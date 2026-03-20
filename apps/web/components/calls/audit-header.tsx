@@ -1,19 +1,60 @@
+"use client"
+
+import { useState, useTransition } from "react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, Calendar, Clock, User } from "lucide-react"
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Download,
+  ExternalLink,
+  Send,
+  User,
+} from "lucide-react"
 import type { CallAuditWithCloser, Classificacao } from "@/lib/types/audit"
-import { formatDate, formatScore, formatDuration } from "@/lib/utils/format"
+import {
+  formatDate,
+  formatScore,
+  formatDuration,
+  formatCurrency,
+} from "@/lib/utils/format"
 import { getClassificacaoColor, getScoreColor } from "@/lib/utils/colors"
 import { RESULTADO_LABELS } from "@/lib/utils/constants"
 import { ProcessingStatus } from "./processing-status"
+import { resendNotification } from "@/lib/actions/calls"
 
 interface AuditHeaderProps {
   audit: CallAuditWithCloser
 }
 
 export function AuditHeader({ audit }: AuditHeaderProps) {
+  const [isPending, startTransition] = useTransition()
+  const [notifMsg, setNotifMsg] = useState<string | null>(null)
+
+  function handleDownloadReport() {
+    if (!audit.relatorio_completo) return
+    const blob = new Blob([audit.relatorio_completo], {
+      type: "text/markdown",
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `relatorio-${audit.lead_name}-${audit.call_date}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function handleResendNotification() {
+    startTransition(async () => {
+      const result = await resendNotification(audit.id)
+      setNotifMsg(result.error ?? "Notificação reenviada!")
+      setTimeout(() => setNotifMsg(null), 3000)
+    })
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -48,6 +89,12 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                   {audit.resultado
                     ? RESULTADO_LABELS[audit.resultado] ?? audit.resultado
                     : "—"}
+                  {audit.resultado === "fechamento" &&
+                    audit.valor_fechamento && (
+                      <span className="ml-1 font-medium text-emerald-600">
+                        ({formatCurrency(audit.valor_fechamento)})
+                      </span>
+                    )}
                 </span>
               </div>
 
@@ -56,6 +103,65 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                   auditId={audit.id}
                   initialStatus={audit.status}
                 />
+              </div>
+
+              {/* Drive links */}
+              {(audit.drive_url || audit.drive_report_url) && (
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  {audit.drive_url && (
+                    <a
+                      href={audit.drive_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-blue-600 hover:underline"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Áudio no Drive
+                    </a>
+                  )}
+                  {audit.drive_report_url && (
+                    <a
+                      href={audit.drive_report_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-blue-600 hover:underline"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Relatório no Drive
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                {audit.relatorio_completo && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadReport}
+                  >
+                    <Download className="mr-1 h-4 w-4" />
+                    Download Relatório
+                  </Button>
+                )}
+                {(audit.status === "completed" ||
+                  audit.status === "analyzed") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResendNotification}
+                    disabled={isPending}
+                  >
+                    <Send className="mr-1 h-4 w-4" />
+                    {isPending ? "Enviando..." : "Reenviar Notif."}
+                  </Button>
+                )}
+                {notifMsg && (
+                  <span className="text-xs text-muted-foreground">
+                    {notifMsg}
+                  </span>
+                )}
               </div>
             </div>
 

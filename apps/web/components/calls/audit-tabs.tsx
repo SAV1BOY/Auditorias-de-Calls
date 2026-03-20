@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -81,8 +83,10 @@ function RelatorioContent({ audit }: { audit: CallAuditWithCloser }) {
   }
 
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap break-words">
-      {audit.relatorio_completo}
+    <div className="prose prose-sm dark:prose-invert max-w-none">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        {audit.relatorio_completo}
+      </ReactMarkdown>
     </div>
   )
 }

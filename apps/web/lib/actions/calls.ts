@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import type { Database } from "@/lib/types/database"
 import type {
   AuditFilters,
   CallAuditWithCloser,
@@ -8,6 +9,8 @@ import type {
   DashboardStats,
   PaginatedResult,
 } from "@/lib/types/audit"
+
+type JobQueueInsert = Database["public"]["Tables"]["job_queue"]["Insert"]
 
 function groupByDateAvg(
   rows: Array<{ call_date: string; score_final: number | null }> | null
@@ -163,4 +166,36 @@ export async function getAuditDetail(
     .eq("id", id)
     .single()
   return (data as unknown as CallAuditWithCloser) ?? null
+}
+
+export async function resendNotification(
+  auditId: string
+): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { data: audit, error: fetchError } = await supabase
+    .from("call_audits")
+    .select("id, status")
+    .eq("id", auditId)
+    .single()
+
+  if (fetchError || !audit) {
+    return { error: "Auditoria não encontrada." }
+  }
+
+  if (audit.status !== "completed" && audit.status !== "analyzed") {
+    return { error: "Auditoria precisa estar completa para reenviar." }
+  }
+
+  const { error: jobError } = await supabase.from("job_queue").insert({
+    audit_id: auditId,
+    job_type: "notify",
+    status: "pending",
+  } satisfies JobQueueInsert)
+
+  if (jobError) {
+    return { error: "Erro ao criar job de notificação." }
+  }
+
+  return { success: true }
 }
