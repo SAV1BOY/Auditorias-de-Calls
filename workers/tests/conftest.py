@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -19,6 +19,7 @@ def config() -> Config:
         supabase_url="https://test.supabase.co",
         supabase_service_role_key="test-service-role-key",
         openai_api_key="test-openai-key",
+        anthropic_api_key="test-anthropic-key",
         google_service_account_info={},
         google_drive_gravacoes_folder_id="test-gravacoes-folder-id",
         google_drive_relatorios_folder_id="test-relatorios-folder-id",
@@ -65,6 +66,7 @@ def mock_db(mock_supabase_client: MagicMock) -> DB:
             supabase_url="https://test.supabase.co",
             supabase_service_role_key="test-key",
             openai_api_key="test-key",
+            anthropic_api_key="test-key",
             google_service_account_info={},
         ))
     db._client = mock_supabase_client
@@ -121,4 +123,40 @@ def sample_whisper_response() -> MagicMock:
     seg2.text = " Meu nome é Evelyn e estou ligando para falar sobre..."
 
     response.segments = [seg1, seg2]
+    return response
+
+
+@pytest.fixture
+def sample_transcribed_audit(sample_audit: dict[str, Any]) -> dict[str, Any]:
+    """Create a sample audit that has been transcribed (ready for analysis)."""
+    return {
+        **sample_audit,
+        "status": "transcribed",
+        "transcricao": (
+            "Olá, tudo bem? Meu nome é Evelyn e estou ligando para falar sobre "
+            "a assessoria para a sua clínica. Eu estava dando uma olhada no seu "
+            "Instagram e vi que você é muito bem posicionada na área de cirurgia..."
+        ),
+        "duration_minutes": 164.0,
+        "audio_duration_seconds": 9840.0,
+    }
+
+
+@pytest.fixture
+def sample_analysis_report() -> str:
+    """Load sample analysis markdown report from fixtures."""
+    fixture_path = Path(__file__).parent / "fixtures" / "sample_analysis_report.md"
+    return fixture_path.read_text()
+
+
+@pytest.fixture
+def mock_claude_response(sample_analysis_report: str) -> MagicMock:
+    """Create a mock Anthropic Claude API response."""
+    response = MagicMock()
+    content_block = MagicMock()
+    content_block.text = sample_analysis_report
+    response.content = [content_block]
+    response.usage = MagicMock()
+    response.usage.input_tokens = 15000
+    response.usage.output_tokens = 8000
     return response

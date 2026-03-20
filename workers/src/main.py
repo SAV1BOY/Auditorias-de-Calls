@@ -21,6 +21,7 @@ from src.db import DB, Job
 from src.drive.client import DriveClient
 from src.drive.sync import DriveSync
 from src.drive.watcher import DriveWatcher
+from src.pipeline.analyzer import Analyzer
 from src.pipeline.transcriber import Transcriber
 
 logging.basicConfig(
@@ -34,7 +35,7 @@ logger = logging.getLogger(__name__)
 _shutdown = threading.Event()
 
 
-def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_sync: DriveSync) -> None:
+def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_sync: DriveSync, analyzer: Analyzer) -> None:
     """Poll job_queue for pending jobs and process them."""
     logger.info("Job runner started (interval: %ds)", config.job_poll_interval_seconds)
 
@@ -45,7 +46,7 @@ def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_syn
                 logger.info("Processing job %s (type=%s, audit=%s, attempt=%d/%d)",
                             job.id, job.job_type, job.audit_id, job.attempts + 1, job.max_attempts)
                 try:
-                    _process_job(job, transcriber, drive_sync)
+                    _process_job(job, transcriber, drive_sync, analyzer)
                     db.complete_job(job.id)
                     logger.info("Job %s completed successfully", job.id)
                 except Exception as e:
@@ -66,7 +67,7 @@ def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_syn
         _shutdown.wait(timeout=config.job_poll_interval_seconds)
 
 
-def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync) -> None:
+def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync, analyzer: Analyzer) -> None:
     """Route a job to the appropriate handler."""
     if job.job_type == "transcribe":
         result = transcriber.transcribe(job.audit_id)
@@ -76,7 +77,7 @@ def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync) -> N
         except Exception as e:
             logger.warning("Drive sync failed for audit %s (non-fatal): %s", job.audit_id, e)
     elif job.job_type == "analyze":
-        logger.info("Analyze job for audit %s — not yet implemented (Sprint 3)", job.audit_id)
+        analyzer.analyze(job.audit_id)
     elif job.job_type == "notify":
         logger.info("Notify job for audit %s — not yet implemented (Sprint 6)", job.audit_id)
     else:
@@ -128,6 +129,7 @@ def main() -> None:
     drive_client = DriveClient(config.google_service_account_info)
     transcriber = Transcriber(config.openai_api_key, db)
     drive_sync = DriveSync(config, db, drive_client)
+    analyzer = Analyzer(config, db, drive_client)
     watcher = DriveWatcher(config, db, drive_client)
 
     # Register signal handlers
@@ -137,7 +139,7 @@ def main() -> None:
     # Start threads
     job_thread = threading.Thread(
         target=_job_runner_loop,
-        args=(config, db, transcriber, drive_sync),
+        args=(config, db, transcriber, drive_sync, analyzer),
         name="job-runner",
         daemon=True,
     )

@@ -26,6 +26,9 @@ class Config:
     # OpenAI (Whisper)
     openai_api_key: str = field(repr=False)
 
+    # Anthropic (Claude)
+    anthropic_api_key: str = field(repr=False)
+
     # Google Drive
     google_service_account_info: dict = field(repr=False)
     google_drive_gravacoes_folder_id: str = ""
@@ -45,7 +48,7 @@ def load_config() -> Config:
     _load_env()
 
     missing: list[str] = []
-    for var in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "OPENAI_API_KEY"):
+    for var in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
         if not os.getenv(var):
             missing.append(var)
 
@@ -69,6 +72,7 @@ def load_config() -> Config:
         supabase_url=os.environ["SUPABASE_URL"],
         supabase_service_role_key=os.environ["SUPABASE_SERVICE_ROLE_KEY"],
         openai_api_key=os.environ["OPENAI_API_KEY"],
+        anthropic_api_key=os.environ["ANTHROPIC_API_KEY"],
         google_service_account_info=sa_info,
         google_drive_gravacoes_folder_id=os.getenv("GOOGLE_DRIVE_GRAVACOES_FOLDER_ID", ""),
         google_drive_relatorios_folder_id=os.getenv("GOOGLE_DRIVE_RELATORIOS_FOLDER_ID", ""),

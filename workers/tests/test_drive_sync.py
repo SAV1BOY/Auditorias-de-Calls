@@ -108,6 +108,7 @@ class TestDriveWatcher:
             supabase_url="https://test.supabase.co",
             supabase_service_role_key="key",
             openai_api_key="key",
+            anthropic_api_key="key",
             google_service_account_info={},
             google_drive_gravacoes_folder_id="",  # Not configured
         )
