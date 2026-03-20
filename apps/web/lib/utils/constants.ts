@@ -51,3 +51,35 @@ export const RESULTADO_LABELS: Record<string, string> = {
   reagendar: "Reagendar",
   outro: "Outro",
 }
+
+export const RADAR_LABELS: Record<string, string> = {
+  d01_frame: "Frame",
+  d02_qualificacao: "Qualif.",
+  d03_diag_quantitativo: "Diag.Quant.",
+  d04_diag_qualitativo: "Diag.Qual.",
+  d05_consequencia: "Conseq.",
+  d06_ensino: "Ensino",
+  d07_identidade: "Ident.",
+  d08_ancoragem: "Ancor.",
+  d09_isolamento: "Isol.",
+  d10_proporcao_fala: "Prop.Fala",
+  d11_promessas: "Promessas",
+  d12_checkpoints: "Checkp.",
+  d13_fechamento: "Fech.",
+}
+
+export const DIM_INDEX_MAP: Record<string, string> = {
+  d01_frame: "avg_d01",
+  d02_qualificacao: "avg_d02",
+  d03_diag_quantitativo: "avg_d03",
+  d04_diag_qualitativo: "avg_d04",
+  d05_consequencia: "avg_d05",
+  d06_ensino: "avg_d06",
+  d07_identidade: "avg_d07",
+  d08_ancoragem: "avg_d08",
+  d09_isolamento: "avg_d09",
+  d10_proporcao_fala: "avg_d10",
+  d11_promessas: "avg_d11",
+  d12_checkpoints: "avg_d12",
+  d13_fechamento: "avg_d13",
+}

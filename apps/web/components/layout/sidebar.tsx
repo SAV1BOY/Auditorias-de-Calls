@@ -13,12 +13,14 @@ import {
   Settings,
   LogOut,
   BarChart3,
+  TrendingUp,
 } from "lucide-react"
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/calls", label: "Calls", icon: Phone },
   { href: "/closers", label: "Closers", icon: Users },
+  { href: "/analytics", label: "Analytics", icon: TrendingUp },
   { href: "/calls/upload", label: "Upload", icon: Upload },
   { href: "/settings", label: "Configurações", icon: Settings },
 ]

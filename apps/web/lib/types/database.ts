@@ -381,6 +381,69 @@ export interface Database {
           }
         ]
       }
+      goals: {
+        Row: {
+          id: string
+          organization_id: string | null
+          title: string
+          type: "individual" | "team" | "dimension"
+          metric: "score_avg" | "score_min" | "classificacao_count" | "taxa_fechamento" | "dimension_avg"
+          target_value: number
+          dimension_id: string | null
+          closer_id: string | null
+          start_date: string
+          end_date: string
+          status: "active" | "completed" | "failed"
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id?: string | null
+          title: string
+          type: "individual" | "team" | "dimension"
+          metric: "score_avg" | "score_min" | "classificacao_count" | "taxa_fechamento" | "dimension_avg"
+          target_value: number
+          dimension_id?: string | null
+          closer_id?: string | null
+          start_date: string
+          end_date: string
+          status?: "active" | "completed" | "failed"
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string | null
+          title?: string
+          type?: "individual" | "team" | "dimension"
+          metric?: "score_avg" | "score_min" | "classificacao_count" | "taxa_fechamento" | "dimension_avg"
+          target_value?: number
+          dimension_id?: string | null
+          closer_id?: string | null
+          start_date?: string
+          end_date?: string
+          status?: "active" | "completed" | "failed"
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goals_closer_id_fkey"
+            columns: ["closer_id"]
+            isOneToOne: false
+            referencedRelation: "closers"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       drive_sync: {
         Row: {
           id: string

@@ -48,3 +48,46 @@ export interface PaginatedResult<T> {
   pageSize: number
   totalPages: number
 }
+
+// ─── Analytics Types ───
+
+export type GoalType = "individual" | "team" | "dimension"
+export type GoalMetric = "score_avg" | "score_min" | "classificacao_count" | "taxa_fechamento" | "dimension_avg"
+export type GoalStatus = "active" | "completed" | "failed"
+
+export interface GoalRow {
+  id: string
+  organization_id: string | null
+  title: string
+  type: GoalType
+  metric: GoalMetric
+  target_value: number
+  dimension_id: string | null
+  closer_id: string | null
+  start_date: string
+  end_date: string
+  status: GoalStatus
+  created_at: string
+  updated_at: string
+}
+
+export interface GoalWithProgress extends GoalRow {
+  current_value: number
+  progress: number
+  closer_name?: string
+}
+
+export interface CloserComparison {
+  closer_id: string
+  closer_name: string
+  dimensions: Array<{ name: string; shortName: string; score: number }>
+  media_score: number | null
+  total_calls: number
+}
+
+export interface DimensionTrendPoint {
+  date: string
+  score: number
+  teamAvg?: number
+  movingAvg?: number
+}
