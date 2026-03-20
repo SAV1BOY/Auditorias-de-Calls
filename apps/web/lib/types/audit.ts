@@ -25,4 +25,26 @@ export interface DashboardStats {
     mediana: number
     fraca: number
   }
+  evolucaoScore: Array<{ date: string; score: number }>
+}
+
+export interface AuditFilters {
+  closerId?: string
+  dateFrom?: string
+  dateTo?: string
+  classificacao?: Classificacao
+  resultado?: string
+  status?: string
+  sortBy?: string
+  sortOrder?: "asc" | "desc"
+  page?: number
+  pageSize?: number
+}
+
+export interface PaginatedResult<T> {
+  data: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }

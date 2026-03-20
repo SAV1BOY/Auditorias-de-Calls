@@ -1,61 +1,8 @@
-import { createClient } from "@/lib/supabase/server"
+import { getDashboardStats, getRecentCalls } from "@/lib/actions/calls"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { RecentCalls } from "@/components/dashboard/recent-calls"
-import type { DashboardStats, CallAuditWithCloser } from "@/lib/types/audit"
-async function getDashboardStats(): Promise<DashboardStats> {
-  const supabase = await createClient()
-
-  const { data: audits } = await supabase.from("call_audits").select("*")
-
-  const all = audits ?? []
-  const completed = all.filter((a) => a.status === "completed")
-  const withScore = completed.filter((a) => a.score_final !== null)
-
-  const today = new Date()
-  const weekAgo = new Date(today)
-  weekAgo.setDate(weekAgo.getDate() - 7)
-  const weekAgoStr = weekAgo.toISOString().split("T")[0]
-
-  const callsEstaSemana = all.filter((a) => a.call_date >= weekAgoStr).length
-
-  const mediaScore =
-    withScore.length > 0
-      ? withScore.reduce((sum, a) => sum + (a.score_final ?? 0), 0) /
-        withScore.length
-      : null
-
-  const withResultado = all.filter((a) => a.resultado !== null)
-  const fechamentos = all.filter((a) => a.resultado === "fechamento").length
-  const taxaFechamento =
-    withResultado.length > 0
-      ? (fechamentos / withResultado.length) * 100
-      : null
-
-  return {
-    totalCalls: all.length,
-    mediaScore,
-    taxaFechamento,
-    callsEstaSemana,
-    porClassificacao: {
-      elite: all.filter((a) => a.classificacao === "ELITE").length,
-      forte: all.filter((a) => a.classificacao === "FORTE").length,
-      mediana: all.filter((a) => a.classificacao === "MEDIANA").length,
-      fraca: all.filter((a) => a.classificacao === "FRACA").length,
-    },
-  }
-}
-
-async function getRecentCalls(): Promise<CallAuditWithCloser[]> {
-  const supabase = await createClient()
-
-  const { data } = await supabase
-    .from("call_audits")
-    .select("*, closers(name)")
-    .order("call_date", { ascending: false })
-    .limit(10)
-
-  return (data as unknown as CallAuditWithCloser[]) ?? []
-}
+import { ScoreChart } from "@/components/dashboard/score-chart"
+import { ClassificacaoChart } from "@/components/dashboard/classificacao-chart"
 
 export default async function DashboardPage() {
   const [stats, recentCalls] = await Promise.all([
@@ -66,6 +13,12 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <StatsCards stats={stats} />
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <ScoreChart data={stats.evolucaoScore} />
+        </div>
+        <ClassificacaoChart stats={stats.porClassificacao} />
+      </div>
       <RecentCalls calls={recentCalls} />
     </div>
   )
