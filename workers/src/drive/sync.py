@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+import uuid
 from pathlib import Path
 
 from src.config import Config
@@ -56,7 +57,6 @@ class DriveSync:
 
         # 4. Upload audio to Supabase first, then create audit with valid path
         #    This avoids orphaned audit rows if upload fails.
-        import uuid
         temp_audit_id = str(uuid.uuid4())
         try:
             storage_path = upload_audio(self._db.client, temp_audit_id, file.name, audio_bytes)
