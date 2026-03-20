@@ -205,7 +205,7 @@ class Analyzer:
                 e,
             )
 
-        # 9. Create notify job (will be processed in Sprint 6)
+        # 9. Create notify job
         self._db.create_job(audit_id, "notify")
         logger.info("Created 'notify' job for audit %s", audit_id)
 

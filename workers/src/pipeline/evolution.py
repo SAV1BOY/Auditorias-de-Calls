@@ -14,9 +14,10 @@ class EvolutionClient:
     """Sends WhatsApp messages via Evolution API."""
 
     def __init__(self, api_url: str, api_token: str, instance_id: str) -> None:
-        self._api_url = api_url.rstrip("/")
+        self._api_url = api_url.rstrip("/") if api_url else ""
         self._api_token = api_token
         self._instance_id = instance_id
+        self._client = httpx.Client(timeout=30.0) if self.enabled else None
 
     @property
     def enabled(self) -> bool:
@@ -30,14 +31,16 @@ class EvolutionClient:
         Headers: { "apikey": token }
         Body: { "number": number, "text": text }
         """
+        if not self._client:
+            raise RuntimeError("Evolution API client is not configured.")
+
         url = f"{self._api_url}/message/sendText/{self._instance_id}"
         headers = {"apikey": self._api_token, "Content-Type": "application/json"}
         payload = {"number": number, "text": text}
 
-        with httpx.Client(timeout=30.0) as client:
-            response = client.post(url, json=payload, headers=headers)
-            response.raise_for_status()
-            result = response.json()
+        response = self._client.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        result = response.json()
 
         logger.info("WhatsApp message sent to %s via Evolution API", number)
         return result

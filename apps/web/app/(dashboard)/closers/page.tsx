@@ -1,21 +1,11 @@
-"use client"
-
-import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Plus, Users } from "lucide-react"
-import type { CloserRow } from "@/lib/types/audit"
+import { Users } from "lucide-react"
 import { getClosersList } from "@/lib/actions/closers"
 import { CloserList } from "@/components/closers/closer-list"
-import { CloserFormDialog } from "@/components/closers/closer-form-dialog"
+import { CloserPageActions } from "@/components/closers/closer-page-actions"
 
-export default function ClosersPage() {
-  const [closers, setClosers] = useState<CloserRow[]>([])
-  const [createOpen, setCreateOpen] = useState(false)
-
-  useEffect(() => {
-    getClosersList().then(setClosers)
-  }, [createOpen])
+export default async function ClosersPage() {
+  const closers = await getClosersList()
 
   return (
     <div className="space-y-4">
@@ -24,10 +14,7 @@ export default function ClosersPage() {
           <Users className="h-6 w-6" />
           Closers
         </h1>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="mr-1 h-4 w-4" />
-          Novo Closer
-        </Button>
+        <CloserPageActions />
       </div>
 
       <Card>
@@ -41,11 +28,6 @@ export default function ClosersPage() {
           <CloserList closers={closers} />
         </CardContent>
       </Card>
-
-      <CloserFormDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-      />
     </div>
   )
 }

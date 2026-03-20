@@ -9,7 +9,7 @@ import {
   getCloserPerformance,
   getCloserScoreEvolution,
 } from "@/lib/actions/closers"
-import { DIMENSIONS } from "@/lib/utils/constants"
+import { DIMENSIONS, type DimensionId } from "@/lib/utils/constants"
 import { CloserStats } from "@/components/closers/closer-stats"
 import { CloserRadarChart } from "@/components/closers/closer-radar-chart"
 import { ScoreChart } from "@/components/dashboard/score-chart"
@@ -44,9 +44,26 @@ export default async function CloserProfilePage({
     getCloserScoreEvolution(id),
   ])
 
+  // View columns are avg_d01..avg_d13 (not avg_d01_frame)
+  const dimIndexMap: Record<string, string> = {
+    d01_frame: "avg_d01",
+    d02_qualificacao: "avg_d02",
+    d03_diag_quantitativo: "avg_d03",
+    d04_diag_qualitativo: "avg_d04",
+    d05_consequencia: "avg_d05",
+    d06_ensino: "avg_d06",
+    d07_identidade: "avg_d07",
+    d08_ancoragem: "avg_d08",
+    d09_isolamento: "avg_d09",
+    d10_proporcao_fala: "avg_d10",
+    d11_promessas: "avg_d11",
+    d12_checkpoints: "avg_d12",
+    d13_fechamento: "avg_d13",
+  }
+
   const radarData = DIMENSIONS.map((dim) => ({
     name: RADAR_LABELS[dim.id] ?? dim.name,
-    score: Number(performance?.[`avg_${dim.id}`] ?? 0),
+    score: Number(performance?.[dimIndexMap[dim.id]] ?? 0),
   }))
 
   return (

@@ -23,6 +23,16 @@ CREATE POLICY "authenticated_update" ON job_queue FOR UPDATE TO authenticated US
 -- notifications
 CREATE POLICY "authenticated_select" ON notifications FOR SELECT TO authenticated USING (true);
 
+-- app_config
+ALTER TABLE app_config ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "authenticated_select" ON app_config FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_insert" ON app_config FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "authenticated_update" ON app_config FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+
+-- drive_sync
+ALTER TABLE drive_sync ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "authenticated_select" ON drive_sync FOR SELECT TO authenticated USING (true);
+
 -- profiles (RLS not yet enabled, but prepare for it)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "users_read_own" ON profiles FOR SELECT TO authenticated USING (id = auth.uid());

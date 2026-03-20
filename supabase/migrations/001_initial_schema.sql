@@ -180,7 +180,7 @@ SELECT
   organization_id,
   COUNT(*) as total_calls,
   COUNT(*) FILTER (WHERE status = 'completed') as calls_completas,
-  COUNT(*) FILTER (WHERE status IN ('uploaded','transcribing','analyzing')) as calls_em_processamento,
+  COUNT(*) FILTER (WHERE status IN ('uploaded','transcribing','transcribed','analyzing','analyzed','notifying')) as calls_em_processamento,
   ROUND(AVG(score_final) FILTER (WHERE score_final IS NOT NULL), 1) as media_score,
   COUNT(*) FILTER (WHERE resultado = 'fechamento') as total_fechamentos,
   ROUND(

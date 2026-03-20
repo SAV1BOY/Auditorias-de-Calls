@@ -15,6 +15,8 @@ class EmailSender:
     def __init__(self, api_key: str, from_email: str) -> None:
         self._api_key = api_key
         self._from_email = from_email
+        if api_key:
+            resend.api_key = api_key
 
     @property
     def enabled(self) -> bool:
@@ -25,7 +27,6 @@ class EmailSender:
 
         Uses Resend API to send the relatorio_completo as plain text.
         """
-        resend.api_key = self._api_key
 
         result = resend.Emails.send({
             "from": self._from_email,
