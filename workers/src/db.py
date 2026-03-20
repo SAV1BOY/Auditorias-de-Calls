@@ -178,6 +178,34 @@ class DB:
         )
         return result.data[0] if result.data else None
 
+    def get_app_config(self, key: str) -> Any | None:
+        """Fetch a config value from app_config by key."""
+        result = self._client.table("app_config").select("value").eq("key", key).limit(1).execute()
+        if result.data:
+            return result.data[0]["value"]
+        return None
+
+    def get_notification_recipients(self) -> dict:
+        """Get notification recipients. Returns { 'whatsapp_numbers': [...], 'email_addresses': [...] }"""
+        value = self.get_app_config("notification_recipients")
+        if isinstance(value, dict):
+            return {
+                "whatsapp_numbers": value.get("whatsapp_numbers", []),
+                "email_addresses": value.get("email_addresses", []),
+            }
+        return {"whatsapp_numbers": [], "email_addresses": []}
+
+    def insert_notification(self, audit_id: str, channel: str, recipient: str, content: str | None = None) -> str:
+        """Insert a notification record. Returns the notification ID."""
+        result = self._client.table("notifications").insert({
+            "audit_id": audit_id,
+            "channel": channel,
+            "recipient": recipient,
+            "content": content,
+            "status": "sent",
+        }).execute()
+        return result.data[0]["id"]
+
     def create_audit_from_drive(
         self,
         closer_id: str | None,

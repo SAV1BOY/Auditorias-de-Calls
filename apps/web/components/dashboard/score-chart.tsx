@@ -18,6 +18,7 @@ import {
 
 interface ScoreChartProps {
   data: Array<{ date: string; score: number }>
+  title?: string
 }
 
 function formatDateLabel(dateStr: string): string {
@@ -25,11 +26,11 @@ function formatDateLabel(dateStr: string): string {
   return `${day}/${month}`
 }
 
-export function ScoreChart({ data }: ScoreChartProps) {
+export function ScoreChart({ data, title = "Evolução de Score" }: ScoreChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Evolução de Score</CardTitle>
+        <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (

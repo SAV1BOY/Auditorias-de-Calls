@@ -34,6 +34,15 @@ class Config:
     google_drive_gravacoes_folder_id: str = ""
     google_drive_relatorios_folder_id: str = ""
 
+    # Evolution API (WhatsApp)
+    evolution_api_url: str = ""
+    evolution_api_token: str = field(default="", repr=False)
+    evolution_instance_id: str = ""
+
+    # Resend (Email)
+    resend_api_key: str = field(default="", repr=False)
+    resend_from_email: str = "noreply@callaudit.app"
+
     # Polling intervals
     job_poll_interval_seconds: int = 30
     drive_poll_interval_seconds: int = 120
@@ -76,6 +85,11 @@ def load_config() -> Config:
         google_service_account_info=sa_info,
         google_drive_gravacoes_folder_id=os.getenv("GOOGLE_DRIVE_GRAVACOES_FOLDER_ID", ""),
         google_drive_relatorios_folder_id=os.getenv("GOOGLE_DRIVE_RELATORIOS_FOLDER_ID", ""),
+        evolution_api_url=os.getenv("EVOLUTION_API_URL", ""),
+        evolution_api_token=os.getenv("EVOLUTION_API_TOKEN", ""),
+        evolution_instance_id=os.getenv("EVOLUTION_INSTANCE_ID", ""),
+        resend_api_key=os.getenv("RESEND_API_KEY", ""),
+        resend_from_email=os.getenv("RESEND_FROM_EMAIL", "noreply@callaudit.app"),
         job_poll_interval_seconds=int(os.getenv("JOB_POLL_INTERVAL_SECONDS", "30")),
         drive_poll_interval_seconds=int(os.getenv("DRIVE_POLL_INTERVAL_SECONDS", "120")),
     )
