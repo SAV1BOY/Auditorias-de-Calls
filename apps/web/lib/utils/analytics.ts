@@ -1,5 +1,3 @@
-import type { GoalWithProgress } from "@/lib/types/audit"
-
 export function calculateMovingAverage(
   data: Array<{ date: string; score: number }>,
   windowSize: number
@@ -63,7 +61,7 @@ export function generateComparisonInsights(
     }
 
     const gap = bestScore - secondScore
-    if (gap >= 1.5 && bestScore >= 7) {
+    if (gap >= 1.5 && bestScore >= 7 && secondScore > 0) {
       const pct = Math.round((gap / secondScore) * 100)
       insights.push(
         `${bestCloser} se destaca em ${dimName} com ${bestScore.toFixed(1)} (${pct}% acima do segundo).`
@@ -72,14 +70,6 @@ export function generateComparisonInsights(
   }
 
   return insights.slice(0, 5)
-}
-
-export function calculateGoalProgress(goal: GoalWithProgress): number {
-  if (goal.target_value === 0) return 100
-  return Math.min(
-    100,
-    Math.round((goal.current_value / goal.target_value) * 100)
-  )
 }
 
 export function getGoalProgressColor(progress: number, daysRemaining: number, totalDays: number): string {
