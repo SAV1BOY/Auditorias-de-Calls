@@ -144,7 +144,7 @@ class Transcriber:
 
         # 5. Update audit
         now = datetime.now(timezone.utc).isoformat()
-        duration_minutes = round(result.duration_seconds / 60, 2) if result.duration_seconds else None
+        duration_minutes = int(round(result.duration_seconds / 60)) if result.duration_seconds else None
 
         self._db.update_audit_status(audit_id, "transcribed", extra={
             "transcricao": result.text,
