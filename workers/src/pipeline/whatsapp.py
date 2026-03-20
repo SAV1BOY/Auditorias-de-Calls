@@ -42,7 +42,7 @@ def generate_whatsapp_summary(parsed: AnalysisResult, metadata: dict) -> str:
     ]
 
     # Top acertos (max 3)
-    acertos = parsed.top_acertos[:3]
+    acertos = (parsed.top_acertos or [])[:3]
     if acertos:
         lines.append("\u2705 Top Acertos:")
         for item in acertos:
@@ -53,7 +53,7 @@ def generate_whatsapp_summary(parsed: AnalysisResult, metadata: dict) -> str:
         lines.append("")
 
     # Top erros (max 3)
-    erros = parsed.top_erros[:3]
+    erros = (parsed.top_erros or [])[:3]
     if erros:
         lines.append("\u274c Top Erros:")
         for item in erros:

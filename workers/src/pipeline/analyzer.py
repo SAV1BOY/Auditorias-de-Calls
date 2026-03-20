@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import re
 from datetime import datetime, timezone
+from typing import Any
 
 import anthropic
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -48,7 +49,7 @@ class Analyzer:
         wait=wait_exponential(multiplier=2, min=2, max=60),
         reraise=True,
     )
-    def _call_claude(self, transcription: str, metadata: dict) -> anthropic.types.Message:
+    def _call_claude(self, transcription: str, metadata: dict[str, Any]) -> anthropic.types.Message:
         """Call Claude API with system prompt and transcription.
 
         Args:
@@ -67,7 +68,7 @@ class Analyzer:
         )
         return response
 
-    def _build_user_message(self, transcription: str, metadata: dict) -> str:
+    def _build_user_message(self, transcription: str, metadata: dict[str, Any]) -> str:
         """Build the user message with metadata and transcription.
 
         Args:
@@ -141,6 +142,8 @@ class Analyzer:
 
         # 4. Call Claude
         response = self._call_claude(transcription, metadata)
+        if not response.content:
+            raise RuntimeError(f"Claude returned empty content for audit {audit_id}")
         raw_text = response.content[0].text
         tokens_input = response.usage.input_tokens
         tokens_output = response.usage.output_tokens

@@ -11,6 +11,7 @@ from src.config import Config
 from src.db import DB
 from src.pipeline.analyzer import Analyzer, MODEL
 from src.pipeline.models import AnalysisResult
+from src.pipeline.analyzer import COST_INPUT_PER_MTOK, COST_OUTPUT_PER_MTOK
 from src.pipeline.parser import DIMENSION_WEIGHTS, calculate_weighted_score
 
 
@@ -254,4 +255,130 @@ class TestAnalyzerStatusFlow:
             MagicMock(data=[sample_audit])
 
         with pytest.raises(ValueError, match="no transcription"):
+            analyzer.analyze("audit-001")
+
+
+class TestAnalyzerDriveReport:
+    """Tests for Drive report save behavior."""
+
+    def test_save_report_creates_md_in_drive(
+        self,
+        analyzer: Analyzer,
+        sample_transcribed_audit: dict[str, Any],
+    ) -> None:
+        """Report is uploaded to Drive in Relatórios/{closer}/ folder."""
+        analyzer._db.get_audit = MagicMock(return_value=sample_transcribed_audit)
+        analyzer._db.update_audit_status = MagicMock()
+        analyzer._db.create_job = MagicMock(return_value="job-002")
+
+        # Enable Drive
+        analyzer._drive.enabled = True
+        analyzer._drive.get_or_create_folder = MagicMock(return_value="folder-relatorios")
+        analyzer._drive.upload_file = MagicMock(return_value={
+            "id": "drive-report-001",
+            "webViewLink": "https://drive.google.com/file/d/drive-report-001",
+        })
+
+        analyzer.analyze("audit-001")
+
+        # Verify Drive upload was called
+        analyzer._drive.upload_file.assert_called_once()
+        call_args = analyzer._drive.upload_file.call_args
+        assert call_args[0][0] == "folder-relatorios"  # folder_id
+        assert call_args[0][1].startswith("auditoria_")  # filename
+        assert call_args[0][1].endswith(".md")  # markdown extension
+        assert call_args[0][3] == "text/markdown"  # mime_type
+
+    def test_drive_failure_is_non_fatal(
+        self,
+        analyzer: Analyzer,
+        sample_transcribed_audit: dict[str, Any],
+    ) -> None:
+        """Drive upload failure does not prevent analysis from completing."""
+        analyzer._db.get_audit = MagicMock(return_value=sample_transcribed_audit)
+        analyzer._db.update_audit_status = MagicMock()
+        analyzer._db.create_job = MagicMock(return_value="job-002")
+
+        analyzer._drive.enabled = True
+        analyzer._drive.get_or_create_folder = MagicMock(
+            side_effect=Exception("Drive unavailable")
+        )
+
+        # Should not raise — Drive failure is non-fatal
+        result = analyzer.analyze("audit-001")
+        assert result.score_final >= 0  # Analysis succeeded
+
+
+class TestAnalyzerCost:
+    """Tests for cost calculation."""
+
+    def test_cost_calculation(
+        self,
+        analyzer: Analyzer,
+        sample_transcribed_audit: dict[str, Any],
+    ) -> None:
+        """Verify cost is calculated correctly from token counts."""
+        analyzer._db.get_audit = MagicMock(return_value=sample_transcribed_audit)
+        analyzer._db.update_audit_status = MagicMock()
+        analyzer._db.create_job = MagicMock(return_value="job-002")
+
+        analyzer.analyze("audit-001")
+
+        # Find the 'analyzed' status update call with cost
+        update_calls = analyzer._db.update_audit_status.call_args_list
+        analyzed_call = [c for c in update_calls if c[0][1] == "analyzed"]
+        assert len(analyzed_call) >= 1
+
+        extra = analyzed_call[0].kwargs.get("extra") or analyzed_call[0][0][2] if len(analyzed_call[0][0]) > 2 else analyzed_call[0].kwargs.get("extra", {})
+        expected_cost = round(
+            (15000 * COST_INPUT_PER_MTOK + 8000 * COST_OUTPUT_PER_MTOK) / 1_000_000,
+            4,
+        )
+        assert extra["custo_estimado"] == expected_cost
+
+
+class TestAnalyzerRetry:
+    """Tests for retry mechanism."""
+
+    def test_retries_on_transient_api_error(
+        self,
+        analyzer: Analyzer,
+        mock_anthropic_client: MagicMock,
+        mock_claude_response: MagicMock,
+        sample_transcribed_audit: dict[str, Any],
+    ) -> None:
+        """API call retries on transient errors and succeeds."""
+        import anthropic
+
+        # First two calls fail, third succeeds
+        mock_anthropic_client.messages.create.side_effect = [
+            anthropic.APIError(message="Server Error", request=MagicMock(), body=None),
+            anthropic.APIError(message="Server Error", request=MagicMock(), body=None),
+            mock_claude_response,
+        ]
+
+        analyzer._db._client.table.return_value.select.return_value \
+            .eq.return_value.limit.return_value.execute.return_value = \
+            MagicMock(data=[sample_transcribed_audit])
+
+        result = analyzer.analyze("audit-001")
+        assert result.score_final >= 0
+        assert mock_anthropic_client.messages.create.call_count == 3
+
+    def test_empty_content_raises_runtime_error(
+        self,
+        analyzer: Analyzer,
+        mock_anthropic_client: MagicMock,
+        sample_transcribed_audit: dict[str, Any],
+    ) -> None:
+        """RuntimeError raised when Claude returns empty content."""
+        empty_response = MagicMock()
+        empty_response.content = []  # Empty content
+        mock_anthropic_client.messages.create.return_value = empty_response
+
+        analyzer._db._client.table.return_value.select.return_value \
+            .eq.return_value.limit.return_value.execute.return_value = \
+            MagicMock(data=[sample_transcribed_audit])
+
+        with pytest.raises(RuntimeError, match="empty content"):
             analyzer.analyze("audit-001")
