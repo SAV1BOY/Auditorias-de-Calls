@@ -24,14 +24,21 @@ export function ProcessingStatus({
   auditId,
   initialStatus,
 }: ProcessingStatusProps) {
-  const { audit: realtimeAudit } = useRealtimeAudit(auditId)
+  const { audit: realtimeAudit, subscriptionError } = useRealtimeAudit(auditId)
   const currentStatus = (realtimeAudit?.status as AuditStatus) ?? initialStatus
   const isProcessing = PROCESSING_STATUSES.has(currentStatus)
 
   return (
-    <Badge variant="secondary" className={getStatusColor(currentStatus)}>
-      {isProcessing && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-      {STATUS_LABELS[currentStatus] ?? currentStatus}
-    </Badge>
+    <div className="flex items-center gap-2">
+      <Badge variant="secondary" className={getStatusColor(currentStatus)}>
+        {isProcessing && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+        {STATUS_LABELS[currentStatus] ?? currentStatus}
+      </Badge>
+      {subscriptionError && isProcessing && (
+        <span className="text-xs text-muted-foreground">
+          (atualização em tempo real indisponível)
+        </span>
+      )}
+    </div>
   )
 }

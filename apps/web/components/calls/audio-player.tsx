@@ -16,21 +16,18 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
     if (!audioPath) return
 
     const supabase = createClient()
-    const { data } = supabase.storage.from("audios").getPublicUrl(audioPath)
 
-    if (data?.publicUrl) {
-      // Use signed URL for private bucket
-      supabase.storage
-        .from("audios")
-        .createSignedUrl(audioPath, 3600) // 1h expiry
-        .then(({ data: signed, error: signError }) => {
-          if (signError || !signed?.signedUrl) {
-            setError(true)
-            return
-          }
-          setSrc(signed.signedUrl)
-        })
-    }
+    // Private bucket — use signed URL (1h expiry)
+    supabase.storage
+      .from("audios")
+      .createSignedUrl(audioPath, 3600)
+      .then(({ data: signed, error: signError }) => {
+        if (signError || !signed?.signedUrl) {
+          setError(true)
+          return
+        }
+        setSrc(signed.signedUrl)
+      })
   }, [audioPath])
 
   if (!audioPath) {

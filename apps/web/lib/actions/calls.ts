@@ -41,7 +41,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     .from("v_dashboard_stats")
     .select("*")
     .limit(1)
-    .single()
+    .maybeSingle()
 
   // 2. Calls this week
   const weekAgo = new Date()
