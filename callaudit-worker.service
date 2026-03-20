@@ -1,0 +1,20 @@
+[Unit]
+Description=CallAudit Worker
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/callaudit/workers
+ExecStart=/opt/callaudit/workers/venv/bin/python -m src.main
+Restart=always
+RestartSec=10
+EnvironmentFile=/opt/callaudit/workers/.env
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=callaudit-worker
+
+[Install]
+WantedBy=multi-user.target
