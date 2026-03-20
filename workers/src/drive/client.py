@@ -156,10 +156,11 @@ class DriveClient:
         if not self._service:
             raise RuntimeError("Drive client is not configured.")
 
-        # Check if folder exists
+        # Check if folder exists (escape quotes in folder_name)
+        escaped_name = folder_name.replace("\\", "\\\\").replace("'", "\\'")
         query = (
             f"'{parent_id}' in parents "
-            f"and name = '{folder_name}' "
+            f"and name = '{escaped_name}' "
             "and mimeType = 'application/vnd.google-apps.folder' "
             "and trashed = false"
         )

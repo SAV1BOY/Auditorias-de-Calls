@@ -54,17 +54,16 @@ class DriveSync:
         # 3. Parse metadata from filename
         call_date, lead_name = parse_filename(file.name)
 
-        # 4. Create audit
-        import uuid
-        audit_id = str(uuid.uuid4())
-        storage_path = upload_audio(self._db.client, audit_id, file.name, audio_bytes)
-
+        # 4. Create audit first to get the DB-generated ID, then upload audio
         audit_id = self._db.create_audit_from_drive(
             closer_id=closer_id,
             lead_name=lead_name,
             call_date=call_date,
-            audio_path=storage_path,
+            audio_path="",  # placeholder, updated after upload
         )
+
+        storage_path = upload_audio(self._db.client, audit_id, file.name, audio_bytes)
+        self._db.update_audit_status(audit_id, "uploaded", extra={"audio_path": storage_path})
 
         # 5. Register in drive_sync
         self._db.insert_drive_sync(

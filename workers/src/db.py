@@ -45,14 +45,20 @@ class DB:
         return self._client
 
     def fetch_pending_job(self) -> Job | None:
-        """Fetch the oldest pending job and mark it as processing.
+        """Fetch the oldest pending job and atomically mark it as processing.
+
+        Uses an atomic UPDATE with status check to prevent TOCTOU race
+        conditions when multiple workers are running.
 
         Returns:
             The job if found, None otherwise.
         """
+        now = datetime.now(timezone.utc).isoformat()
+
+        # Atomic: only update if still pending, preventing race conditions
         result = (
             self._client.table("job_queue")
-            .select("*")
+            .update({"status": "processing", "started_at": now})
             .eq("status", "pending")
             .order("created_at", desc=False)
             .limit(1)
@@ -63,12 +69,6 @@ class DB:
             return None
 
         row = result.data[0]
-        now = datetime.now(timezone.utc).isoformat()
-
-        self._client.table("job_queue").update({
-            "status": "processing",
-            "started_at": now,
-        }).eq("id", row["id"]).execute()
 
         return Job(
             id=row["id"],

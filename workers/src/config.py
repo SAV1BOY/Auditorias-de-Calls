@@ -21,10 +21,10 @@ class Config:
 
     # Supabase
     supabase_url: str
-    supabase_service_role_key: str
+    supabase_service_role_key: str = field(repr=False)
 
     # OpenAI (Whisper)
-    openai_api_key: str
+    openai_api_key: str = field(repr=False)
 
     # Google Drive
     google_service_account_info: dict = field(repr=False)

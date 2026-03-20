@@ -15,10 +15,9 @@ import logging
 import signal
 import sys
 import threading
-import time
 
 from src.config import load_config, Config
-from src.db import DB
+from src.db import DB, Job
 from src.drive.client import DriveClient
 from src.drive.sync import DriveSync
 from src.drive.watcher import DriveWatcher
@@ -61,13 +60,13 @@ def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_syn
                         })
                         logger.error("Job %s exceeded max attempts, audit %s marked as error",
                                      job.id, job.audit_id)
-        except Exception as e:
-            logger.exception("Unexpected error in job runner: %s", e)
+        except Exception:
+            logger.exception("Unexpected error in job runner")
 
         _shutdown.wait(timeout=config.job_poll_interval_seconds)
 
 
-def _process_job(job, transcriber: Transcriber, drive_sync: DriveSync) -> None:
+def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync) -> None:
     """Route a job to the appropriate handler."""
     if job.job_type == "transcribe":
         result = transcriber.transcribe(job.audit_id)
@@ -100,8 +99,8 @@ def _drive_watcher_loop(config: Config, watcher: DriveWatcher, drive_sync: Drive
                     drive_sync.sync_from_drive(file)
                 except Exception as e:
                     logger.error("Failed to sync Drive file %s: %s", file.name, e)
-        except Exception as e:
-            logger.exception("Unexpected error in Drive watcher: %s", e)
+        except Exception:
+            logger.exception("Unexpected error in Drive watcher")
 
         _shutdown.wait(timeout=config.drive_poll_interval_seconds)
 

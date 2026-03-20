@@ -125,8 +125,8 @@ class Transcriber:
         # 3. Write to temp file and call Whisper
         suffix = Path(audio_path).suffix or ".ogg"
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-            tmp.write(audio_bytes)
             tmp_path = Path(tmp.name)
+            tmp.write(audio_bytes)
 
         try:
             response = self._call_whisper(tmp_path)
