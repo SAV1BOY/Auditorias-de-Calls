@@ -368,6 +368,59 @@ def parse_reescrita_falas(raw_text: str) -> list[dict[str, Any]]:
     return items
 
 
+def parse_fases_analise(raw_text: str) -> list[dict[str, Any]]:
+    """Parse the phase-by-phase analysis section.
+
+    Extracts each sales phase with its rating and observations.
+
+    Args:
+        raw_text: Full markdown report.
+
+    Returns:
+        List of dicts with 'phase', 'rating', 'observations'.
+    """
+    section = _extract_section(raw_text, 3)  # Section "3. ANÁLISE FASE A FASE"
+    if not section:
+        return []
+
+    items: list[dict[str, Any]] = []
+
+    # Match phase headers: ### Fase N: Name or ### N. Name
+    phase_pattern = r"###\s+(?:Fase\s+)?(\d+)\s*[:.]\s*(.+)"
+    phase_matches = list(re.finditer(phase_pattern, section, re.IGNORECASE))
+
+    for i, p_match in enumerate(phase_matches):
+        start = p_match.end()
+        end = phase_matches[i + 1].start() if i + 1 < len(phase_matches) else len(section)
+        block = section[start:end]
+
+        item: dict[str, Any] = {
+            "phase": int(p_match.group(1)),
+            "name": p_match.group(2).strip(),
+        }
+
+        # Try to extract rating (e.g., **Nota:** 7.5 or similar)
+        rating_match = re.search(
+            r"(?:nota|rating|avalia[çc][ãa]o)\s*:\s*([\d]+[,.][\d]+)",
+            block,
+            re.IGNORECASE,
+        )
+        if rating_match:
+            try:
+                item["rating"] = _normalize_decimal(rating_match.group(1))
+            except ValueError:
+                pass
+
+        # Collect the block text as observations (trimmed)
+        obs = block.strip()
+        if obs:
+            item["observations"] = obs
+
+        items.append(item)
+
+    return items
+
+
 def parse_mapa_frameworks(raw_text: str) -> dict[str, Any]:
     """Parse the frameworks map table.
 
@@ -472,6 +525,7 @@ def parse_analysis(
         frases_proibidas=parse_frases_proibidas(raw_text),
         reescrita_falas=parse_reescrita_falas(raw_text),
         mapa_frameworks=parse_mapa_frameworks(raw_text),
+        fases_analise=parse_fases_analise(raw_text),
         tokens_input=tokens_input,
         tokens_output=tokens_output,
     )

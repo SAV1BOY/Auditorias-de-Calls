@@ -65,6 +65,7 @@ class Analyzer:
             max_tokens=MAX_TOKENS,
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
+            timeout=300.0,  # 5 min timeout to prevent indefinite blocking
         )
         return response
 
@@ -184,6 +185,7 @@ class Analyzer:
             "frases_proibidas": result.frases_proibidas,
             "reescrita_falas": result.reescrita_falas,
             "mapa_frameworks": result.mapa_frameworks,
+            "fases_analise": result.fases_analise,
             # Meta
             "modelo_analise": MODEL,
             "tokens_input": tokens_input,

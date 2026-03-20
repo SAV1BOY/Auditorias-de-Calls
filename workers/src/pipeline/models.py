@@ -34,5 +34,6 @@ class AnalysisResult:
     frases_proibidas: list[dict] = field(default_factory=list)
     reescrita_falas: list[dict] = field(default_factory=list)
     mapa_frameworks: dict = field(default_factory=dict)
+    fases_analise: list[dict] = field(default_factory=list)
     tokens_input: int = 0
     tokens_output: int = 0

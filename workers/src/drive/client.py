@@ -85,16 +85,24 @@ class DriveClient:
             f"and ({mime_conditions}) "
             "and trashed = false"
         )
-        results = (
-            self._service.files()
-            .list(
-                q=query,
-                fields="files(id, name, mimeType, createdTime)",
-                pageSize=100,
+        all_files: list[dict[str, Any]] = []
+        page_token: str | None = None
+        while True:
+            results = (
+                self._service.files()
+                .list(
+                    q=query,
+                    fields="nextPageToken, files(id, name, mimeType, createdTime)",
+                    pageSize=100,
+                    pageToken=page_token,
+                )
+                .execute()
             )
-            .execute()
-        )
-        return results.get("files", [])
+            all_files.extend(results.get("files", []))
+            page_token = results.get("nextPageToken")
+            if not page_token:
+                break
+        return all_files
 
     def download_file(self, file_id: str) -> bytes:
         """Download a file's content by its ID.

@@ -37,8 +37,15 @@ def upload_audio(client: Client, audit_id: str, filename: str, data: bytes) -> s
 
     Returns:
         The storage path of the uploaded file.
+
+    Raises:
+        RuntimeError: If the upload fails.
     """
     path = f"{audit_id}/{filename}"
     logger.info("Uploading audio to %s/%s", BUCKET, path)
-    client.storage.from_(BUCKET).upload(path, data)
+    try:
+        client.storage.from_(BUCKET).upload(path, data)
+    except Exception as exc:
+        logger.error("Failed to upload %s/%s: %s", BUCKET, path, exc)
+        raise RuntimeError(f"Storage upload failed for {path}") from exc
     return path

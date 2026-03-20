@@ -19,6 +19,11 @@ CREATE POLICY "Auth users read audios"
   ON storage.objects FOR SELECT TO authenticated
   USING (bucket_id = 'audios');
 
+-- Authenticated users can delete their own audios
+CREATE POLICY "Auth users delete audios"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'audios');
+
 -- Service role (worker) has full access
 CREATE POLICY "Service role full access audios"
   ON storage.objects FOR ALL TO service_role

@@ -10,7 +10,7 @@ from src.config import Config
 from src.db import DB
 from src.drive.client import DriveClient
 from src.drive.watcher import DriveFile, parse_filename
-from src.storage import upload_audio
+from src.storage import download_audio, upload_audio
 
 logger = logging.getLogger(__name__)
 
@@ -54,16 +54,22 @@ class DriveSync:
         # 3. Parse metadata from filename
         call_date, lead_name = parse_filename(file.name)
 
-        # 4. Create audit first to get the DB-generated ID, then upload audio
+        # 4. Upload audio to Supabase first, then create audit with valid path
+        #    This avoids orphaned audit rows if upload fails.
+        import uuid
+        temp_audit_id = str(uuid.uuid4())
+        try:
+            storage_path = upload_audio(self._db.client, temp_audit_id, file.name, audio_bytes)
+        except Exception:
+            logger.error("Failed to upload audio from Drive file %s to Supabase Storage", file.name)
+            raise
+
         audit_id = self._db.create_audit_from_drive(
             closer_id=closer_id,
             lead_name=lead_name,
             call_date=call_date,
-            audio_path="",  # placeholder, updated after upload
+            audio_path=storage_path,
         )
-
-        storage_path = upload_audio(self._db.client, audit_id, file.name, audio_bytes)
-        self._db.update_audit_status(audit_id, "uploaded", extra={"audio_path": storage_path})
 
         # 5. Register in drive_sync
         self._db.insert_drive_sync(
@@ -119,8 +125,7 @@ class DriveSync:
             return audit["drive_file_id"]
 
         # 1. Download from Supabase
-        from src.storage import download_audio as dl_audio
-        audio_bytes = dl_audio(self._db.client, audio_path)
+        audio_bytes = download_audio(self._db.client, audio_path)
 
         # 2. Build filename
         closer_name = "desconhecido"

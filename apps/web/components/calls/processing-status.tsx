@@ -24,7 +24,7 @@ export function ProcessingStatus({
   auditId,
   initialStatus,
 }: ProcessingStatusProps) {
-  const realtimeAudit = useRealtimeAudit(auditId)
+  const { audit: realtimeAudit } = useRealtimeAudit(auditId)
   const currentStatus = (realtimeAudit?.status as AuditStatus) ?? initialStatus
   const isProcessing = PROCESSING_STATUSES.has(currentStatus)
 
