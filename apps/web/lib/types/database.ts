@@ -28,6 +28,7 @@ export interface Database {
           slug?: string
           created_at?: string
         }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -54,6 +55,15 @@ export interface Database {
           avatar_url?: string | null
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       closers: {
         Row: {
@@ -86,6 +96,15 @@ export interface Database {
           active?: boolean
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "closers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       call_audits: {
         Row: {
@@ -228,6 +247,22 @@ export interface Database {
           drive_url?: string | null
           drive_report_url?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "call_audits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_audits_closer_id_fkey"
+            columns: ["closer_id"]
+            isOneToOne: false
+            referencedRelation: "closers"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       job_queue: {
         Row: {
@@ -266,6 +301,15 @@ export interface Database {
           completed_at?: string | null
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "job_queue_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "call_audits"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       app_config: {
         Row: {
@@ -289,6 +333,15 @@ export interface Database {
           value?: Json
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "app_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       notifications: {
         Row: {
@@ -318,6 +371,15 @@ export interface Database {
           status?: string
           sent_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "call_audits"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       drive_sync: {
         Row: {
@@ -347,6 +409,15 @@ export interface Database {
           origin?: "frontend" | "drive"
           synced_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "drive_sync_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "call_audits"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {
@@ -364,6 +435,7 @@ export interface Database {
           calls_mediana: number
           calls_fraca: number
         }
+        Relationships: []
       }
       v_closer_performance: {
         Row: {
@@ -389,7 +461,11 @@ export interface Database {
           avg_d12: number | null
           avg_d13: number | null
         }
+        Relationships: []
       }
+    }
+    Functions: {
+      [_ in never]: never
     }
   }
 }

@@ -2,16 +2,12 @@ import { createClient } from "@/lib/supabase/server"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { RecentCalls } from "@/components/dashboard/recent-calls"
 import type { DashboardStats, CallAuditWithCloser } from "@/lib/types/audit"
-import type { Database } from "@/lib/types/database"
-
-type CallAuditRow = Database["public"]["Tables"]["call_audits"]["Row"]
-
 async function getDashboardStats(): Promise<DashboardStats> {
   const supabase = await createClient()
 
   const { data: audits } = await supabase.from("call_audits").select("*")
 
-  const all: CallAuditRow[] = audits ?? []
+  const all = audits ?? []
   const completed = all.filter((a) => a.status === "completed")
   const withScore = completed.filter((a) => a.score_final !== null)
 
