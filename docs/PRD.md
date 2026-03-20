@@ -53,7 +53,8 @@ Iniciar como ferramenta interna da System Digital. Evoluir para SaaS multi-tenan
 | UI Components | shadcn/ui + Tailwind CSS | Consistente, acessível, customizável |
 | Auth | Supabase Auth | JWT, magic link, OAuth, RLS nativo |
 | Database | Supabase (PostgreSQL) | RLS, realtime, edge functions, free tier generoso |
-| File Storage | Supabase Storage | Integrado com RLS, API simples, buckets por tipo |
+| File Storage (primário) | Supabase Storage | Integrado com RLS, API simples, buckets por tipo |
+| File Storage (sync) | Google Drive | Pasta compartilhada para upload manual dos closers, sync bidirecional |
 | Pipeline Worker | Python 3.11+ (scripts) | Melhor para audio processing, chamadas de API, parsing |
 | Transcrição | OpenAI Whisper API | Melhor qualidade PT-BR |
 | Análise IA | Anthropic Claude API (Sonnet) | Melhor custo-benefício para análise longa |
@@ -66,22 +67,29 @@ Iniciar como ferramenta interna da System Digital. Evoluir para SaaS multi-tenan
 ### 3.2 Diagrama de Arquitetura
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         FRONTEND (Next.js 14)                    │
-│                         Deploy: Vercel                           │
-│                                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
-│  │ Dashboard │  │ Upload   │  │ Detalhe  │  │ Config   │       │
-│  │ (lista   │  │ (drag &  │  │ (audit   │  │ (closers │       │
-│  │  calls)  │  │  drop)   │  │  completa│  │  perfis) │       │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘       │
-│       │              │              │              │              │
-│       └──────────────┴──────────────┴──────────────┘              │
-│                              │                                    │
-│                    Server Actions / API Routes                    │
-└──────────────────────────────┬────────────────────────────────────┘
-                               │
-                    ┌──────────┴──────────┐
+                    ┌─────────────────┐
+                    │  Google Drive    │──── Upload manual do closer
+                    │  (Pasta por     │     (joga .ogg na pasta)
+                    │   closer)       │
+                    └───────┬─┬───────┘
+                      Detect│ │Sync back
+                      new   │ │(Fluxo A)
+                      file  │ │
+                    (Fluxo B)│ │
+┌────────────────────────────┼─┼──────────────────────────────────┐
+│                 FRONTEND   │ │  (Next.js 14)                     │
+│                 Deploy:    │ │  Vercel                            │
+│                            │ │                                   │
+│  ┌──────────┐  ┌──────────┼─┼┐  ┌──────────┐  ┌──────────┐    │
+│  │ Dashboard │  │ Upload   │ ││  │ Detalhe  │  │ Config   │    │
+│  │ (lista   │  │ (drag &  │ ││  │ (audit   │  │ (closers │    │
+│  │  calls)  │  │  drop)   │ ││  │  completa│  │  perfis) │    │
+│  └──────────┘  └──────────┘ ││  └──────────┘  └──────────┘    │
+│                              ││                                  │
+│                    Server Actions / API Routes                   │
+└──────────────────────────────┼┼──────────────────────────────────┘
+                               ││
+                    ┌──────────┴┴─────────┐
                     │   Supabase Cloud     │
                     │                      │
                     │  ┌────────────────┐  │
@@ -89,6 +97,7 @@ Iniciar como ferramenta interna da System Digital. Evoluir para SaaS multi-tenan
                     │  │  - call_audits │  │
                     │  │  - closers     │  │
                     │  │  - job_queue   │  │
+                    │  │  - drive_sync  │  │
                     │  │  - users       │  │
                     │  └────────────────┘  │
                     │                      │
@@ -115,8 +124,15 @@ Iniciar como ferramenta interna da System Digital. Evoluir para SaaS multi-tenan
                     │  │  - analyze     │  │
                     │  │  - notify      │  │
                     │  └────────────────┘  │
+                    │  ┌────────────────┐  │
+                    │  │ drive_watcher  │  │
+                    │  │  - poll Drive  │  │
+                    │  │  - sync ↔ Supa │  │
+                    │  │  - anti-loop   │  │
+                    │  └────────────────┘  │
                     │                      │
                     │  APIs externas:      │
+                    │  - Google Drive API  │
                     │  - Whisper API       │
                     │  - Claude API        │
                     │  - Evolution API     │
@@ -124,24 +140,53 @@ Iniciar como ferramenta interna da System Digital. Evoluir para SaaS multi-tenan
                     └─────────────────────┘
 ```
 
-### 3.3 Fluxo de Dados
+### 3.3 Fluxos de Dados (DOIS PONTOS DE ENTRADA + SYNC BIDIRECIONAL)
 
+O sistema aceita uploads por DOIS caminhos. Ambos convergem no mesmo pipeline. O arquivo SEMPRE fica em ambos os storages (Drive + Supabase).
+
+**FLUXO A — Upload via Frontend (closer/supervisor usa o app)**
 ```
-1. Usuário faz upload do áudio via frontend
+1. Usuário faz upload do áudio via frontend (drag & drop)
 2. Next.js Server Action salva no Supabase Storage (bucket: audios/)
 3. Server Action cria registro na tabela call_audits (status: 'uploaded')
 4. Server Action insere job na tabela job_queue (tipo: 'process_call')
 5. Python Worker detecta novo job (polling a cada 30s)
-6. Worker baixa áudio do Supabase Storage
-7. Worker envia para Whisper API → recebe transcrição
-8. Worker salva transcrição no call_audits (status: 'transcribed')
-9. Worker envia transcrição + System Prompt para Claude API → recebe análise
-10. Worker parseia análise (scores, erros, acertos, plano de ação)
-11. Worker salva tudo no call_audits (status: 'analyzed')
-12. Worker envia resumo via WhatsApp (Evolution API)
-13. Worker envia relatório via Email (Resend)
-14. Worker atualiza status para 'completed'
-15. Frontend exibe resultados em tempo real (Supabase Realtime)
+6. Worker TAMBÉM faz upload do áudio para Google Drive (pasta do closer)
+   → Registra drive_file_id na tabela drive_sync (flag: origin='frontend')
+7. Worker baixa áudio do Supabase Storage
+8. Worker envia para Whisper API → recebe transcrição
+9. Worker salva transcrição no call_audits (status: 'transcribed')
+10. Worker envia transcrição + System Prompt para Claude API → recebe análise
+11. Worker parseia análise (scores, erros, acertos, plano de ação)
+12. Worker salva tudo no call_audits (status: 'analyzed')
+13. Worker envia resumo via WhatsApp (Evolution API)
+14. Worker envia relatório via Email (Resend)
+15. Worker salva relatório no Google Drive (pasta Relatórios/closer/)
+16. Worker atualiza status para 'completed'
+17. Frontend exibe resultados em tempo real (Supabase Realtime)
+```
+
+**FLUXO B — Upload via Google Drive (closer só joga arquivo na pasta)**
+```
+1. Closer salva gravação na pasta: Gravações/evelyn/2026-03-20_lead.ogg
+2. Worker (drive_watcher) detecta novo arquivo via Google Drive API (polling a cada 2min)
+3. Worker consulta tabela drive_sync → se drive_file_id já existe, IGNORA (veio do Fluxo A)
+4. Se arquivo é novo: Worker baixa do Drive → salva no Supabase Storage
+5. Worker cria registro em call_audits (status: 'uploaded')
+   - closer_name: extraído do nome da pasta pai
+   - lead_name: extraído do nome do arquivo (após a data)
+   - call_date: extraído do nome do arquivo (antes do underscore)
+6. Worker registra na tabela drive_sync (flag: origin='drive')
+7. Worker insere job na job_queue (tipo: 'process_call')
+8. Pipeline normal: transcreve → analisa → salva → notifica
+9. Resultados aparecem no frontend automaticamente
+```
+
+**REGRA ANTI-LOOP (CRÍTICA):**
+A tabela `drive_sync` registra todo arquivo sincronizado com `drive_file_id` + `origin` ('frontend' ou 'drive'). Quando:
+- Fluxo A cria arquivo no Drive: registra com origin='frontend'
+- Fluxo B detecta arquivo no Drive: verifica se ID já existe → se sim, ignora
+- Resultado: NUNCA há processamento duplicado
 ```
 
 ---
@@ -160,7 +205,7 @@ Iniciar como ferramenta interna da System Digital. Evoluir para SaaS multi-tenan
 - Cards de resumo no topo: total calls, média score, taxa fechamento, calls esta semana
 - Status em tempo real: uploaded → transcribing → analyzing → completed
 
-### F3 — Upload de Call
+### F3 — Upload de Call (Frontend)
 - Drag & drop ou file picker
 - Selecionar closer (dropdown dos closers cadastrados)
 - Campo: nome do lead
@@ -170,7 +215,29 @@ Iniciar como ferramenta interna da System Digital. Evoluir para SaaS multi-tenan
 - Aceitar: .ogg, .mp3, .mp4, .webm, .wav, .m4a
 - Limite: 500MB por arquivo
 - Progress bar de upload
-- Após upload: redirecionar para página de detalhe (com status "processando")
+- Após upload: salva no Supabase Storage + copia para Google Drive (pasta do closer)
+- Redirecionar para página de detalhe (com status "processando")
+
+### F3b — Sync Bidirecional Google Drive ↔ Supabase (CORE)
+- **Drive → Supabase:** Worker monitora pasta "Gravações/" no Drive a cada 2 minutos. Arquivo novo detectado → baixa → salva no Supabase Storage → cria audit → inicia pipeline. Closer e lead extraídos do nome da pasta e arquivo.
+- **Frontend → Drive:** Quando upload é feito pelo app, o Worker copia o arquivo para a pasta do closer no Drive automaticamente.
+- **Anti-loop:** Tabela `drive_sync` com `drive_file_id` + `origin` impede processamento duplicado.
+- **Relatório no Drive:** Após análise completa, relatório (.md) é salvo na pasta Relatórios/[closer]/ no Drive.
+- **Estrutura de pastas no Drive:**
+  ```
+  📁 Auditorias Comerciais/
+    📁 Gravações/
+      📁 evelyn/
+        2026-03-02_elane-lima.ogg
+      📁 gustavo/
+    📁 Relatórios/
+      📁 evelyn/
+        2026-03-02_elane-lima_auditoria.md
+      📁 gustavo/
+  ```
+- **Convenção de nome:** `YYYY-MM-DD_nome-do-lead.ogg` — a data e o lead são extraídos automaticamente
+- **Configurável:** IDs das pastas do Drive são armazenados em `app_config`
+- **Visível no frontend:** Cada audit mostra link para o arquivo no Drive e link para o relatório no Drive
 
 ### F4 — Detalhe da Auditoria
 - Header: closer, lead, data, duração, resultado, score (destaque grande)
@@ -303,6 +370,8 @@ CREATE TABLE call_audits (
   -- Storage
   audio_path TEXT, -- path no Supabase Storage
   audio_duration_seconds NUMERIC,
+  drive_file_id TEXT, -- ID do arquivo no Google Drive
+  drive_url TEXT, -- URL de acesso no Drive
   
   -- Meta
   modelo_transcricao TEXT DEFAULT 'whisper-1',
@@ -355,6 +424,22 @@ CREATE TABLE notifications (
   status TEXT DEFAULT 'sent',
   sent_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Sync bidirecional Google Drive ↔ Supabase (anti-loop)
+CREATE TABLE drive_sync (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  drive_file_id TEXT NOT NULL UNIQUE, -- ID do arquivo no Google Drive
+  drive_folder_id TEXT, -- ID da pasta (identifica o closer)
+  audit_id UUID REFERENCES call_audits(id),
+  file_name TEXT NOT NULL,
+  origin TEXT NOT NULL CHECK (origin IN ('frontend', 'drive')),
+    -- 'frontend': arquivo subiu pelo app e foi copiado pro Drive
+    -- 'drive': arquivo subiu pelo Drive e foi copiado pro Supabase
+  synced_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_drive_sync_file_id ON drive_sync(drive_file_id);
+CREATE INDEX idx_drive_sync_audit ON drive_sync(audit_id);
 
 -- Índices
 CREATE INDEX idx_call_audits_org ON call_audits(organization_id);
@@ -528,10 +613,15 @@ callaudit/
 ├── workers/                           # Python processing pipeline
 │   ├── src/
 │   │   ├── __init__.py
-│   │   ├── main.py                    # Job runner (polling loop)
+│   │   ├── main.py                    # Job runner (polling loop, 30s)
 │   │   ├── config.py                  # Environment variables
 │   │   ├── db.py                      # Supabase client wrapper
 │   │   ├── storage.py                 # Supabase storage operations
+│   │   ├── drive/
+│   │   │   ├── __init__.py
+│   │   │   ├── watcher.py             # Polling Drive a cada 2min, detecta novos arquivos
+│   │   │   ├── sync.py                # Sync bidirecional (Drive↔Supabase) + anti-loop
+│   │   │   └── client.py              # Google Drive API wrapper
 │   │   ├── pipeline/
 │   │   │   ├── __init__.py
 │   │   │   ├── transcriber.py         # Whisper API integration
@@ -552,6 +642,7 @@ callaudit/
 │   │   ├── test_transcriber.py
 │   │   ├── test_analyzer.py
 │   │   ├── test_parser.py
+│   │   ├── test_drive_sync.py         # Testes do sync bidirecional + anti-loop
 │   │   ├── test_notifications.py
 │   │   ├── test_pipeline_integration.py
 │   │   └── fixtures/

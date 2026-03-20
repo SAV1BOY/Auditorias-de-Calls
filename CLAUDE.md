@@ -87,14 +87,32 @@ Tabelas principais:
 - `organizations` — multi-tenant (futuro)
 - `profiles` — extends Supabase Auth
 - `closers` — closers cadastrados
-- `call_audits` — auditorias (tabela principal, 40+ colunas)
+- `call_audits` — auditorias (tabela principal, 40+ colunas, inclui drive_file_id e drive_url)
 - `job_queue` — fila de processamento assíncrono
+- `drive_sync` — sync bidirecional Drive ↔ Supabase (anti-loop com drive_file_id + origin)
 - `notifications` — registro de notificações enviadas
 - `app_config` — configurações por organização
 
 Views:
 - `v_dashboard_stats` — estatísticas agregadas
 - `v_closer_performance` — performance por closer com média de 13 dimensões
+
+## Sync Bidirecional Google Drive ↔ Supabase (IMPORTANTE)
+
+O sistema tem DOIS pontos de entrada para arquivos:
+1. **Upload pelo frontend** → Supabase Storage → Worker copia para Drive → Pipeline
+2. **Upload pelo Drive** → Worker detecta → copia para Supabase → Pipeline
+
+Ambos convergem no mesmo pipeline. Anti-loop via tabela `drive_sync`:
+- Todo arquivo sincronizado registra `drive_file_id` + `origin` ('frontend' ou 'drive')
+- Drive Watcher ignora arquivos que já existem na tabela (vieram do frontend)
+- NUNCA processa o mesmo arquivo duas vezes
+
+O Worker tem dois loops paralelos:
+- `job_runner.py` — processa jobs (transcrição, análise, notificação) a cada 30s
+- `drive_watcher.py` — monitora novas gravações no Drive a cada 2min
+
+Ver `docs/PRD.md` seção 3.3 e `docs/TDD.md` seção "Drive Watcher" para detalhes completos.
 
 ## Ordem de Desenvolvimento (Sprints)
 
@@ -103,27 +121,30 @@ Seguir EXATAMENTE esta ordem:
 ### Sprint 1 — Setup + DB + Auth
 1. Inicializar projeto Next.js 14 em `apps/web/`
 2. Instalar e configurar: Tailwind, shadcn/ui, @supabase/supabase-js, @supabase/ssr
-3. Executar migration SQL no Supabase
+3. Executar migration SQL no Supabase (inclui tabela drive_sync)
 4. Criar Supabase clients (server + browser)
 5. Implementar auth middleware (proteger rotas)
 6. Criar login page
 7. Criar layout base (sidebar + header)
 
-### Sprint 2 — Upload + Worker Base
+### Sprint 2 — Upload + Worker Base + Drive Sync
 1. Criar página de upload com dropzone
-2. Implementar Server Action `uploadCall`
+2. Implementar Server Action `uploadCall` (salva em Supabase Storage)
 3. Criar bucket `audios` no Supabase Storage
 4. Setup Python worker: projeto, venv, requirements
-5. Implementar job runner (polling loop)
+5. Implementar job runner (polling loop a cada 30s)
 6. Implementar transcriber (Whisper API integration)
-7. Testar: upload → transcrição funciona
+7. Implementar `drive_watcher.py` (polling Drive a cada 2min, anti-loop via drive_sync)
+8. Implementar sync frontend → Drive (copiar áudio para pasta do closer no Drive)
+9. Testar ambos os fluxos: upload frontend → Drive, upload Drive → Supabase
 
-### Sprint 3 — Análise IA + Parser
+### Sprint 3 — Análise IA + Parser + Relatório no Drive
 1. Implementar analyzer (Claude API integration)
 2. Implementar parser (extrair scores, erros, acertos do markdown)
 3. Salvar resultados parseados no Supabase
 4. Implementar gerador de resumo WhatsApp
-5. Testar: transcrição → análise → dados no banco
+5. Implementar save_report_to_drive (salva .md na pasta Relatórios/closer/ no Drive)
+6. Testar: transcrição → análise → dados no banco → relatório no Drive
 
 ### Sprint 4 — Dashboard + Lista
 1. Criar dashboard page com stats cards

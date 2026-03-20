@@ -11,10 +11,11 @@
 **Decisão:** App Router com Server Components por padrão, Client Components apenas para interatividade.
 **Consequência:** Melhor performance, menos JavaScript no cliente, Server Actions substituem API routes para mutações.
 
-### ADR-002: Supabase Storage em vez de Google Drive
-**Contexto:** Google Drive precisa de OAuth complexo e não oferece RLS. Supabase Storage integra nativamente com auth e DB.
-**Decisão:** Supabase Storage como storage primário. Google Drive como sync opcional futuro.
-**Consequência:** API unificada, RLS no storage, upload direto do browser com signed URLs.
+### ADR-002: Dual Storage — Supabase + Google Drive (sync bidirecional)
+**Contexto:** Closers precisam de um jeito simples de subir gravações (jogar na pasta do Drive). Supervisores precisam de interface web (frontend). O sistema precisa funcionar independentemente de qual caminho o arquivo entrou.
+**Decisão:** Supabase Storage como storage primário (integrado com DB e auth). Google Drive como storage secundário sincronizado — para facilitar upload manual dos closers e armazenar relatórios acessíveis fora do app.
+**Regra:** Todo arquivo SEMPRE fica em ambos os storages. Upload pelo frontend → copia para Drive. Upload pelo Drive → copia para Supabase. Tabela `drive_sync` com anti-loop previne processamento duplicado.
+**Consequência:** Dois pontos de entrada convergindo no mesmo pipeline. Worker precisa de um módulo `drive_watcher.py` que faz polling no Drive a cada 2 minutos.
 
 ### ADR-003: Python Worker em vez de n8n
 **Contexto:** n8n é visual mas frágil para produção, não versionável, difícil de testar.
@@ -148,6 +149,78 @@ def parse_analysis(raw_text: str) -> AnalysisResult:
     - Rewrite section
     - Framework map section
     """
+```
+
+#### Drive Watcher (Sync Bidirecional)
+```python
+class DriveWatcher:
+    """Monitora pasta do Google Drive e sincroniza com Supabase.
+    
+    Polling a cada 2 minutos. Usa tabela drive_sync para anti-loop.
+    """
+    
+    def check_new_files(self) -> list[DriveFile]:
+        """Lista arquivos novos nas pastas de closers.
+        
+        1. Lista todas as subpastas de 'Gravações/' (cada uma = 1 closer)
+        2. Para cada subpasta, lista arquivos de áudio
+        3. Filtra: só arquivos com drive_file_id NÃO existente em drive_sync
+        4. Retorna lista de arquivos novos com metadata
+        """
+    
+    def sync_from_drive(self, file: DriveFile) -> str:
+        """Baixa arquivo do Drive, salva no Supabase, cria audit.
+        
+        1. Baixa bytes do arquivo do Drive
+        2. Upload para Supabase Storage (bucket: audios/)
+        3. Extrai metadata do nome: closer (pasta), lead e data (arquivo)
+        4. Cria registro em call_audits (status: 'uploaded')
+        5. Registra em drive_sync (origin: 'drive')
+        6. Cria job em job_queue (tipo: 'process_call')
+        7. Retorna audit_id
+        """
+    
+    def sync_to_drive(self, audit_id: str) -> str:
+        """Upload arquivo do Supabase para o Drive (chamado pelo Fluxo A).
+        
+        1. Busca audit e closer_id
+        2. Baixa áudio do Supabase Storage
+        3. Identifica pasta do closer no Drive
+        4. Faz upload para a pasta
+        5. Registra em drive_sync (origin: 'frontend')
+        6. Atualiza call_audits com drive_file_id e drive_url
+        7. Retorna drive_file_id
+        """
+    
+    def save_report_to_drive(self, audit_id: str) -> str:
+        """Salva relatório (.md) na pasta Relatórios/[closer]/ do Drive.
+        
+        1. Busca audit com relatório completo
+        2. Cria arquivo .md no Drive
+        3. Retorna URL do arquivo
+        """
+
+class DriveFile:
+    file_id: str
+    name: str          # "2026-03-02_elane-lima.ogg"
+    folder_id: str
+    folder_name: str   # "evelyn" (nome do closer)
+    mime_type: str
+    created_time: str
+    
+    @property
+    def closer_name(self) -> str:
+        return self.folder_name.capitalize()
+    
+    @property
+    def lead_name(self) -> str:
+        # "2026-03-02_elane-lima.ogg" → "Elane Lima"
+        ...
+    
+    @property
+    def call_date(self) -> str:
+        # "2026-03-02_elane-lima.ogg" → "2026-03-02"
+        ...
 ```
 
 ### 2.3 Webhook (Worker → Frontend)

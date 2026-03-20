@@ -258,7 +258,128 @@ class TestEmail:
         # Then: body contém tags HTML (<h2>, <table>, etc)
 ```
 
-### 1.5 test_pipeline_integration.py
+### 1.5 test_drive_sync.py
+
+```python
+"""Testes para sync bidirecional Google Drive ↔ Supabase."""
+
+class TestDriveWatcher:
+    
+    def test_detect_new_file_in_closer_folder(self, mock_drive_api):
+        """Detecta arquivo novo na pasta de um closer."""
+        # Given: pasta evelyn/ com 1 arquivo novo (.ogg)
+        # When: check_new_files()
+        # Then: retorna 1 DriveFile com folder_name='evelyn'
+
+    def test_ignores_already_synced_files(self, mock_drive_api, db_with_sync):
+        """Ignora arquivos que já existem na tabela drive_sync."""
+        # Given: arquivo X no Drive + drive_sync row com drive_file_id=X
+        # When: check_new_files()
+        # Then: retorna lista vazia
+
+    def test_ignores_files_uploaded_from_frontend(self, mock_drive_api, db_with_sync):
+        """Ignora arquivos que vieram do frontend (origin='frontend')."""
+        # Given: arquivo no Drive com drive_sync.origin='frontend'
+        # When: check_new_files()
+        # Then: retorna lista vazia (anti-loop)
+
+    def test_extracts_closer_name_from_folder(self):
+        """Extrai nome do closer do nome da pasta."""
+        # Given: DriveFile com folder_name='evelyn'
+        # When: file.closer_name
+        # Then: 'Evelyn'
+
+    def test_extracts_lead_name_from_filename(self):
+        """Extrai nome do lead do nome do arquivo."""
+        # Given: DriveFile com name='2026-03-02_elane-lima.ogg'
+        # When: file.lead_name
+        # Then: 'Elane Lima'
+
+    def test_extracts_date_from_filename(self):
+        """Extrai data do nome do arquivo."""
+        # Given: DriveFile com name='2026-03-02_elane-lima.ogg'
+        # When: file.call_date
+        # Then: '2026-03-02'
+
+    def test_handles_malformed_filename(self):
+        """Lida com nomes de arquivo fora do padrão."""
+        # Given: DriveFile com name='gravacao_qualquer.ogg'
+        # When: file.lead_name, file.call_date
+        # Then: lead_name = 'gravacao qualquer', call_date = hoje
+
+class TestDriveSyncFromDrive:
+    """Testes do Fluxo B: arquivo sobe pelo Drive → Supabase."""
+
+    def test_sync_downloads_and_stores_in_supabase(self, mock_drive_api):
+        """Baixa do Drive e salva no Supabase Storage."""
+        # Given: novo arquivo no Drive
+        # When: sync_from_drive(drive_file)
+        # Then: arquivo existe no Supabase Storage bucket 'audios'
+
+    def test_sync_creates_audit_record(self, mock_drive_api):
+        """Cria registro em call_audits com status 'uploaded'."""
+        # Given: novo arquivo no Drive, pasta 'evelyn'
+        # When: sync_from_drive(drive_file)
+        # Then: call_audits row existe com closer='Evelyn', status='uploaded'
+
+    def test_sync_creates_drive_sync_record(self, mock_drive_api):
+        """Registra na tabela drive_sync com origin='drive'."""
+        # Given: novo arquivo no Drive
+        # When: sync_from_drive(drive_file)
+        # Then: drive_sync row com origin='drive' e drive_file_id correto
+
+    def test_sync_creates_processing_job(self, mock_drive_api):
+        """Cria job de processamento na fila."""
+        # Given: novo arquivo no Drive
+        # When: sync_from_drive(drive_file)
+        # Then: job_queue row com tipo 'process_call' e audit_id correto
+
+class TestDriveSyncFromFrontend:
+    """Testes do Fluxo A: arquivo sobe pelo frontend → Drive."""
+
+    def test_sync_uploads_to_drive(self, mock_drive_api):
+        """Upload do Supabase para pasta do closer no Drive."""
+        # Given: audit com áudio no Supabase Storage, closer='evelyn'
+        # When: sync_to_drive(audit_id)
+        # Then: arquivo existe na pasta 'Gravações/evelyn/' no Drive
+
+    def test_sync_creates_drive_sync_with_frontend_origin(self, mock_drive_api):
+        """Registra na drive_sync com origin='frontend'."""
+        # Given: audit processado
+        # When: sync_to_drive(audit_id)
+        # Then: drive_sync row com origin='frontend'
+
+    def test_sync_updates_audit_with_drive_ids(self, mock_drive_api):
+        """Atualiza call_audits com drive_file_id e drive_url."""
+        # Given: audit sem drive_file_id
+        # When: sync_to_drive(audit_id)
+        # Then: audit.drive_file_id preenchido, audit.drive_url preenchido
+
+    def test_save_report_creates_md_in_drive(self, mock_drive_api):
+        """Salva relatório .md na pasta Relatórios/closer/."""
+        # Given: audit com relatorio_completo
+        # When: save_report_to_drive(audit_id)
+        # Then: arquivo .md existe em 'Relatórios/evelyn/' no Drive
+        #       audit.drive_report_url preenchido
+
+class TestAntiLoop:
+    """Testes específicos para o mecanismo anti-loop."""
+
+    def test_frontend_upload_then_drive_detect_no_duplicate(self, mock_drive_api):
+        """Arquivo do frontend não é reprocessado quando detectado no Drive."""
+        # Given: arquivo subiu pelo frontend
+        # When: sync_to_drive(audit_id) → drive watcher detecta o mesmo arquivo
+        # Then: check_new_files() retorna vazio (já existe em drive_sync)
+        #       NÃO cria segundo audit
+
+    def test_drive_upload_then_frontend_check_no_duplicate(self, mock_drive_api):
+        """Arquivo do Drive não é duplicado se alguém tentar subir pelo frontend."""
+        # Given: arquivo processado vindo do Drive
+        # When: alguém tenta upload do mesmo áudio pelo frontend
+        # Then: detectar duplicata por hash ou nome e alertar
+```
+
+### 1.6 test_pipeline_integration.py
 
 ```python
 """Testes de integração do pipeline completo."""

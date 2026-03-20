@@ -84,6 +84,9 @@ CREATE TABLE call_audits (
   -- Storage
   audio_path TEXT, -- path no Supabase Storage
   audio_duration_seconds NUMERIC,
+  drive_file_id TEXT, -- ID do arquivo no Google Drive
+  drive_url TEXT, -- URL de acesso no Drive
+  drive_report_url TEXT, -- URL do relatório no Drive
   
   -- Meta
   modelo_transcricao TEXT DEFAULT 'whisper-1',
@@ -137,6 +140,19 @@ CREATE TABLE notifications (
   sent_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Sync bidirecional Google Drive <-> Supabase (anti-loop)
+CREATE TABLE drive_sync (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  drive_file_id TEXT NOT NULL UNIQUE, -- ID do arquivo no Google Drive
+  drive_folder_id TEXT,               -- ID da pasta (identifica o closer)
+  audit_id UUID REFERENCES call_audits(id),
+  file_name TEXT NOT NULL,
+  origin TEXT NOT NULL CHECK (origin IN ('frontend', 'drive')),
+    -- 'frontend': arquivo subiu pelo app e foi copiado pro Drive
+    -- 'drive': arquivo subiu pelo Drive e foi copiado pro Supabase
+  synced_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Índices
 CREATE INDEX idx_call_audits_org ON call_audits(organization_id);
 CREATE INDEX idx_call_audits_closer ON call_audits(closer_id);
@@ -145,6 +161,8 @@ CREATE INDEX idx_call_audits_date ON call_audits(call_date DESC);
 CREATE INDEX idx_call_audits_score ON call_audits(score_final DESC);
 CREATE INDEX idx_job_queue_status ON job_queue(status) WHERE status = 'pending';
 CREATE INDEX idx_job_queue_audit ON job_queue(audit_id);
+CREATE INDEX idx_drive_sync_file_id ON drive_sync(drive_file_id);
+CREATE INDEX idx_drive_sync_audit ON drive_sync(audit_id);
 
 -- Triggers
 CREATE OR REPLACE FUNCTION update_updated_at()

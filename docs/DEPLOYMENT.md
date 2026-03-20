@@ -50,12 +50,32 @@ journalctl -u callaudit-worker -f
 4. Criar buckets no Storage: `audios` (private), `reports` (private)
 5. Copiar URL e keys para variáveis de ambiente
 
+## Google Drive (Sync Bidirecional)
+
+1. Criar Service Account no Google Cloud Console
+2. Ativar Google Drive API no projeto
+3. Baixar JSON da Service Account → configurar em `GOOGLE_SERVICE_ACCOUNT_JSON`
+4. Criar pasta raiz no Drive: "Auditorias Comerciais"
+5. Compartilhar a pasta raiz com o email da Service Account (Editor)
+6. Dentro dela, criar subpastas:
+   - `Gravações/evelyn/`, `Gravações/gustavo/` (uma por closer)
+   - `Relatórios/evelyn/`, `Relatórios/gustavo/` (uma por closer)
+7. Copiar os IDs das pastas para as variáveis de ambiente
+8. Testar: jogar um .ogg numa pasta de closer e verificar se o worker detecta
+
 ## Checklist Pós-Deploy
 
 - [ ] Frontend acessível na URL do Vercel
 - [ ] Login funcionando
-- [ ] Upload de áudio salva no Supabase Storage
+- [ ] Upload de áudio pelo frontend salva no Supabase Storage
+- [ ] Upload pelo frontend copia arquivo para Google Drive (pasta do closer)
 - [ ] Worker rodando (`systemctl status callaudit-worker`)
+- [ ] Drive Watcher detectando novos arquivos a cada 2min
+- [ ] Upload pelo Drive cria audit e inicia pipeline automaticamente
+- [ ] Anti-loop: arquivo do frontend NÃO é reprocessado quando detectado no Drive
 - [ ] Pipeline completo: upload → transcrição → análise → notificação
-- [ ] WhatsApp recebendo resumo
+- [ ] WhatsApp recebendo resumo no grupo
 - [ ] Email recebendo relatório completo
+- [ ] Relatório .md salvo na pasta Relatórios/closer/ no Drive
+- [ ] Dashboard exibindo calls processadas
+- [ ] Links do Drive visíveis na página de detalhe da auditoria
