@@ -9,7 +9,7 @@ import {
   getCloserPerformance,
   getCloserScoreEvolution,
 } from "@/lib/actions/closers"
-import { DIMENSIONS, type DimensionId } from "@/lib/utils/constants"
+import { DIMENSIONS } from "@/lib/utils/constants"
 import { CloserStats } from "@/components/closers/closer-stats"
 import { CloserRadarChart } from "@/components/closers/closer-radar-chart"
 import { ScoreChart } from "@/components/dashboard/score-chart"

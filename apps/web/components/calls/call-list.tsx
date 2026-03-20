@@ -72,14 +72,18 @@ export function CallList({ audits, sortBy, sortOrder }: CallListProps) {
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
             {columns.map((col) => (
               <TableHead
                 key={col.key}
-                className={col.sortable ? "cursor-pointer select-none" : ""}
+                className={`${col.sortable ? "cursor-pointer select-none" : ""} ${
+                  col.key === "duration_minutes" || col.key === "classificacao"
+                    ? "hidden sm:table-cell"
+                    : ""
+                }`}
                 onClick={() => col.sortable && handleSort(col.key)}
               >
                 <div className="flex items-center gap-1">
@@ -108,13 +112,15 @@ export function CallList({ audits, sortBy, sortOrder }: CallListProps) {
               </TableCell>
               <TableCell>{audit.lead_name}</TableCell>
               <TableCell>{formatDate(audit.call_date)}</TableCell>
-              <TableCell>{formatDuration(audit.duration_minutes)}</TableCell>
+              <TableCell className="hidden sm:table-cell">
+                {formatDuration(audit.duration_minutes)}
+              </TableCell>
               <TableCell>
                 <span className={getScoreColor(audit.score_final)}>
                   {formatScore(audit.score_final)}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden sm:table-cell">
                 {audit.classificacao ? (
                   <Badge
                     variant="secondary"

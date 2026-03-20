@@ -30,6 +30,7 @@ export function RecentCalls({ calls }: RecentCallsProps) {
             Nenhuma call auditada ainda.
           </p>
         ) : (
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -83,6 +84,7 @@ export function RecentCalls({ calls }: RecentCallsProps) {
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </CardContent>
     </Card>

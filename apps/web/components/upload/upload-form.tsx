@@ -163,7 +163,8 @@ export function UploadForm({ closers }: UploadFormProps) {
         </div>
       </div>
 
-      {/* Closer */}
+      {/* Closer + Lead Name */}
+      <div className="grid gap-4 md:grid-cols-2">
       <div>
         <Label htmlFor="closerId">Closer</Label>
         <select
@@ -181,7 +182,6 @@ export function UploadForm({ closers }: UploadFormProps) {
         </select>
       </div>
 
-      {/* Lead Name */}
       <div>
         <Label htmlFor="leadName">Nome do Lead</Label>
         <Input
@@ -192,8 +192,10 @@ export function UploadForm({ closers }: UploadFormProps) {
           className="mt-1"
         />
       </div>
+      </div>
 
-      {/* Call Date */}
+      {/* Call Date + Resultado */}
+      <div className="grid gap-4 md:grid-cols-2">
       <div>
         <Label htmlFor="callDate">Data da Call</Label>
         <Input
@@ -205,7 +207,6 @@ export function UploadForm({ closers }: UploadFormProps) {
         />
       </div>
 
-      {/* Resultado */}
       <div>
         <Label>Resultado</Label>
         <div className="mt-2 flex flex-wrap gap-3">
@@ -223,6 +224,7 @@ export function UploadForm({ closers }: UploadFormProps) {
             </label>
           ))}
         </div>
+      </div>
       </div>
 
       {/* Valor Fechamento (conditional) */}

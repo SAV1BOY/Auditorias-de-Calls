@@ -66,12 +66,13 @@ export function CloserList({ closers }: CloserListProps) {
 
   return (
     <>
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Nome</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>WhatsApp</TableHead>
+            <TableHead className="hidden md:table-cell">Email</TableHead>
+            <TableHead className="hidden md:table-cell">WhatsApp</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-10" />
           </TableRow>
@@ -97,10 +98,10 @@ export function CloserList({ closers }: CloserListProps) {
                     <span className="font-medium">{closer.name}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="hidden md:table-cell text-muted-foreground">
                   {closer.email ?? "—"}
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="hidden md:table-cell text-muted-foreground">
                   {closer.whatsapp ?? "—"}
                 </TableCell>
                 <TableCell>
@@ -143,6 +144,7 @@ export function CloserList({ closers }: CloserListProps) {
           )}
         </TableBody>
       </Table>
+      </div>
 
       <CloserFormDialog
         closer={editCloser}
