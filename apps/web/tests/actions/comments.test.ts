@@ -152,15 +152,55 @@ describe("unresolveComment", () => {
 })
 
 describe("deleteComment", () => {
-  it("deletes comment by id", async () => {
-    const client = makeMockClient({ data: null, error: null })
+  it("deletes own comment", async () => {
+    // Mock: first call returns comment (ownership check), second call is delete
+    const ownershipChain = mockChain({ data: { author_id: "user-001" } })
+    const deleteChain = mockChain({ data: null, error: null })
+    let callCount = 0
+    const client = {
+      from: vi.fn().mockImplementation(() => {
+        callCount++
+        // 1st call: select author_id, 2nd call: delete
+        return callCount <= 1 ? ownershipChain : deleteChain
+      }),
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-001" } },
+          error: null,
+        }),
+      },
+      storage: { from: vi.fn() },
+    }
     vi.mocked(createClient).mockResolvedValue(client as any)
 
     await deleteComment("comment-001")
 
     expect(client.from).toHaveBeenCalledWith("call_comments")
-    expect(client._chain.delete).toHaveBeenCalled()
-    expect(client._chain.eq).toHaveBeenCalledWith("id", "comment-001")
+    expect(deleteChain.delete).toHaveBeenCalled()
+  })
+
+  it("rejects delete by non-owner non-admin", async () => {
+    // Comment authored by someone else, user is a viewer
+    const ownershipChain = mockChain({ data: { author_id: "user-other" } })
+    const profileChain = mockChain({ data: { role: "viewer" } })
+    let callCount = 0
+    const client = {
+      from: vi.fn().mockImplementation((table: string) => {
+        callCount++
+        if (table === "profiles") return profileChain
+        return ownershipChain
+      }),
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-001" } },
+          error: null,
+        }),
+      },
+      storage: { from: vi.fn() },
+    }
+    vi.mocked(createClient).mockResolvedValue(client as any)
+
+    await expect(deleteComment("comment-001")).rejects.toThrow("permissão")
   })
 })
 

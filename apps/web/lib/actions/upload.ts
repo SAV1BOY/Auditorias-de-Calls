@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { AUDIO_FORMATS, MAX_FILE_SIZE_BYTES } from "@/lib/utils/constants"
 import type { Database } from "@/lib/types/database"
+import { requireRole } from "@/lib/auth/require-role"
 
 type CallAuditInsert = Database["public"]["Tables"]["call_audits"]["Insert"]
 type JobQueueInsert = Database["public"]["Tables"]["job_queue"]["Insert"]
@@ -13,6 +14,11 @@ export type UploadResult = {
 }
 
 export async function uploadCall(formData: FormData): Promise<UploadResult> {
+  try {
+    await requireRole(["admin", "supervisor", "closer"])
+  } catch {
+    return { error: "Sem permissão para fazer upload de calls." }
+  }
   const file = formData.get("file") as File | null
   const closerId = formData.get("closerId") as string | null
   const leadName = formData.get("leadName") as string | null

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import type { CallComment } from "@/lib/types/audit"
 import { createCommentSchema } from "@/lib/validations/schemas"
+import { requireRole } from "@/lib/auth/require-role"
 
 export async function createComment(data: {
   auditId: string
@@ -39,22 +40,21 @@ export async function createComment(data: {
 }
 
 export async function resolveComment(commentId: string): Promise<void> {
+  const { userId } = await requireRole(["admin", "supervisor"])
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
   await supabase
     .from("call_comments")
     .update({
       resolved: true,
-      resolved_by: user?.id ?? null,
+      resolved_by: userId,
       resolved_at: new Date().toISOString(),
     })
     .eq("id", commentId)
 }
 
 export async function unresolveComment(commentId: string): Promise<void> {
+  await requireRole(["admin", "supervisor"])
   const supabase = await createClient()
 
   await supabase
@@ -69,6 +69,33 @@ export async function unresolveComment(commentId: string): Promise<void> {
 
 export async function deleteComment(commentId: string): Promise<void> {
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("Not authenticated")
+
+  // Check ownership: only author or admin/supervisor can delete
+  const { data: comment } = await supabase
+    .from("call_comments")
+    .select("author_id")
+    .eq("id", commentId)
+    .single()
+
+  if (!comment) throw new Error("Comentário não encontrado")
+
+  if (comment.author_id !== user.id) {
+    // Not the author — must be admin or supervisor
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+
+    if (!profile || !["admin", "supervisor"].includes(profile.role)) {
+      throw new Error("Sem permissão para excluir este comentário")
+    }
+  }
+
   await supabase.from("call_comments").delete().eq("id", commentId)
 }
 
