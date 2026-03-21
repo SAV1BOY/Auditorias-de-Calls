@@ -203,6 +203,21 @@ export async function getAllBadges(): Promise<BadgeRow[]> {
   return (data as BadgeRow[]) ?? []
 }
 
+export async function getAllEarnedBadgeIds(): Promise<string[]> {
+  const supabase = await createClient()
+
+  const { data } = await db(supabase)
+    .from("closer_badges")
+    .select("badge_id")
+
+  if (!data) return []
+
+  // Return unique badge IDs that have been earned by any closer
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ids = new Set<string>(data.map((row: any) => row.badge_id as string))
+  return Array.from(ids)
+}
+
 export async function getCloserStreaks(
   closerId: string
 ): Promise<CloserStreakRow[]> {
@@ -218,6 +233,15 @@ export async function getCloserStreaks(
 
 export async function getCompetitions(): Promise<CompetitionWithStandings[]> {
   const supabase = await createClient()
+
+  const today = new Date().toISOString().split("T")[0]
+
+  // Auto-complete expired competitions
+  await db(supabase)
+    .from("competitions")
+    .update({ status: "completed" })
+    .eq("status", "active")
+    .lt("end_date", today)
 
   const { data: competitions } = await db(supabase)
     .from("competitions")

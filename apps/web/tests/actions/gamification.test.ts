@@ -13,7 +13,7 @@ import {
 function mockChain(result: { data?: any; count?: number | null; error?: any }) {
   const chain: any = {}
   const methods = [
-    "select", "insert", "update", "delete", "eq", "neq", "gte", "lte",
+    "select", "insert", "update", "delete", "eq", "neq", "gt", "gte", "lt", "lte",
     "in", "not", "overlaps", "order", "limit", "range", "single", "maybeSingle",
   ]
   for (const m of methods) {

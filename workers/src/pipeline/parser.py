@@ -565,7 +565,7 @@ def parse_sentiment(raw_text: str) -> dict[str, Any]:
             "sentiment": sent_mapping.get(
                 match.group(2).strip().lower(), "neutral"
             ),
-            "confidence": float(match.group(3).replace(",", ".")),
+            "confidence": max(0.0, min(1.0, float(match.group(3).replace(",", ".")))),
             "key_moment": match.group(4).strip(),
         }
         result["sentiment_timeline"].append(entry)

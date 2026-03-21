@@ -37,10 +37,13 @@ DIMENSION_NAMES: dict[str, str] = {
 class LossPatternAnalyzer:
     """Analyzes patterns in lost/failed calls using Claude API."""
 
+    MODEL = "claude-sonnet-4-20250514"
+
     def __init__(self, config: Config, db: DB) -> None:
         self._config = config
         self._db = db
         self._client = anthropic.Anthropic(api_key=config.anthropic_api_key)
+        self._model = self.MODEL
 
     def analyze(self, date_from: str, date_to: str) -> dict[str, Any]:
         """Analyze loss patterns for a date range.
@@ -217,7 +220,7 @@ class LossPatternAnalyzer:
     def _call_claude(self, user_message: str) -> str:
         """Call Claude API with loss pattern prompt."""
         response = self._client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model=self._model,
             max_tokens=8000,
             system=LOSS_PATTERN_PROMPT,
             messages=[{"role": "user", "content": user_message}],

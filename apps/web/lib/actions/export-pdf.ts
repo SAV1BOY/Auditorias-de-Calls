@@ -84,12 +84,11 @@ export async function generateBatchPDF(
 
     // Dynamic imports
     const { renderToBuffer } = await import("@react-pdf/renderer")
-    const { AuditReportDocument } = await import("@/lib/pdf/audit-report")
+    const { BatchAuditReportDocument } = await import("@/lib/pdf/audit-report")
     const React = await import("react")
 
-    // For batch, generate the first one (could be extended with PDF merge later)
-    const firstAudit = audits[0] as CallAuditWithCloser
-    const element = React.createElement(AuditReportDocument, { audit: firstAudit })
+    const typedAudits = audits as CallAuditWithCloser[]
+    const element = React.createElement(BatchAuditReportDocument, { audits: typedAudits })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const buffer = await renderToBuffer(element as any)
 

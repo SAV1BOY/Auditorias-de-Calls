@@ -14,7 +14,7 @@ interface AuditReportDocumentProps {
   audit: CallAuditWithCloser
 }
 
-export function AuditReportDocument({ audit }: AuditReportDocumentProps) {
+function extractAuditData(audit: CallAuditWithCloser) {
   const closerName = audit.closers?.name ?? "Desconhecido"
   const resultado = audit.resultado
     ? RESULTADO_LABELS[audit.resultado] ?? audit.resultado
@@ -41,8 +41,14 @@ export function AuditReportDocument({ audit }: AuditReportDocumentProps) {
     timestamp: string; objection: string; closer_response: string; effectiveness: string
   }>) ?? []
 
+  return { closerName, resultado, auditData, dimensions, topErros, topAcertos, planoAcao, sentimentTimeline, objectionsDetected }
+}
+
+function AuditPages({ audit }: { audit: CallAuditWithCloser }) {
+  const { closerName, resultado, auditData, dimensions, topErros, topAcertos, planoAcao, sentimentTimeline, objectionsDetected } = extractAuditData(audit)
+
   return (
-    <Document>
+    <>
       <Page size="A4" style={styles.page}>
         <PdfHeader
           closerName={closerName}
@@ -84,6 +90,28 @@ export function AuditReportDocument({ audit }: AuditReportDocumentProps) {
           </Text>
         </View>
       </Page>
+    </>
+  )
+}
+
+export function AuditReportDocument({ audit }: AuditReportDocumentProps) {
+  return (
+    <Document>
+      <AuditPages audit={audit} />
+    </Document>
+  )
+}
+
+interface BatchAuditReportDocumentProps {
+  audits: CallAuditWithCloser[]
+}
+
+export function BatchAuditReportDocument({ audits }: BatchAuditReportDocumentProps) {
+  return (
+    <Document>
+      {audits.map((audit) => (
+        <AuditPages key={audit.id} audit={audit} />
+      ))}
     </Document>
   )
 }

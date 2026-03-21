@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from src.db import DB
@@ -27,20 +28,19 @@ DIMENSION_COLUMNS = [
 ]
 
 # Score-based badge definitions: slug -> minimum ELITE count required
+# Must match slugs in supabase/migrations/005_gamification.sql seed data
 SCORE_BADGES: dict[str, int] = {
-    "first-elite": 1,
-    "elite-5": 5,
-    "elite-10": 10,
-    "elite-25": 25,
-    "elite-50": 50,
+    "first_elite": 1,
+    "triple_elite": 3,
+    "ten_elite": 10,
 }
 
 # Streak-based badge definitions: slug -> minimum streak count
+# Must match slugs in supabase/migrations/005_gamification.sql seed data
 STREAK_BADGES: dict[str, int] = {
-    "streak-3": 3,
-    "streak-5": 5,
-    "streak-10": 10,
-    "streak-20": 20,
+    "streak_3": 3,
+    "streak_5": 5,
+    "streak_10": 10,
 }
 
 # Threshold for a "good" score that continues a streak
@@ -160,7 +160,7 @@ class BadgeEvaluator:
         """
         earned: list[str] = []
         try:
-            streak_type = "good_score"
+            streak_type = "daily_above_7"
 
             # Fetch current streak
             result = (
@@ -183,7 +183,7 @@ class BadgeEvaluator:
                         .update({
                             "current_count": new_count,
                             "best_count": new_best,
-                            "last_updated": "now()",
+                            "last_updated": datetime.now(timezone.utc).isoformat(),
                         })
                         .eq("id", row["id"])
                         .execute()
@@ -209,7 +209,7 @@ class BadgeEvaluator:
                         self._db.client.table("closer_streaks")
                         .update({
                             "current_count": 0,
-                            "last_updated": "now()",
+                            "last_updated": datetime.now(timezone.utc).isoformat(),
                         })
                         .eq("id", result.data[0]["id"])
                         .execute()
@@ -245,21 +245,13 @@ class BadgeEvaluator:
         try:
             existing = self._get_earned_slugs(closer_id)
 
-            for dim_col, score in dimensions.items():
-                if score >= 10.0:
-                    slug = f"perfect-{dim_col}"
-                    if slug not in existing:
-                        # Check if badge exists in badges table
-                        badge_result = (
-                            self._db.client.table("badges")
-                            .select("id")
-                            .eq("slug", slug)
-                            .limit(1)
-                            .execute()
-                        )
-                        if badge_result.data:
-                            self._award_badge(closer_id, slug)
-                            earned.append(slug)
+            # The seed has a single "perfect_dimension" badge for any dimension with 10.0
+            slug = "perfect_dimension"
+            if slug not in existing:
+                has_perfect = any(score >= 10.0 for score in dimensions.values())
+                if has_perfect:
+                    self._award_badge(closer_id, slug)
+                    earned.append(slug)
 
         except Exception as e:
             logger.error(

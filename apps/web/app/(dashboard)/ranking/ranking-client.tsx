@@ -19,12 +19,14 @@ interface RankingClientProps {
   initialEntries: LeaderboardEntry[]
   competitions: CompetitionWithStandings[]
   badges: BadgeRow[]
+  earnedBadgeIds: string[]
 }
 
 export function RankingClient({
   initialEntries,
   competitions,
   badges,
+  earnedBadgeIds,
 }: RankingClientProps) {
   const [entries, setEntries] = useState(initialEntries)
   const [period, setPeriod] = useState("week")
@@ -105,7 +107,7 @@ export function RankingClient({
           </div>
         </CardHeader>
         <CardContent>
-          <BadgeGrid badges={badges} earnedBadgeIds={[]} />
+          <BadgeGrid badges={badges} earnedBadgeIds={earnedBadgeIds} />
         </CardContent>
       </Card>
     </div>

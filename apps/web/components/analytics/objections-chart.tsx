@@ -37,8 +37,8 @@ export function ObjectionsChart({ objections }: ObjectionsChartProps) {
   }
 
   const data = objections.map((o) => ({
-    name: o.objection.length > 40 ? o.objection.slice(0, 37) + "..." : o.objection,
-    fullName: o.objection,
+    name: (o.objection ?? "").length > 40 ? (o.objection ?? "").slice(0, 37) + "..." : (o.objection ?? ""),
+    fullName: o.objection ?? "",
     count: o.count,
     best_response: o.best_response,
   }))
