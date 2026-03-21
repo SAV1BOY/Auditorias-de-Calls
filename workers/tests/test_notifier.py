@@ -32,18 +32,17 @@ class TestEvolutionClient:
 
     @patch("src.pipeline.evolution.httpx.Client")
     def test_send_text_calls_correct_endpoint(self, mock_client_cls: MagicMock) -> None:
-        mock_client = MagicMock()
+        mock_instance = MagicMock()
         mock_response = MagicMock()
         mock_response.json.return_value = {"status": "sent"}
-        mock_client.post.return_value = mock_response
-        mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client)
-        mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+        mock_instance.post.return_value = mock_response
+        mock_client_cls.return_value = mock_instance
 
         client = EvolutionClient("https://api.example.com", "mytoken", "inst1")
         result = client.send_text("5511999999999", "Hello!")
 
-        mock_client.post.assert_called_once()
-        args, kwargs = mock_client.post.call_args
+        mock_instance.post.assert_called_once()
+        args, kwargs = mock_instance.post.call_args
         assert args[0] == "https://api.example.com/message/sendText/inst1"
         assert kwargs["headers"]["apikey"] == "mytoken"
         assert kwargs["json"]["number"] == "5511999999999"

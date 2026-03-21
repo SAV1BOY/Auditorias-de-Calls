@@ -21,6 +21,7 @@ from src.db import DB, Job
 from src.drive.client import DriveClient
 from src.drive.sync import DriveSync
 from src.drive.watcher import DriveWatcher
+from src.health import register_thread, start_health_server
 from src.pipeline.analyzer import Analyzer
 from src.pipeline.notifier import Notifier
 from src.pipeline.transcriber import Transcriber
@@ -39,6 +40,7 @@ _shutdown = threading.Event()
 
 def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_sync: DriveSync, analyzer: Analyzer, notifier: Notifier) -> None:
     """Poll job_queue for pending jobs and process them."""
+    register_thread("job-runner", "running")
     logger.info("Job runner started (interval: %ds)", config.job_poll_interval_seconds)
 
     while not _shutdown.is_set():
@@ -92,9 +94,11 @@ def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync, anal
 def _drive_watcher_loop(config: Config, watcher: DriveWatcher, drive_sync: DriveSync) -> None:
     """Poll Google Drive for new audio files."""
     if not watcher.enabled:
+        register_thread("drive-watcher", "disabled")
         logger.info("Drive watcher disabled (not configured). Thread exiting.")
         return
 
+    register_thread("drive-watcher", "running")
     logger.info("Drive watcher started (interval: %ds)", config.drive_poll_interval_seconds)
 
     while not _shutdown.is_set():
@@ -113,6 +117,7 @@ def _drive_watcher_loop(config: Config, watcher: DriveWatcher, drive_sync: Drive
 
 def _weekly_reporter_loop(config: Config, reporter: WeeklyReporter) -> None:
     """Check for weekly report generation every hour."""
+    register_thread("weekly-reporter", "running")
     logger.info("Weekly reporter started (interval: 3600s)")
 
     while not _shutdown.is_set():
@@ -155,6 +160,9 @@ def main() -> None:
     # Register signal handlers
     signal.signal(signal.SIGINT, _signal_handler)
     signal.signal(signal.SIGTERM, _signal_handler)
+
+    # Start health check server
+    start_health_server()
 
     # Start threads
     job_thread = threading.Thread(

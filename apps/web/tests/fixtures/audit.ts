@@ -26,7 +26,7 @@ export const mockAudit: CallAuditWithCloser = {
   status: "completed",
   audio_path: "audit-001/call.ogg",
   transcricao: "Olá, tudo bem? Meu nome é Evelyn...",
-  relatorio_markdown: "# Relatório\n\nAnálise completa...",
+  relatorio_completo: "# Relatório\n\nAnálise completa...",
   score_final: 8.2,
   classificacao: "FORTE",
   resultado: "fechamento",
@@ -46,22 +46,36 @@ export const mockAudit: CallAuditWithCloser = {
   d11_promessas: 8.0,
   d12_checkpoints: 9.2,
   d13_fechamento: 8.5,
-  erros_json: [
+  top_erros: [
     { titulo: "Erro 1", descricao: "Desc", trecho: "trecho", impacto: "alto" },
   ],
-  acertos_json: [
+  top_acertos: [
     { titulo: "Acerto 1", descricao: "Desc", trecho: "trecho", impacto: "alto" },
   ],
-  reescrita_json: [
+  reescrita_falas: [
     { fala_original: "original", fala_reescrita: "reescrita", motivo: "motivo", impacto: "alto" },
   ],
-  plano_acao_json: [
+  plano_acao: [
     { acao: "ação 1", prioridade: "alta", dimensao: "frame" },
   ],
+  frases_proibidas: [],
+  mapa_frameworks: {},
+  fases_analise: {},
   resumo_whatsapp: "Resumo para WhatsApp...",
   drive_file_id: null,
   drive_url: null,
+  drive_report_url: null,
   error_message: null,
+  modelo_transcricao: "whisper-1",
+  modelo_analise: "claude-sonnet-4-20250514",
+  tokens_input: 15000,
+  tokens_output: 8000,
+  custo_estimado: 0.12,
+  uploaded_at: "2026-03-15T09:00:00Z",
+  transcribed_at: "2026-03-15T09:15:00Z",
+  analyzed_at: "2026-03-15T10:00:00Z",
+  notified_at: "2026-03-15T10:05:00Z",
+  completed_at: "2026-03-15T10:05:00Z",
   created_at: "2026-03-15T10:00:00Z",
   updated_at: "2026-03-15T10:30:00Z",
   closers: { name: "Evelyn" },

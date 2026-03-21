@@ -8,17 +8,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 
-def _make_table_chain():
+def make_table_chain() -> MagicMock:
+    """Create a mock Supabase table chain (mirrors conftest.make_table_chain)."""
     chain = MagicMock()
-    chain.select.return_value = chain
-    chain.insert.return_value = chain
-    chain.eq.return_value = chain
-    chain.gte.return_value = chain
-    chain.lte.return_value = chain
-    chain.in_.return_value = chain
-    chain.not_.return_value = chain
-    chain.limit.return_value = chain
-    chain.order.return_value = chain
+    for method in ["select", "insert", "update", "delete", "eq", "neq",
+                   "gte", "lte", "in_", "not_", "ilike", "order", "limit", "range"]:
+        getattr(chain, method).return_value = chain
+    chain.single.return_value = MagicMock(data=None)
     chain.execute.return_value = MagicMock(data=[])
     return chain
 
@@ -46,7 +42,7 @@ class TestWeeklyReporter:
         reporter = self._make_reporter(config, mock_db, MockAnthropic, MockEvolution, MockEmail)
 
         monday = date(2026, 3, 16)  # a Monday
-        chain = _make_table_chain()
+        chain = make_table_chain()
         chain.execute.return_value = MagicMock(data=[])
         mock_db.client.table.return_value = chain
 
@@ -74,7 +70,7 @@ class TestWeeklyReporter:
         reporter = self._make_reporter(config, mock_db, MockAnthropic, MockEvolution, MockEmail)
 
         monday = date(2026, 3, 16)
-        chain = _make_table_chain()
+        chain = make_table_chain()
         chain.execute.return_value = MagicMock(data=[{"id": "existing-report"}])
         mock_db.client.table.return_value = chain
 
@@ -124,7 +120,7 @@ class TestWeeklyReporter:
         """Returns insufficient_data when no calls exist."""
         reporter = self._make_reporter(config, mock_db, MockAnthropic, MockEvolution, MockEmail)
 
-        chain = _make_table_chain()
+        chain = make_table_chain()
         chain.execute.return_value = MagicMock(data=[])
         mock_db.client.table.return_value = chain
 
@@ -146,7 +142,7 @@ class TestWeeklyReporter:
             {"id": "2", "score_final": 90, "closer_id": "c2", "closer_name": "Bob"},
             {"id": "3", "score_final": 78, "closer_id": "c1", "closer_name": "Alice"},
         ]
-        chain = _make_table_chain()
+        chain = make_table_chain()
         chain.execute.return_value = MagicMock(data=calls_data)
         mock_db.client.table.return_value = chain
 
@@ -167,7 +163,7 @@ class TestWeeklyReporter:
         calls_data = [
             {"id": "1", "score_final": 80, "closer_id": "c1", "closer": {"name": "Alice"}},
         ]
-        chain = _make_table_chain()
+        chain = make_table_chain()
         chain.execute.return_value = MagicMock(data=calls_data)
         mock_db.client.table.return_value = chain
 
@@ -183,7 +179,7 @@ class TestWeeklyReporter:
         calls_data = [
             {"id": "1", "score_final": 75, "closer_id": "c1", "closer": [{"name": "Alice"}]},
         ]
-        chain = _make_table_chain()
+        chain = make_table_chain()
         chain.execute.return_value = MagicMock(data=calls_data)
         mock_db.client.table.return_value = chain
 

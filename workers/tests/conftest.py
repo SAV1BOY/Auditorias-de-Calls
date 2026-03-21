@@ -28,26 +28,40 @@ def config() -> Config:
     )
 
 
+def make_table_chain() -> MagicMock:
+    """Create a mock Supabase table chain with all chaining methods."""
+    chain = MagicMock()
+    chain.select.return_value = chain
+    chain.insert.return_value = chain
+    chain.update.return_value = chain
+    chain.delete.return_value = chain
+    chain.eq.return_value = chain
+    chain.neq.return_value = chain
+    chain.gte.return_value = chain
+    chain.lte.return_value = chain
+    chain.in_.return_value = chain
+    chain.not_.return_value = chain
+    chain.ilike.return_value = chain
+    chain.order.return_value = chain
+    chain.limit.return_value = chain
+    chain.range.return_value = chain
+    chain.single.return_value = MagicMock(data=None)
+    chain.execute.return_value = MagicMock(data=[])
+    return chain
+
+
+@pytest.fixture
+def table_chain_factory():
+    """Factory fixture that returns make_table_chain for use in tests."""
+    return make_table_chain
+
+
 @pytest.fixture
 def mock_supabase_client() -> MagicMock:
     """Create a mock Supabase client."""
     client = MagicMock()
 
-    # Setup chaining for table operations
-    def _make_table_chain() -> MagicMock:
-        chain = MagicMock()
-        chain.select.return_value = chain
-        chain.insert.return_value = chain
-        chain.update.return_value = chain
-        chain.delete.return_value = chain
-        chain.eq.return_value = chain
-        chain.ilike.return_value = chain
-        chain.order.return_value = chain
-        chain.limit.return_value = chain
-        chain.execute.return_value = MagicMock(data=[])
-        return chain
-
-    client.table.return_value = _make_table_chain()
+    client.table.return_value = make_table_chain()
 
     # Storage mock
     storage_bucket = MagicMock()
