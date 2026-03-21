@@ -14,10 +14,12 @@ from __future__ import annotations
 import logging
 import signal
 import sys
+import time
 import threading
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 
 from src.config import load_config, Config
+from src.logging_config import setup_logging
 from src.db import DB, Job
 from src.drive.client import DriveClient
 from src.drive.sync import DriveSync
@@ -29,11 +31,7 @@ from src.pipeline.notifier import Notifier
 from src.pipeline.transcriber import Transcriber
 from src.weekly_reporter import WeeklyReporter
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+setup_logging(logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Global shutdown flag
@@ -56,23 +54,39 @@ def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_syn
                 timeouts = {"transcribe": 600, "analyze": 300, "notify": 120, "loss_pattern": 300, "weekly_report": 300}
                 timeout_sec = timeouts.get(job.job_type, 300)
 
+                start_time = time.monotonic()
                 try:
                     with ThreadPoolExecutor(max_workers=1) as executor:
                         future = executor.submit(
                             _process_job, job, transcriber, drive_sync, analyzer, notifier, loss_analyzer
                         )
                         future.result(timeout=timeout_sec)
+                    elapsed_ms = int((time.monotonic() - start_time) * 1000)
                     db.complete_job(job.id)
-                    logger.info("Job %s completed successfully", job.id)
+                    logger.info(
+                        "Job %s completed in %dms",
+                        job.id, elapsed_ms,
+                        extra={"job_id": job.id, "audit_id": job.audit_id, "job_type": job.job_type, "duration_ms": elapsed_ms},
+                    )
                 except FuturesTimeoutError:
+                    elapsed_ms = int((time.monotonic() - start_time) * 1000)
                     error_msg = f"TimeoutError: job exceeded {timeout_sec}s timeout"
-                    logger.error("Job %s timed out after %ds", job.id, timeout_sec)
+                    logger.error(
+                        "Job %s timed out after %ds",
+                        job.id, timeout_sec,
+                        extra={"job_id": job.id, "audit_id": job.audit_id, "job_type": job.job_type, "duration_ms": elapsed_ms},
+                    )
                     db.fail_job(job.id, error_msg, job.attempts, job.max_attempts)
                     if job.attempts + 1 >= job.max_attempts and job.audit_id:
                         db.update_audit_status(job.audit_id, "error", extra={"error_message": error_msg})
                 except Exception as e:
+                    elapsed_ms = int((time.monotonic() - start_time) * 1000)
                     error_msg = f"{type(e).__name__}: {e}"
-                    logger.error("Job %s failed: %s", job.id, error_msg)
+                    logger.error(
+                        "Job %s failed: %s",
+                        job.id, error_msg,
+                        extra={"job_id": job.id, "audit_id": job.audit_id, "job_type": job.job_type, "duration_ms": elapsed_ms},
+                    )
                     db.fail_job(job.id, error_msg, job.attempts, job.max_attempts)
 
                     # If max retries exceeded, mark audit as error
