@@ -7,13 +7,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import type { CallAuditWithCloser } from "@/lib/types/audit"
+import type { CallAuditWithCloser, SentimentTimelineEntry, DetectedObjection } from "@/lib/types/audit"
 import { DIMENSIONS } from "@/lib/utils/constants"
 import { formatScore } from "@/lib/utils/format"
 import { getScoreColor } from "@/lib/utils/colors"
+import { CommentsPanel } from "./comments-panel"
+import { SentimentTimeline } from "./sentiment-timeline"
+import { EngagementMeter } from "./engagement-meter"
+import { ObjectionsList } from "./objections-list"
 
 interface AuditTabsProps {
   audit: CallAuditWithCloser
+  currentTime?: number
+  onSeek?: (sec: number) => void
 }
 
 /* ─────────────── SCORECARD TAB ─────────────── */
@@ -349,8 +355,30 @@ function PlanoAcaoContent({ audit }: { audit: CallAuditWithCloser }) {
   )
 }
 
+/* ─────────────── SENTIMENTO TAB ─────────────── */
+function SentimentoContent({ audit }: { audit: CallAuditWithCloser }) {
+  const raw = audit as unknown as Record<string, unknown>
+  const timeline = (raw.sentiment_timeline ?? []) as unknown as SentimentTimelineEntry[]
+  const objections = (raw.objections_detected ?? []) as unknown as DetectedObjection[]
+  const overallSentiment = (raw.sentiment_overall as string) ?? "neutral"
+  const sentimentScore = (raw.sentiment_score as number) ?? 0
+  const engagementLevel = (raw.engagement_level as string) ?? "medium"
+
+  return (
+    <div className="space-y-6">
+      <SentimentTimeline
+        timeline={timeline}
+        overallSentiment={overallSentiment}
+        sentimentScore={sentimentScore}
+      />
+      <EngagementMeter level={engagementLevel} />
+      <ObjectionsList objections={objections} />
+    </div>
+  )
+}
+
 /* ─────────────── MAIN TABS COMPONENT ─────────────── */
-export function AuditTabs({ audit }: AuditTabsProps) {
+export function AuditTabs({ audit, currentTime, onSeek }: AuditTabsProps) {
   return (
     <Tabs defaultValue="scorecard">
       <TabsList className="flex-wrap">
@@ -360,6 +388,8 @@ export function AuditTabs({ audit }: AuditTabsProps) {
         <TabsTrigger value="erros">Erros & Acertos</TabsTrigger>
         <TabsTrigger value="reescrita">Reescrita</TabsTrigger>
         <TabsTrigger value="plano">Plano de Ação</TabsTrigger>
+        <TabsTrigger value="sentimento">Sentimento</TabsTrigger>
+        <TabsTrigger value="coaching">Coaching</TabsTrigger>
       </TabsList>
 
       <TabsContent value="scorecard">
@@ -424,6 +454,32 @@ export function AuditTabs({ audit }: AuditTabsProps) {
           </CardHeader>
           <CardContent>
             <PlanoAcaoContent audit={audit} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="sentimento">
+        <Card>
+          <CardHeader>
+            <CardTitle>Análise de Sentimento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SentimentoContent audit={audit} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="coaching">
+        <Card>
+          <CardHeader>
+            <CardTitle>Coaching</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CommentsPanel
+              auditId={audit.id}
+              currentTime={currentTime}
+              onSeek={onSeek}
+            />
           </CardContent>
         </Card>
       </TabsContent>

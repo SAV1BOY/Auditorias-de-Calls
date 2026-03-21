@@ -24,6 +24,8 @@ import {
 import { getClassificacaoColor, getScoreColor } from "@/lib/utils/colors"
 import { RESULTADO_LABELS } from "@/lib/utils/constants"
 import { ProcessingStatus } from "./processing-status"
+import { BookmarkButton } from "./bookmark-button"
+import { ExportPdfButton } from "./export-pdf-button"
 import { resendNotification } from "@/lib/actions/calls"
 
 interface AuditHeaderProps {
@@ -71,9 +73,12 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             {/* Left: metadata */}
             <div className="space-y-3">
-              <h1 className="text-2xl font-bold">
-                {audit.closers?.name ?? "—"} x {audit.lead_name}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold">
+                  {audit.closers?.name ?? "—"} x {audit.lead_name}
+                </h1>
+                <BookmarkButton auditId={audit.id} />
+              </div>
 
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
@@ -144,6 +149,10 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                     <Download className="mr-1 h-4 w-4" />
                     Download Relatório
                   </Button>
+                )}
+                {(audit.status === "completed" ||
+                  audit.status === "analyzed") && (
+                  <ExportPdfButton auditId={audit.id} />
                 )}
                 {(audit.status === "completed" ||
                   audit.status === "analyzed") && (

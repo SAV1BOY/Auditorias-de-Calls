@@ -21,9 +21,12 @@ from src.db import DB, Job
 from src.drive.client import DriveClient
 from src.drive.sync import DriveSync
 from src.drive.watcher import DriveWatcher
+from src.health import register_thread, start_health_server
 from src.pipeline.analyzer import Analyzer
+from src.pipeline.loss_pattern_analyzer import LossPatternAnalyzer
 from src.pipeline.notifier import Notifier
 from src.pipeline.transcriber import Transcriber
+from src.weekly_reporter import WeeklyReporter
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,8 +39,9 @@ logger = logging.getLogger(__name__)
 _shutdown = threading.Event()
 
 
-def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_sync: DriveSync, analyzer: Analyzer, notifier: Notifier) -> None:
+def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_sync: DriveSync, analyzer: Analyzer, notifier: Notifier, loss_analyzer: LossPatternAnalyzer) -> None:
     """Poll job_queue for pending jobs and process them."""
+    register_thread("job-runner", "running")
     logger.info("Job runner started (interval: %ds)", config.job_poll_interval_seconds)
 
     while not _shutdown.is_set():
@@ -47,7 +51,7 @@ def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_syn
                 logger.info("Processing job %s (type=%s, audit=%s, attempt=%d/%d)",
                             job.id, job.job_type, job.audit_id, job.attempts + 1, job.max_attempts)
                 try:
-                    _process_job(job, transcriber, drive_sync, analyzer, notifier)
+                    _process_job(job, transcriber, drive_sync, analyzer, notifier, loss_analyzer)
                     db.complete_job(job.id)
                     logger.info("Job %s completed successfully", job.id)
                 except Exception as e:
@@ -57,9 +61,10 @@ def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_syn
 
                     # If max retries exceeded, mark audit as error
                     if job.attempts + 1 >= job.max_attempts:
-                        db.update_audit_status(job.audit_id, "error", extra={
-                            "error_message": error_msg,
-                        })
+                        if job.audit_id:
+                            db.update_audit_status(job.audit_id, "error", extra={
+                                "error_message": error_msg,
+                            })
                         logger.error("Job %s exceeded max attempts, audit %s marked as error",
                                      job.id, job.audit_id)
         except Exception:
@@ -68,7 +73,7 @@ def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_syn
         _shutdown.wait(timeout=config.job_poll_interval_seconds)
 
 
-def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync, analyzer: Analyzer, notifier: Notifier) -> None:
+def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync, analyzer: Analyzer, notifier: Notifier, loss_analyzer: LossPatternAnalyzer) -> None:
     """Route a job to the appropriate handler."""
     if job.job_type == "transcribe":
         result = transcriber.transcribe(job.audit_id)
@@ -81,6 +86,13 @@ def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync, anal
         analyzer.analyze(job.audit_id)
     elif job.job_type == "notify":
         notifier.notify(job.audit_id)
+    elif job.job_type == "loss_pattern":
+        result = loss_analyzer.process_pending_report()
+        if result is None:
+            logger.warning("No pending loss pattern report found for job %s", job.id)
+    elif job.job_type == "weekly_report":
+        # Weekly reports are handled by the dedicated loop, not job queue
+        logger.info("Weekly report job — skipping (handled by weekly_reporter loop)")
     else:
         raise ValueError(f"Unknown job type: {job.job_type}")
 
@@ -88,9 +100,11 @@ def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync, anal
 def _drive_watcher_loop(config: Config, watcher: DriveWatcher, drive_sync: DriveSync) -> None:
     """Poll Google Drive for new audio files."""
     if not watcher.enabled:
+        register_thread("drive-watcher", "disabled")
         logger.info("Drive watcher disabled (not configured). Thread exiting.")
         return
 
+    register_thread("drive-watcher", "running")
     logger.info("Drive watcher started (interval: %ds)", config.drive_poll_interval_seconds)
 
     while not _shutdown.is_set():
@@ -105,6 +119,20 @@ def _drive_watcher_loop(config: Config, watcher: DriveWatcher, drive_sync: Drive
             logger.exception("Unexpected error in Drive watcher")
 
         _shutdown.wait(timeout=config.drive_poll_interval_seconds)
+
+
+def _weekly_reporter_loop(config: Config, reporter: WeeklyReporter) -> None:
+    """Check for weekly report generation every hour."""
+    register_thread("weekly-reporter", "running")
+    logger.info("Weekly reporter started (interval: 3600s)")
+
+    while not _shutdown.is_set():
+        try:
+            reporter.run()
+        except Exception:
+            logger.exception("Unexpected error in weekly reporter")
+
+        _shutdown.wait(timeout=3600)  # Check every hour
 
 
 def _signal_handler(signum: int, frame) -> None:
@@ -133,15 +161,20 @@ def main() -> None:
     analyzer = Analyzer(config, db, drive_client)
     notifier = Notifier(config, db)
     watcher = DriveWatcher(config, db, drive_client)
+    loss_analyzer = LossPatternAnalyzer(config, db)
+    weekly_reporter = WeeklyReporter(config, db)
 
     # Register signal handlers
     signal.signal(signal.SIGINT, _signal_handler)
     signal.signal(signal.SIGTERM, _signal_handler)
 
+    # Start health check server
+    start_health_server()
+
     # Start threads
     job_thread = threading.Thread(
         target=_job_runner_loop,
-        args=(config, db, transcriber, drive_sync, analyzer, notifier),
+        args=(config, db, transcriber, drive_sync, analyzer, notifier, loss_analyzer),
         name="job-runner",
         daemon=True,
     )
@@ -151,9 +184,16 @@ def main() -> None:
         name="drive-watcher",
         daemon=True,
     )
+    weekly_thread = threading.Thread(
+        target=_weekly_reporter_loop,
+        args=(config, weekly_reporter),
+        name="weekly-reporter",
+        daemon=True,
+    )
 
     job_thread.start()
     drive_thread.start()
+    weekly_thread.start()
 
     logger.info("Worker running. Press Ctrl+C to stop.")
 
@@ -167,6 +207,7 @@ def main() -> None:
     # Wait for threads to finish
     job_thread.join(timeout=10)
     drive_thread.join(timeout=10)
+    weekly_thread.join(timeout=10)
 
     logger.info("Worker stopped.")
 

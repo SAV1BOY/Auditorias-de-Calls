@@ -105,27 +105,26 @@ export async function getDimensionTrends(
   fromDate.setDate(fromDate.getDate() - days)
   const fromStr = fromDate.toISOString().split("T")[0]
 
-  // Fetch all completed audits in date range
-  let closerQuery = supabase
-    .from("call_audits")
-    .select("*")
-    .gte("call_date", fromStr)
-    .not("score_final", "is", null)
-    .order("call_date", { ascending: true })
-
-  if (closerId) {
-    closerQuery = closerQuery.eq("closer_id", closerId)
-  }
-
-  const { data: closerData } = await closerQuery
-
-  // Team average (all closers)
+  // Team average (all closers) — always needed
   const { data: teamData } = await supabase
     .from("call_audits")
     .select("*")
     .gte("call_date", fromStr)
     .not("score_final", "is", null)
     .order("call_date", { ascending: true })
+
+  // Individual closer scores — only query separately if filtering by closer
+  let closerData = teamData
+  if (closerId) {
+    const { data } = await supabase
+      .from("call_audits")
+      .select("*")
+      .gte("call_date", fromStr)
+      .eq("closer_id", closerId)
+      .not("score_final", "is", null)
+      .order("call_date", { ascending: true })
+    closerData = data
+  }
 
   const closerGrouped = groupByDateDimAvg(closerData, dimensionId)
   const teamGrouped = groupByDateDimAvg(teamData, dimensionId)
@@ -286,8 +285,10 @@ export async function createGoal(
   const targetValue = Number(formData.get("target_value"))
   const startDate = formData.get("start_date")?.toString()
   const endDate = formData.get("end_date")?.toString()
-  const closerId = formData.get("closer_id")?.toString() || null
-  const dimensionId = formData.get("dimension_id")?.toString() || null
+  const closerIdRaw = formData.get("closer_id")?.toString()
+  const closerId = closerIdRaw && closerIdRaw !== "none" ? closerIdRaw : null
+  const dimensionIdRaw = formData.get("dimension_id")?.toString()
+  const dimensionId = dimensionIdRaw && dimensionIdRaw !== "none" ? dimensionIdRaw : null
 
   if (!type || !metric || !startDate || !endDate || isNaN(targetValue)) {
     return { error: "Preencha todos os campos obrigatórios." }

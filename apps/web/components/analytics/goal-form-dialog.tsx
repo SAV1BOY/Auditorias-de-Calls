@@ -122,7 +122,7 @@ export function GoalFormDialog({
                 <SelectValue placeholder="Todos (meta do time)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos (Time)</SelectItem>
+                <SelectItem value="none">Todos (Time)</SelectItem>
                 {closers
                   .filter((c) => c.active)
                   .map((closer) => (
@@ -143,7 +143,7 @@ export function GoalFormDialog({
                 <SelectValue placeholder="Não aplicável" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Não aplicável</SelectItem>
+                <SelectItem value="none">Não aplicável</SelectItem>
                 {DIMENSIONS.map((dim) => (
                   <SelectItem key={dim.id} value={dim.id}>
                     {dim.name}

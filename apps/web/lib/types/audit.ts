@@ -91,3 +91,152 @@ export interface DimensionTrendPoint {
   teamAvg?: number
   movingAvg?: number
 }
+
+// ─── Sprint 9: Coaching Types ───
+
+export type CallBookmarkRow = Database["public"]["Tables"]["call_bookmarks"]["Row"]
+export type CallCommentRow = Database["public"]["Tables"]["call_comments"]["Row"]
+export type WeeklyReportRow = Database["public"]["Tables"]["weekly_reports"]["Row"]
+
+export interface HighlightTimestamp {
+  start_sec: number
+  end_sec: number
+  label: string
+}
+
+export interface CallBookmark extends Omit<CallBookmarkRow, "highlight_timestamps"> {
+  highlight_timestamps: HighlightTimestamp[]
+  call_audits?: Pick<CallAuditRow, "id" | "lead_name" | "call_date" | "score_final" | "classificacao"> & {
+    closers: Pick<CloserRow, "name"> | null
+  }
+}
+
+export interface CallComment extends CallCommentRow {
+  author?: Pick<ProfileRow, "full_name" | "avatar_url" | "role">
+  replies?: CallComment[]
+}
+
+export interface WeeklyStats {
+  total_calls: number
+  insufficient_data?: boolean
+  score_avg: number
+  score_avg_prev: number | null
+  top_closers: { id: string; name: string; score: number }[]
+  weakest_dimension: { id: string; name: string; avg: number } | null
+  best_call: { id: string; lead_name: string; closer_name: string; score: number | null } | null
+  worst_call: { id: string; lead_name: string; closer_name: string; score: number | null } | null
+  taxa_fechamento: number
+  total_prev_calls: number
+}
+
+export interface WeeklyReport extends Omit<WeeklyReportRow, "stats"> {
+  stats: WeeklyStats
+}
+
+export interface AudioMarker {
+  id: string
+  timestampSec: number
+  type: "comment" | "highlight"
+  label?: string
+  color?: string
+}
+
+// ─── Sprint 11: Gamification Types ───
+
+export interface BadgeRow {
+  id: string
+  slug: string
+  name: string
+  description: string
+  icon: string
+  category: "score" | "streak" | "volume" | "dimension" | "special"
+  criteria: Record<string, unknown>
+}
+
+export interface CloserBadgeWithInfo {
+  id: string
+  closer_id: string
+  badge: BadgeRow
+  audit_id: string | null
+  earned_at: string
+}
+
+export interface CloserStreakRow {
+  id: string
+  closer_id: string
+  streak_type: string
+  current_count: number
+  best_count: number
+  last_updated: string
+}
+
+export interface LeaderboardEntry {
+  rank: number
+  closer_id: string
+  closer_name: string
+  avatar_url: string | null
+  value: number
+  badges_count: number
+  trend: "up" | "down" | "stable"
+}
+
+export interface CompetitionRow {
+  id: string
+  title: string
+  description: string | null
+  metric: string
+  metric_params: Record<string, unknown>
+  start_date: string
+  end_date: string
+  status: "upcoming" | "active" | "completed"
+}
+
+export interface CompetitionStanding {
+  closer_id: string
+  closer_name: string
+  rank: number
+  value: number
+}
+
+export interface CompetitionWithStandings extends CompetitionRow {
+  standings: CompetitionStanding[]
+}
+
+// ─── Sprint 11: Sentiment Types ───
+
+export interface SentimentTimelineEntry {
+  timestamp_range: string
+  sentiment: "positive" | "neutral" | "negative" | "mixed"
+  confidence: number
+  key_moment: string
+}
+
+export interface DetectedObjection {
+  timestamp: string
+  objection: string
+  closer_response: string
+  effectiveness: "good" | "poor"
+}
+
+// ─── Sprint 11: Loss Pattern Types ───
+
+export interface LossPattern {
+  pattern: string
+  frequency: number
+  severity: "high" | "medium" | "low"
+  affected_closers: string[]
+  example_audits: string[]
+  recommendation: string
+}
+
+export interface LossPatternReport {
+  id: string
+  generated_at: string
+  period_start: string
+  period_end: string
+  total_lost_calls: number
+  patterns: LossPattern[]
+  common_objections: { objection: string; count: number; best_response: string }[]
+  weakest_phases: { phase: string; avg_score: number }[]
+  report_markdown: string | null
+}

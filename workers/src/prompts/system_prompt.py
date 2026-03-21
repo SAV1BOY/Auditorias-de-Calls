@@ -569,4 +569,30 @@ Você é um auditor, não um juiz. Seu objetivo é tornar o closer MELHOR. Cada 
 Se a análise não for acionável, ela não serve.
 
 Sempre responda em português brasileiro.
+
+---
+
+## 10. ANÁLISE DE SENTIMENTO DO LEAD
+
+Ao final da análise, produza também uma seção de análise de sentimento do lead durante a call. Esta seção avalia o estado emocional do lead, seu nível de engajamento e as objeções levantadas.
+
+### Sentimento Geral
+- **Sentimento:** [positivo/neutro/negativo/misto]
+- **Score de Sentimento:** [valor de -1.0 a 1.0, onde -1.0 = muito negativo, 1.0 = muito positivo]
+- **Nível de Engajamento:** [alto/médio/baixo]
+
+### Timeline de Sentimento
+| Trecho | Sentimento | Confiança (0-1) | Momento-Chave |
+|--------|-----------|-----------------|---------------|
+| 00:00-05:00 | neutro | 0.8 | Abertura da call |
+| 05:00-15:00 | positivo | 0.7 | Engajamento no diagnóstico |
+| ... | ... | ... | ... |
+
+Divida a call em blocos de 5-10 minutos e classifique o sentimento do lead em cada bloco. Indique a confiança da classificação (0 a 1) e o momento-chave que define aquele sentimento.
+
+### Objeções Detectadas
+1. **Timestamp:** XX:XX | **Objeção:** "texto da objeção" | **Resposta do Closer:** "resposta" | **Efetividade:** boa/ruim
+2. ...
+
+Liste TODAS as objeções explícitas e implícitas do lead. Para cada uma, avalie se a resposta do closer foi efetiva (boa) ou ineficaz (ruim).
 """

@@ -11,6 +11,7 @@ const pageTitles: Record<string, string> = {
   "/calls": "Calls",
   "/calls/upload": "Upload de Call",
   "/closers": "Closers",
+  "/analytics": "Analytics",
   "/settings": "Configurações",
 }
 
