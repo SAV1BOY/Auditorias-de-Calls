@@ -51,6 +51,33 @@ export async function removeBookmark(
   auditId: string
 ): Promise<{ success: boolean }> {
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("Not authenticated")
+
+  // Check ownership: only the user who bookmarked can remove
+  const { data: bookmark } = await supabase
+    .from("call_bookmarks")
+    .select("bookmarked_by")
+    .eq("audit_id", auditId)
+    .maybeSingle()
+
+  if (!bookmark) return { success: true } // Already removed
+
+  if (bookmark.bookmarked_by !== user.id) {
+    // Not owner — must be admin/supervisor
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+
+    if (!profile || !["admin", "supervisor"].includes(profile.role)) {
+      throw new Error("Sem permissão para remover este bookmark")
+    }
+  }
+
   await supabase.from("call_bookmarks").delete().eq("audit_id", auditId)
   return { success: true }
 }

@@ -198,10 +198,22 @@ export async function getGoals(): Promise<GoalWithProgress[]> {
     }
   }
 
+  // Batch fetch all calls needed for goal calculations (avoid N+1)
+  // Find the widest date range across all goals
+  const minDate = goals.reduce((min, g) => (g.start_date < min ? g.start_date : min), goals[0].start_date)
+  const maxDate = goals.reduce((max, g) => (g.end_date > max ? g.end_date : max), goals[0].end_date)
+
+  const { data: allCalls } = await supabase
+    .from("call_audits")
+    .select("closer_id, call_date, score_final, classificacao, resultado, d01_frame, d02_qualificacao, d03_diag_quantitativo, d04_diag_qualitativo, d05_consequencia, d06_ensino, d07_identidade, d08_ancoragem, d09_isolamento, d10_proporcao_fala, d11_promessas, d12_checkpoints, d13_fechamento")
+    .gte("call_date", minDate)
+    .lte("call_date", maxDate)
+    .not("score_final", "is", null) as { data: Array<Record<string, unknown>> | null }
+
   const results: GoalWithProgress[] = []
 
   for (const goal of goals) {
-    const currentValue = await calculateCurrentValue(goal, supabase)
+    const currentValue = calculateCurrentValueFromCache(goal, allCalls ?? [])
     const progress =
       goal.target_value > 0
         ? Math.min(100, Math.round((currentValue / Number(goal.target_value)) * 100))
@@ -230,24 +242,19 @@ export async function getGoals(): Promise<GoalWithProgress[]> {
   return results
 }
 
-async function calculateCurrentValue(
+function calculateCurrentValueFromCache(
   goal: GoalRow,
-  supabase: Awaited<ReturnType<typeof createClient>>
-): Promise<number> {
-  let query = supabase
-    .from("call_audits")
-    .select("*")
-    .gte("call_date", goal.start_date)
-    .lte("call_date", goal.end_date)
-    .not("score_final", "is", null)
+  allCalls: Array<Record<string, unknown>>
+): number {
+  // Filter calls for this specific goal's date range and closer
+  const calls = allCalls.filter((c) => {
+    const date = String(c.call_date)
+    if (date < goal.start_date || date > goal.end_date) return false
+    if (goal.closer_id && c.closer_id !== goal.closer_id) return false
+    return true
+  })
 
-  if (goal.closer_id) {
-    query = query.eq("closer_id", goal.closer_id)
-  }
-
-  const { data: calls } = await query
-
-  if (!calls || calls.length === 0) return 0
+  if (calls.length === 0) return 0
 
   switch (goal.metric) {
     case "score_avg": {
@@ -268,7 +275,7 @@ async function calculateCurrentValue(
     }
     case "dimension_avg": {
       if (!goal.dimension_id) return 0
-      const dimId = goal.dimension_id as keyof typeof calls[0]
+      const dimId = goal.dimension_id
       const scores = calls
         .map((c) => Number(c[dimId] ?? 0))
         .filter((s) => s > 0)

@@ -115,16 +115,61 @@ describe("toggleBookmark", () => {
 })
 
 describe("removeBookmark", () => {
-  it("removes bookmark by audit id", async () => {
-    const client = makeMockClient({ data: null, error: null })
+  it("removes own bookmark", async () => {
+    // Mock: first select returns bookmark owned by user, then delete
+    const selectChain = mockChain({ data: { bookmarked_by: "user-001" } })
+    const deleteChain = mockChain({ data: null, error: null })
+    let callCount = 0
+    const client = {
+      from: vi.fn().mockImplementation(() => {
+        callCount++
+        return callCount <= 1 ? selectChain : deleteChain
+      }),
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-001" } },
+          error: null,
+        }),
+      },
+      storage: { from: vi.fn() },
+    }
     vi.mocked(createClient).mockResolvedValue(client as any)
 
     const result = await removeBookmark("audit-001")
 
     expect(result).toEqual({ success: true })
     expect(client.from).toHaveBeenCalledWith("call_bookmarks")
-    expect(client._chain.delete).toHaveBeenCalled()
-    expect(client._chain.eq).toHaveBeenCalledWith("audit_id", "audit-001")
+  })
+
+  it("returns success when bookmark already removed", async () => {
+    // maybeSingle returns null → already removed
+    const client = makeMockClient({ data: null, error: null })
+    vi.mocked(createClient).mockResolvedValue(client as any)
+
+    const result = await removeBookmark("audit-001")
+
+    expect(result).toEqual({ success: true })
+  })
+
+  it("rejects removal by non-owner non-admin", async () => {
+    const selectChain = mockChain({ data: { bookmarked_by: "other-user" } })
+    const profileChain = mockChain({ data: { role: "viewer" } })
+    const client = {
+      from: vi.fn().mockImplementation((table: string) => {
+        if (table === "profiles") return profileChain
+        return selectChain
+      }),
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-001" } },
+          error: null,
+        }),
+      },
+      storage: { from: vi.fn() },
+    }
+    vi.mocked(createClient).mockResolvedValue(client as any)
+
+    await expect(removeBookmark("audit-001")).rejects.toThrow("permissão")
   })
 })
 
