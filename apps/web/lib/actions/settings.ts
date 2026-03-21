@@ -11,12 +11,19 @@ interface NotificationConfig {
 }
 
 export async function getNotificationConfig(): Promise<NotificationConfig> {
+  const { organizationId } = await requireRole(["admin", "supervisor"])
   const supabase = await createClient()
-  const { data } = await supabase
+
+  let query = supabase
     .from("app_config")
     .select("value")
     .eq("key", "notification_recipients")
-    .maybeSingle()
+
+  if (organizationId) {
+    query = query.eq("organization_id", organizationId)
+  }
+
+  const { data } = await query.maybeSingle()
 
   if (data?.value && typeof data.value === "object") {
     const v = data.value as Record<string, unknown>
@@ -36,7 +43,7 @@ export async function getNotificationConfig(): Promise<NotificationConfig> {
 export async function updateNotificationConfig(
   formData: FormData
 ): Promise<{ success?: boolean; error?: string }> {
-  await requireRole(["admin"])
+  const { organizationId } = await requireRole(["admin"])
 
   const whatsappRaw = formData.get("whatsapp_numbers")?.toString() ?? ""
   const emailRaw = formData.get("email_addresses")?.toString() ?? ""
@@ -61,7 +68,7 @@ export async function updateNotificationConfig(
   const { error } = await supabase.from("app_config").upsert(
     {
       key: "notification_recipients",
-      organization_id: null,
+      organization_id: organizationId,
       value: { whatsapp_numbers, email_addresses },
     },
     { onConflict: "organization_id,key" }

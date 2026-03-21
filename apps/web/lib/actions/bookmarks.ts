@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { requireAuth } from "@/lib/auth/require-role"
 import type { CallBookmark, HighlightTimestamp } from "@/lib/types/audit"
 
 export async function toggleBookmark(
@@ -31,16 +32,15 @@ export async function toggleBookmark(
       .eq("audit_id", auditId)
   } else {
     // Insert
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const { userId, organizationId } = await requireAuth()
 
     await supabase.from("call_bookmarks").insert({
       audit_id: auditId,
-      bookmarked_by: user?.id ?? null,
+      bookmarked_by: userId,
       tags: data.tags,
       highlight_timestamps: data.highlightTimestamps as unknown as import("@/lib/types/database").Json,
       notes: data.notes ?? null,
+      organization_id: organizationId,
     })
   }
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { requireRole } from "@/lib/auth/require-role"
+import { createGoalSchema, updateGoalStatusSchema } from "@/lib/validations/schemas"
 import { DIMENSIONS, RADAR_LABELS, DIM_INDEX_MAP } from "@/lib/utils/constants"
 import type {
   CloserComparison,
@@ -290,35 +291,37 @@ function calculateCurrentValueFromCache(
 export async function createGoal(
   formData: FormData
 ): Promise<{ success?: boolean; error?: string }> {
-  await requireRole(["admin", "supervisor"])
+  const { organizationId } = await requireRole(["admin", "supervisor"])
 
-  const title = formData.get("title")?.toString().trim()
-  if (!title) return { error: "Título é obrigatório." }
-
-  const type = formData.get("type")?.toString() as "individual" | "team" | "dimension"
-  const metric = formData.get("metric")?.toString() as "score_avg" | "score_min" | "classificacao_count" | "taxa_fechamento" | "dimension_avg"
-  const targetValue = Number(formData.get("target_value"))
-  const startDate = formData.get("start_date")?.toString()
-  const endDate = formData.get("end_date")?.toString()
   const closerIdRaw = formData.get("closer_id")?.toString()
-  const closerId = closerIdRaw && closerIdRaw !== "none" ? closerIdRaw : null
   const dimensionIdRaw = formData.get("dimension_id")?.toString()
-  const dimensionId = dimensionIdRaw && dimensionIdRaw !== "none" ? dimensionIdRaw : null
 
-  if (!type || !metric || !startDate || !endDate || isNaN(targetValue)) {
-    return { error: "Preencha todos os campos obrigatórios." }
+  const parsed = createGoalSchema.safeParse({
+    title: formData.get("title")?.toString().trim(),
+    type: formData.get("type")?.toString(),
+    metric: formData.get("metric")?.toString(),
+    target_value: Number(formData.get("target_value")),
+    start_date: formData.get("start_date")?.toString(),
+    end_date: formData.get("end_date")?.toString(),
+    closer_id: closerIdRaw && closerIdRaw !== "none" ? closerIdRaw : null,
+    dimension_id: dimensionIdRaw && dimensionIdRaw !== "none" ? dimensionIdRaw : null,
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." }
   }
 
   const supabase = await createClient()
   const { error } = await supabase.from("goals").insert({
-    title,
-    type,
-    metric,
-    target_value: targetValue,
-    start_date: startDate,
-    end_date: endDate,
-    closer_id: closerId,
-    dimension_id: dimensionId,
+    title: parsed.data.title,
+    type: parsed.data.type,
+    metric: parsed.data.metric,
+    target_value: parsed.data.target_value,
+    start_date: parsed.data.start_date,
+    end_date: parsed.data.end_date,
+    closer_id: parsed.data.closer_id ?? null,
+    dimension_id: parsed.data.dimension_id ?? null,
+    organization_id: organizationId,
   })
 
   if (error) return { error: "Erro ao criar meta." }
@@ -333,11 +336,16 @@ export async function updateGoalStatus(
 ): Promise<{ success?: boolean; error?: string }> {
   await requireRole(["admin", "supervisor"])
 
+  const parsed = updateGoalStatusSchema.safeParse({ goalId, status })
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." }
+  }
+
   const supabase = await createClient()
   const { error } = await supabase
     .from("goals")
-    .update({ status })
-    .eq("id", goalId)
+    .update({ status: parsed.data.status })
+    .eq("id", parsed.data.goalId)
 
   if (error) return { error: "Erro ao atualizar meta." }
 

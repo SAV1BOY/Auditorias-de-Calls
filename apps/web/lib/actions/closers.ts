@@ -90,7 +90,7 @@ export async function getCloserScoreEvolution(
 export async function createCloser(
   formData: FormData
 ): Promise<{ success?: boolean; error?: string }> {
-  await requireRole(["admin", "supervisor"])
+  const { organizationId } = await requireRole(["admin", "supervisor"])
 
   const name = formData.get("name")?.toString().trim()
   if (!name) return { error: "Nome é obrigatório." }
@@ -101,6 +101,7 @@ export async function createCloser(
     email: formData.get("email")?.toString().trim() || null,
     whatsapp: formData.get("whatsapp")?.toString().trim() || null,
     avatar_url: formData.get("avatar_url")?.toString().trim() || null,
+    organization_id: organizationId,
   })
 
   if (error) return { error: "Erro ao criar closer." }

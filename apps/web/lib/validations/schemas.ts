@@ -59,16 +59,22 @@ export type UploadMetadataInput = z.infer<typeof uploadMetadataSchema>
 
 // ─── Goals ───
 
-const goalMetrics = ["score_avg", "score_min", "volume", "taxa_fechamento", "dimension_avg"] as const
-const goalStatuses = ["active", "achieved", "missed"] as const
+const goalTypes = ["individual", "team", "dimension"] as const
+const goalMetrics = ["score_avg", "score_min", "classificacao_count", "taxa_fechamento", "dimension_avg"] as const
+const goalStatuses = ["active", "completed", "failed"] as const
 
 export const createGoalSchema = z.object({
   title: z.string().min(1, "Título obrigatório").max(200),
+  type: z.enum(goalTypes, { error: "Tipo inválido" }),
   metric: z.enum(goalMetrics, { error: "Métrica inválida" }),
   target_value: z.number().positive("Meta deve ser um valor positivo").finite(),
-  deadline: z.string().date("Data limite inválida"),
+  start_date: z.string().date("Data de início inválida"),
+  end_date: z.string().date("Data de fim inválida"),
   closer_id: z.string().uuid().nullable().optional(),
   dimension_id: z.string().nullable().optional(),
+}).refine((data) => data.end_date > data.start_date, {
+  message: "Data de fim deve ser posterior à data de início",
+  path: ["end_date"],
 })
 
 export type CreateGoalInput = z.infer<typeof createGoalSchema>

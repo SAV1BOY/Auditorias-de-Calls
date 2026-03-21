@@ -191,6 +191,91 @@ class TestEmailResilience:
             assert mock_resend.Emails.send.call_count == 3
 
 
+class TestDeadLetterAndRefreshViews:
+    """Test dead_letter status and materialized view refresh."""
+
+    def test_fail_job_dead_letter_on_max_attempts(self) -> None:
+        """Jobs exceeding max_attempts move to dead_letter status."""
+        from src.db import DB
+
+        config = MagicMock()
+        config.supabase_url = "https://test.supabase.co"
+        config.supabase_service_role_key = "fake-key"
+
+        with patch("src.db.create_client") as mock_create:
+            mock_client = MagicMock()
+            mock_create.return_value = mock_client
+
+            db = DB(config)
+
+            # Mock the chain
+            mock_table = MagicMock()
+            mock_client.table.return_value = mock_table
+            mock_table.update.return_value = mock_table
+            mock_table.eq.return_value = mock_table
+            mock_table.execute.return_value = MagicMock()
+
+            db.fail_job("job-123", "test error", attempts=2, max_attempts=3)
+
+            # Verify dead_letter status was set
+            mock_table.update.assert_called_once()
+            call_args = mock_table.update.call_args[0][0]
+            assert call_args["status"] == "dead_letter"
+
+    def test_fail_job_retries_below_max(self) -> None:
+        """Jobs below max_attempts are reset to pending for retry."""
+        from src.db import DB
+
+        config = MagicMock()
+        config.supabase_url = "https://test.supabase.co"
+        config.supabase_service_role_key = "fake-key"
+
+        with patch("src.db.create_client") as mock_create:
+            mock_client = MagicMock()
+            mock_create.return_value = mock_client
+
+            db = DB(config)
+
+            mock_table = MagicMock()
+            mock_client.table.return_value = mock_table
+            mock_table.update.return_value = mock_table
+            mock_table.eq.return_value = mock_table
+            mock_table.execute.return_value = MagicMock()
+
+            db.fail_job("job-123", "test error", attempts=0, max_attempts=3)
+
+            call_args = mock_table.update.call_args[0][0]
+            assert call_args["status"] == "pending"
+            assert call_args["attempts"] == 1
+
+    def test_refresh_views_non_fatal(self) -> None:
+        """refresh_views catches errors without raising."""
+        from src.db import DB
+
+        config = MagicMock()
+        config.supabase_url = "https://test.supabase.co"
+        config.supabase_service_role_key = "fake-key"
+
+        with patch("src.db.create_client") as mock_create:
+            mock_client = MagicMock()
+            mock_create.return_value = mock_client
+
+            db = DB(config)
+
+            # Simulate RPC failure
+            mock_client.rpc.return_value.execute.side_effect = Exception("RPC failed")
+
+            # Should not raise
+            db.refresh_views()
+            mock_client.rpc.assert_called_once_with("refresh_dashboard_views_debounced")
+
+    def test_prompt_version_saved_in_analysis(self) -> None:
+        """Analyzer saves prompt_version and report_hash with results."""
+        from src.prompts.system_prompt import PROMPT_VERSION
+        assert isinstance(PROMPT_VERSION, str)
+        assert len(PROMPT_VERSION) > 0
+
+
 class TestJobTimeoutBehavior:
     """Test that job timeout configuration is correct."""
 

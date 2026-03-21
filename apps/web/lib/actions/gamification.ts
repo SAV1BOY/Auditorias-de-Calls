@@ -276,7 +276,7 @@ export async function getCompetitions(): Promise<CompetitionWithStandings[]> {
 export async function createCompetition(
   formData: FormData
 ): Promise<{ success?: boolean; error?: string }> {
-  await requireRole(["admin", "supervisor"])
+  const { organizationId } = await requireRole(["admin", "supervisor"])
 
   const supabase = await createClient()
 
@@ -308,6 +308,7 @@ export async function createCompetition(
     start_date: parsed.data.start_date,
     end_date: parsed.data.end_date,
     status,
+    organization_id: organizationId,
   })
 
   if (error) {

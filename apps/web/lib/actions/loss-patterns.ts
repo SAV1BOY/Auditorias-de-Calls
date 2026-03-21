@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import { requireRole } from "@/lib/auth/require-role"
 import type { LossPatternReport } from "@/lib/types/audit"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -54,6 +55,8 @@ export async function generateLossPatternAnalysis(
   dateFrom: string,
   dateTo: string
 ): Promise<{ success?: boolean; error?: string; reportId?: string }> {
+  const { organizationId } = await requireRole(["admin", "supervisor"])
+
   if (!dateFrom || !dateTo) {
     return { error: "Datas de inicio e fim sao obrigatorias." }
   }
@@ -74,6 +77,7 @@ export async function generateLossPatternAnalysis(
       patterns: [],
       common_objections: [],
       weakest_phases: [],
+      organization_id: organizationId,
     })
     .select("id")
     .single()

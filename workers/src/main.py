@@ -68,6 +68,9 @@ def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_syn
                         job.id, elapsed_ms,
                         extra={"job_id": job.id, "audit_id": job.audit_id, "job_type": job.job_type, "duration_ms": elapsed_ms},
                     )
+                    # Refresh materialized views after data-changing jobs
+                    if job.job_type in ("analyze", "notify"):
+                        db.refresh_views()
                 except FuturesTimeoutError:
                     elapsed_ms = int((time.monotonic() - start_time) * 1000)
                     error_msg = f"TimeoutError: job exceeded {timeout_sec}s timeout"

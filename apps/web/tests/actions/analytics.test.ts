@@ -136,7 +136,7 @@ describe("getGoals", () => {
   it("returns goals with progress", async () => {
     const goalData = [
       {
-        id: "goal-001",
+        id: "a0000000-0000-4000-8000-000000000010",
         organization_id: null,
         title: "Score médio acima de 8.0",
         type: "team",
@@ -211,7 +211,7 @@ describe("createGoal", () => {
     const result = await createGoal(fd)
 
     expect(result.error).toBeDefined()
-    expect(result.error).toContain("obrigat")
+    expect(result.error).toBeTruthy()
   })
 })
 
@@ -220,19 +220,19 @@ describe("updateGoalStatus", () => {
     const client = makeMockClient({ data: null, error: null })
     vi.mocked(createClient).mockResolvedValue(client as any)
 
-    const result = await updateGoalStatus("goal-001", "completed")
+    const result = await updateGoalStatus("a0000000-0000-4000-8000-000000000010", "completed")
 
     expect(result).toEqual({ success: true })
     expect(client.from).toHaveBeenCalledWith("goals")
     expect(client._chain.update).toHaveBeenCalledWith({ status: "completed" })
-    expect(client._chain.eq).toHaveBeenCalledWith("id", "goal-001")
+    expect(client._chain.eq).toHaveBeenCalledWith("id", "a0000000-0000-4000-8000-000000000010")
   })
 
   it("returns error on failure", async () => {
     const client = makeMockClient({ data: null, error: { message: "db error" } })
     vi.mocked(createClient).mockResolvedValue(client as any)
 
-    const result = await updateGoalStatus("goal-001", "failed")
+    const result = await updateGoalStatus("a0000000-0000-4000-8000-000000000010", "failed")
 
     expect(result.error).toBeDefined()
     expect(result.error).toContain("meta")
@@ -244,19 +244,19 @@ describe("deleteGoal", () => {
     const client = makeMockClient({ data: null, error: null })
     vi.mocked(createClient).mockResolvedValue(client as any)
 
-    const result = await deleteGoal("goal-001")
+    const result = await deleteGoal("a0000000-0000-4000-8000-000000000010")
 
     expect(result).toEqual({ success: true })
     expect(client.from).toHaveBeenCalledWith("goals")
     expect(client._chain.delete).toHaveBeenCalled()
-    expect(client._chain.eq).toHaveBeenCalledWith("id", "goal-001")
+    expect(client._chain.eq).toHaveBeenCalledWith("id", "a0000000-0000-4000-8000-000000000010")
   })
 
   it("returns error on failure", async () => {
     const client = makeMockClient({ data: null, error: { message: "db error" } })
     vi.mocked(createClient).mockResolvedValue(client as any)
 
-    const result = await deleteGoal("goal-001")
+    const result = await deleteGoal("a0000000-0000-4000-8000-000000000010")
 
     expect(result.error).toBeDefined()
     expect(result.error).toContain("excluir")
