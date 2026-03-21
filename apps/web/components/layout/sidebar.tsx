@@ -14,6 +14,8 @@ import {
   LogOut,
   BarChart3,
   TrendingUp,
+  BookMarked,
+  FileText,
 } from "lucide-react"
 
 const navItems = [
@@ -21,6 +23,8 @@ const navItems = [
   { href: "/calls", label: "Calls", icon: Phone },
   { href: "/closers", label: "Closers", icon: Users },
   { href: "/analytics", label: "Analytics", icon: TrendingUp },
+  { href: "/library", label: "Biblioteca", icon: BookMarked },
+  { href: "/reports", label: "Relatórios", icon: FileText },
   { href: "/calls/upload", label: "Upload", icon: Upload },
   { href: "/settings", label: "Configurações", icon: Settings },
 ]

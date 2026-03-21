@@ -91,3 +91,52 @@ export interface DimensionTrendPoint {
   teamAvg?: number
   movingAvg?: number
 }
+
+// ─── Sprint 9: Coaching Types ───
+
+export type CallBookmarkRow = Database["public"]["Tables"]["call_bookmarks"]["Row"]
+export type CallCommentRow = Database["public"]["Tables"]["call_comments"]["Row"]
+export type WeeklyReportRow = Database["public"]["Tables"]["weekly_reports"]["Row"]
+
+export interface HighlightTimestamp {
+  start_sec: number
+  end_sec: number
+  label: string
+}
+
+export interface CallBookmark extends Omit<CallBookmarkRow, "highlight_timestamps"> {
+  highlight_timestamps: HighlightTimestamp[]
+  call_audits?: Pick<CallAuditRow, "id" | "lead_name" | "call_date" | "score_final" | "classificacao"> & {
+    closers: Pick<CloserRow, "name"> | null
+  }
+}
+
+export interface CallComment extends CallCommentRow {
+  author?: Pick<ProfileRow, "full_name" | "avatar_url" | "role">
+  replies?: CallComment[]
+}
+
+export interface WeeklyStats {
+  total_calls: number
+  score_avg: number
+  score_avg_prev: number | null
+  top_closers: { id: string; name: string; score: number }[]
+  most_improved_closer: { id: string; name: string; delta: number } | null
+  weakest_dimension: { id: string; name: string; avg: number } | null
+  best_call_id: string | null
+  worst_call_id: string | null
+  taxa_fechamento: number
+  taxa_fechamento_meta: number | null
+}
+
+export interface WeeklyReport extends Omit<WeeklyReportRow, "stats"> {
+  stats: WeeklyStats
+}
+
+export interface AudioMarker {
+  id: string
+  timestampSec: number
+  type: "comment" | "highlight"
+  label?: string
+  color?: string
+}

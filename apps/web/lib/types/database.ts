@@ -268,7 +268,7 @@ export interface Database {
         Row: {
           id: string
           audit_id: string | null
-          job_type: "transcribe" | "analyze" | "notify"
+          job_type: "transcribe" | "analyze" | "notify" | "weekly_report"
           status: "pending" | "processing" | "completed" | "failed"
           attempts: number
           max_attempts: number
@@ -280,7 +280,7 @@ export interface Database {
         Insert: {
           id?: string
           audit_id?: string | null
-          job_type: "transcribe" | "analyze" | "notify"
+          job_type: "transcribe" | "analyze" | "notify" | "weekly_report"
           status?: "pending" | "processing" | "completed" | "failed"
           attempts?: number
           max_attempts?: number
@@ -292,7 +292,7 @@ export interface Database {
         Update: {
           id?: string
           audit_id?: string | null
-          job_type?: "transcribe" | "analyze" | "notify"
+          job_type?: "transcribe" | "analyze" | "notify" | "weekly_report"
           status?: "pending" | "processing" | "completed" | "failed"
           attempts?: number
           max_attempts?: number
@@ -440,6 +440,175 @@ export interface Database {
             columns: ["closer_id"]
             isOneToOne: false
             referencedRelation: "closers"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      call_bookmarks: {
+        Row: {
+          id: string
+          audit_id: string
+          organization_id: string | null
+          bookmarked_by: string | null
+          tags: string[]
+          highlight_timestamps: Json
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          audit_id: string
+          organization_id?: string | null
+          bookmarked_by?: string | null
+          tags?: string[]
+          highlight_timestamps?: Json
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          audit_id?: string
+          organization_id?: string | null
+          bookmarked_by?: string | null
+          tags?: string[]
+          highlight_timestamps?: Json
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_bookmarks_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: true
+            referencedRelation: "call_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_bookmarks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_bookmarks_bookmarked_by_fkey"
+            columns: ["bookmarked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      call_comments: {
+        Row: {
+          id: string
+          audit_id: string
+          author_id: string
+          parent_id: string | null
+          timestamp_sec: number | null
+          content: string
+          resolved: boolean
+          resolved_by: string | null
+          resolved_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          audit_id: string
+          author_id: string
+          parent_id?: string | null
+          timestamp_sec?: number | null
+          content: string
+          resolved?: boolean
+          resolved_by?: string | null
+          resolved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          audit_id?: string
+          author_id?: string
+          parent_id?: string | null
+          timestamp_sec?: number | null
+          content?: string
+          resolved?: boolean
+          resolved_by?: string | null
+          resolved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_comments_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "call_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "call_comments"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      weekly_reports: {
+        Row: {
+          id: string
+          organization_id: string | null
+          week_start: string
+          week_end: string
+          report_markdown: string
+          stats: Json
+          sent_whatsapp: boolean
+          sent_email: boolean
+          sent_at: string | null
+          generated_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id?: string | null
+          week_start: string
+          week_end: string
+          report_markdown: string
+          stats?: Json
+          sent_whatsapp?: boolean
+          sent_email?: boolean
+          sent_at?: string | null
+          generated_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string | null
+          week_start?: string
+          week_end?: string
+          report_markdown?: string
+          stats?: Json
+          sent_whatsapp?: boolean
+          sent_email?: boolean
+          sent_at?: string | null
+          generated_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           }
         ]
