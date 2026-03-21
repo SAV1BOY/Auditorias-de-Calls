@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import type { CallComment } from "@/lib/types/audit"
+import { createCommentSchema } from "@/lib/validations/schemas"
 
 export async function createComment(data: {
   auditId: string
@@ -9,6 +10,11 @@ export async function createComment(data: {
   content: string
   parentId?: string
 }): Promise<{ id: string }> {
+  const parsed = createCommentSchema.safeParse(data)
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Dados inválidos")
+  }
+
   const supabase = await createClient()
   const {
     data: { user },
@@ -19,11 +25,11 @@ export async function createComment(data: {
   const { data: row, error } = await supabase
     .from("call_comments")
     .insert({
-      audit_id: data.auditId,
+      audit_id: parsed.data.auditId,
       author_id: user.id,
-      timestamp_sec: data.timestampSec ?? null,
-      content: data.content,
-      parent_id: data.parentId ?? null,
+      timestamp_sec: parsed.data.timestampSec ?? null,
+      content: parsed.data.content,
+      parent_id: parsed.data.parentId ?? null,
     })
     .select("id")
     .single()

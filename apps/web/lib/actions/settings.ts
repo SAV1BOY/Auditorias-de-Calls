@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import { requireRole } from "@/lib/auth/require-role"
+import { notificationConfigSchema } from "@/lib/validations/schemas"
 
 interface NotificationConfig {
   whatsapp_numbers: string[]
@@ -34,6 +36,8 @@ export async function getNotificationConfig(): Promise<NotificationConfig> {
 export async function updateNotificationConfig(
   formData: FormData
 ): Promise<{ success?: boolean; error?: string }> {
+  await requireRole(["admin"])
+
   const whatsappRaw = formData.get("whatsapp_numbers")?.toString() ?? ""
   const emailRaw = formData.get("email_addresses")?.toString() ?? ""
 
@@ -45,6 +49,12 @@ export async function updateNotificationConfig(
     .split("\n")
     .map((s) => s.trim())
     .filter(Boolean)
+
+  const parsed = notificationConfigSchema.safeParse({ whatsapp_numbers, email_addresses })
+  if (!parsed.success) {
+    const msg = parsed.error.issues[0]?.message ?? "Dados inválidos"
+    return { error: msg }
+  }
 
   const supabase = await createClient()
 

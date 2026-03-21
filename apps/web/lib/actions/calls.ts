@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { requireRole } from "@/lib/auth/require-role"
 import type { Database } from "@/lib/types/database"
 import type {
   AuditFilters,
@@ -171,6 +172,8 @@ export async function getAuditDetail(
 export async function resendNotification(
   auditId: string
 ): Promise<{ success?: boolean; error?: string }> {
+  await requireRole(["admin", "supervisor"])
+
   const supabase = await createClient()
 
   const { data: audit, error: fetchError } = await supabase

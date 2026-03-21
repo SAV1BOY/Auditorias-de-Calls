@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import { requireRole } from "@/lib/auth/require-role"
 import { DIMENSIONS, RADAR_LABELS, DIM_INDEX_MAP } from "@/lib/utils/constants"
 import type {
   CloserComparison,
@@ -41,28 +42,39 @@ export async function getClosersComparison(
     }))
   }
 
-  // Date-filtered: calculate from raw call_audits
+  // Date-filtered: batch fetch all audits + closers in 2 queries instead of 2N
+  let query = supabase
+    .from("call_audits")
+    .select("closer_id, score_final, d01_frame, d02_qualificacao, d03_diag_quantitativo, d04_diag_qualitativo, d05_consequencia, d06_ensino, d07_identidade, d08_ancoragem, d09_isolamento, d10_proporcao_fala, d11_promessas, d12_checkpoints, d13_fechamento")
+    .in("closer_id", closerIds)
+    .not("score_final", "is", null)
+
+  if (dateFrom) query = query.gte("call_date", dateFrom)
+  if (dateTo) query = query.lte("call_date", dateTo)
+
+  const [{ data: allCalls }, { data: closerRows }] = await Promise.all([
+    query,
+    supabase.from("closers").select("id, name").in("id", closerIds),
+  ])
+
+  const closerNameMap = new Map(
+    (closerRows ?? []).map((c) => [c.id, c.name as string])
+  )
+
+  // Group by closer_id
+  type AuditRow = Record<string, unknown>
+  const callsByCloser = new Map<string, AuditRow[]>()
+  for (const call of (allCalls ?? []) as AuditRow[]) {
+    const cid = call.closer_id as string
+    if (!callsByCloser.has(cid)) callsByCloser.set(cid, [])
+    callsByCloser.get(cid)!.push(call)
+  }
+
   const results: CloserComparison[] = []
 
   for (const closerId of closerIds) {
-    let query = supabase
-      .from("call_audits")
-      .select("*")
-      .eq("closer_id", closerId)
-      .not("score_final", "is", null)
-
-    if (dateFrom) query = query.gte("call_date", dateFrom)
-    if (dateTo) query = query.lte("call_date", dateTo)
-
-    const { data: calls } = await query
-
+    const calls = callsByCloser.get(closerId)
     if (!calls || calls.length === 0) continue
-
-    const { data: closer } = await supabase
-      .from("closers")
-      .select("name")
-      .eq("id", closerId)
-      .maybeSingle()
 
     const dimensions = DIMENSIONS.map((dim) => {
       const scores = calls
@@ -83,7 +95,7 @@ export async function getClosersComparison(
 
     results.push({
       closer_id: closerId,
-      closer_name: closer?.name ?? "Desconhecido",
+      closer_name: closerNameMap.get(closerId) ?? "Desconhecido",
       media_score: mediaScore,
       total_calls: calls.length,
       dimensions,
@@ -105,25 +117,19 @@ export async function getDimensionTrends(
   fromDate.setDate(fromDate.getDate() - days)
   const fromStr = fromDate.toISOString().split("T")[0]
 
-  // Team average (all closers) — always needed
+  // Fetch all team data in one query, then filter for closer in JS (avoids 2nd query)
   const { data: teamData } = await supabase
     .from("call_audits")
-    .select("*")
+    .select("call_date, closer_id, score_final, d01_frame, d02_qualificacao, d03_diag_quantitativo, d04_diag_qualitativo, d05_consequencia, d06_ensino, d07_identidade, d08_ancoragem, d09_isolamento, d10_proporcao_fala, d11_promessas, d12_checkpoints, d13_fechamento")
     .gte("call_date", fromStr)
     .not("score_final", "is", null)
     .order("call_date", { ascending: true })
 
-  // Individual closer scores — only query separately if filtering by closer
-  let closerData = teamData
-  if (closerId) {
-    const { data } = await supabase
-      .from("call_audits")
-      .select("*")
-      .gte("call_date", fromStr)
-      .eq("closer_id", closerId)
-      .not("score_final", "is", null)
-      .order("call_date", { ascending: true })
-    closerData = data
+  // Filter from teamData to avoid extra query
+  type AuditRow = Record<string, unknown>
+  let closerData: AuditRow[] | null = teamData as AuditRow[] | null
+  if (closerId && teamData) {
+    closerData = (teamData as AuditRow[]).filter((row) => row.closer_id === closerId)
   }
 
   const closerGrouped = groupByDateDimAvg(closerData, dimensionId)
@@ -277,6 +283,8 @@ async function calculateCurrentValue(
 export async function createGoal(
   formData: FormData
 ): Promise<{ success?: boolean; error?: string }> {
+  await requireRole(["admin", "supervisor"])
+
   const title = formData.get("title")?.toString().trim()
   if (!title) return { error: "Título é obrigatório." }
 
@@ -316,6 +324,8 @@ export async function updateGoalStatus(
   goalId: string,
   status: "active" | "completed" | "failed"
 ): Promise<{ success?: boolean; error?: string }> {
+  await requireRole(["admin", "supervisor"])
+
   const supabase = await createClient()
   const { error } = await supabase
     .from("goals")
@@ -331,6 +341,8 @@ export async function updateGoalStatus(
 export async function deleteGoal(
   goalId: string
 ): Promise<{ success?: boolean; error?: string }> {
+  await requireRole(["admin", "supervisor"])
+
   const supabase = await createClient()
   const { error } = await supabase.from("goals").delete().eq("id", goalId)
 

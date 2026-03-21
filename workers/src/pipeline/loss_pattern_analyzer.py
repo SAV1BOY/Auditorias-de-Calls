@@ -18,19 +18,19 @@ from src.prompts.loss_pattern_prompt import LOSS_PATTERN_PROMPT
 logger = logging.getLogger(__name__)
 
 DIMENSION_NAMES: dict[str, str] = {
-    "d01_abertura": "Abertura e Rapport",
-    "d02_qualificacao": "Qualificacao",
-    "d03_consciencia_problema": "Consciencia do Problema",
-    "d04_implicacoes": "Implicacoes",
-    "d05_visao_solucao": "Visao da Solucao",
-    "d06_apresentacao_oferta": "Apresentacao da Oferta",
-    "d07_prova_social": "Prova Social",
-    "d08_ancoragem_preco": "Ancoragem de Preco",
-    "d09_contorno_objecoes": "Contorno de Objecoes",
-    "d10_fechamento": "Fechamento",
-    "d11_comunicacao": "Comunicacao",
-    "d12_escuta_ativa": "Escuta Ativa",
-    "d13_controle_conversa": "Controle da Conversa",
+    "d01_frame": "Frame e Lideranca",
+    "d02_qualificacao": "Qualificacao Preliminar",
+    "d03_diag_quantitativo": "Diagnostico Quantitativo",
+    "d04_diag_qualitativo": "Diagnostico Qualitativo",
+    "d05_consequencia": "Perguntas de Consequencia",
+    "d06_ensino": "Ensino Comercial",
+    "d07_identidade": "Reframe de Identidade",
+    "d08_ancoragem": "Ancoragem de Valor",
+    "d09_isolamento": "Isolamento de Objecao",
+    "d10_proporcao_fala": "Proporcao de Fala",
+    "d11_promessas": "Seguranca de Promessas",
+    "d12_checkpoints": "Checkpoints",
+    "d13_fechamento": "Controle e Fechamento",
 }
 
 

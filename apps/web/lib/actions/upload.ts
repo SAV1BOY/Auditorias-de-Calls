@@ -62,7 +62,9 @@ export async function uploadCall(formData: FormData): Promise<UploadResult> {
         lead_name: leadName.trim(),
         call_date: callDate,
         resultado: (resultado as CallAuditInsert["resultado"]) || null,
-        valor_fechamento: valorFechamento ? parseFloat(valorFechamento) : null,
+        valor_fechamento: valorFechamento
+          ? (Number.isFinite(parseFloat(valorFechamento)) ? parseFloat(valorFechamento) : null)
+          : null,
         status: "uploaded" as const,
       } satisfies CallAuditInsert)
       .select("id")

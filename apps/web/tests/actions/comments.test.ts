@@ -60,7 +60,7 @@ describe("createComment", () => {
     vi.mocked(createClient).mockResolvedValue(client as any)
 
     const result = await createComment({
-      auditId: "audit-001",
+      auditId: "a0000000-0000-4000-8000-000000000001",
       timestampSec: 120,
       content: "Boa ancoragem neste ponto",
     })
@@ -69,7 +69,7 @@ describe("createComment", () => {
     expect(client.from).toHaveBeenCalledWith("call_comments")
     expect(client._chain.insert).toHaveBeenCalledWith(
       expect.objectContaining({
-        audit_id: "audit-001",
+        audit_id: "a0000000-0000-4000-8000-000000000001",
         author_id: "user-001",
         timestamp_sec: 120,
         content: "Boa ancoragem neste ponto",
@@ -85,16 +85,16 @@ describe("createComment", () => {
     vi.mocked(createClient).mockResolvedValue(client as any)
 
     const result = await createComment({
-      auditId: "audit-001",
+      auditId: "a0000000-0000-4000-8000-000000000001",
       content: "Concordo com o comentário",
-      parentId: "comment-001",
+      parentId: "a0000000-0000-4000-8000-000000000002",
     })
 
     expect(result).toEqual({ id: "comment-reply" })
     expect(client._chain.insert).toHaveBeenCalledWith(
       expect.objectContaining({
-        audit_id: "audit-001",
-        parent_id: "comment-001",
+        audit_id: "a0000000-0000-4000-8000-000000000001",
+        parent_id: "a0000000-0000-4000-8000-000000000002",
         timestamp_sec: null,
       })
     )
@@ -109,7 +109,7 @@ describe("createComment", () => {
     vi.mocked(createClient).mockResolvedValue(client as any)
 
     await expect(
-      createComment({ auditId: "audit-001", content: "test" })
+      createComment({ auditId: "a0000000-0000-4000-8000-000000000001", content: "test" })
     ).rejects.toThrow("Not authenticated")
   })
 })
