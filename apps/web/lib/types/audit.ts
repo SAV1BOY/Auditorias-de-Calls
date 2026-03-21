@@ -118,15 +118,15 @@ export interface CallComment extends CallCommentRow {
 
 export interface WeeklyStats {
   total_calls: number
+  insufficient_data?: boolean
   score_avg: number
   score_avg_prev: number | null
   top_closers: { id: string; name: string; score: number }[]
-  most_improved_closer: { id: string; name: string; delta: number } | null
   weakest_dimension: { id: string; name: string; avg: number } | null
-  best_call_id: string | null
-  worst_call_id: string | null
+  best_call: { id: string; lead_name: string; closer_name: string; score: number | null } | null
+  worst_call: { id: string; lead_name: string; closer_name: string; score: number | null } | null
   taxa_fechamento: number
-  taxa_fechamento_meta: number | null
+  total_prev_calls: number
 }
 
 export interface WeeklyReport extends Omit<WeeklyReportRow, "stats"> {

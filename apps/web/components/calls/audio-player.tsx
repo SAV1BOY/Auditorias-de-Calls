@@ -153,8 +153,6 @@ export function AudioPlayer({
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 
-  // Separate highlight ranges from point markers
-  const highlights = markers.filter((m) => m.type === "highlight")
   const pointMarkers = markers.filter((m) => m.type === "comment")
 
   return (
@@ -240,13 +238,6 @@ export function AudioPlayer({
         className="relative h-3 cursor-pointer rounded-full bg-muted group"
         onClick={handleProgressClick}
       >
-        {/* Highlight ranges */}
-        {highlights.map((h) => {
-          // Highlights use the marker data from bookmarks
-          // We need start/end which we encode as timestampSec for start
-          return null // Highlights rendered below via separate data
-        })}
-
         {/* Progress fill */}
         <div
           className="absolute left-0 top-0 h-full rounded-full bg-primary transition-[width] duration-100"

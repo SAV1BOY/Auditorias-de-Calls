@@ -6,6 +6,7 @@ collects stats from the database and sends via WhatsApp/Email.
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
@@ -151,8 +152,10 @@ class WeeklyReporter:
                 closer_scores.setdefault(cid, []).append(s)
                 closers_data = c.get("closers")
                 if closers_data:
-                    name = closers_data.get("name", "Desconhecido") if isinstance(closers_data, dict) else "Desconhecido"
-                    closer_names[cid] = name
+                    if isinstance(closers_data, dict):
+                        closer_names[cid] = closers_data.get("name", "Desconhecido")
+                    elif isinstance(closers_data, list) and closers_data:
+                        closer_names[cid] = closers_data[0].get("name", "Desconhecido")
 
         top_closers = sorted(
             [
@@ -172,7 +175,6 @@ class WeeklyReporter:
         worst_call = min(calls, key=lambda c: c.get("score_final") or 999) if scores else None
 
         # Weakest dimension
-        dim_cols = [f"d{str(i).zfill(2)}" for i in range(1, 14)]
         dim_names = {
             "d01": "Frame e Liderança", "d02": "Qualificação Preliminar",
             "d03": "Diagnóstico Quantitativo", "d04": "Diagnóstico Qualitativo",
@@ -222,6 +224,8 @@ class WeeklyReporter:
             closer_name = "Desconhecido"
             if isinstance(closers_data, dict):
                 closer_name = closers_data.get("name", closer_name)
+            elif isinstance(closers_data, list) and closers_data:
+                closer_name = closers_data[0].get("name", closer_name)
             return {
                 "id": call["id"],
                 "lead_name": call.get("lead_name", "—"),
@@ -243,8 +247,6 @@ class WeeklyReporter:
 
     def generate_report(self, stats: dict[str, Any], week_start: date, week_end: date) -> str:
         """Send stats to Claude API and get formatted markdown report."""
-        import json
-
         if stats.get("insufficient_data"):
             return (
                 f"📊 RESUMO SEMANAL — {week_start.strftime('%d/%m')} a {week_end.strftime('%d/%m')}\n\n"

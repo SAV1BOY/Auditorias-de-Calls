@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { X } from "lucide-react"
-import { toggleBookmark } from "@/lib/actions/bookmarks"
+import { toggleBookmark, getBookmark } from "@/lib/actions/bookmarks"
 import type { CallBookmark } from "@/lib/types/audit"
 
 interface BookmarkDialogProps {
@@ -69,16 +69,11 @@ export function BookmarkDialog({
         highlightTimestamps: [],
         notes: notes || undefined,
       })
-      onSaved({
-        id: "",
-        audit_id: auditId,
-        organization_id: null,
-        bookmarked_by: null,
-        tags,
-        highlight_timestamps: [],
-        notes: notes || null,
-        created_at: new Date().toISOString(),
-      })
+      // Refetch from server to get the real bookmark with correct ID
+      const saved = await getBookmark(auditId)
+      if (saved) {
+        onSaved(saved)
+      }
     })
   }
 
