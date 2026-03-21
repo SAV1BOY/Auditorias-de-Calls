@@ -11,9 +11,12 @@ import type { CallAuditWithCloser } from "@/lib/types/audit"
 import { DIMENSIONS } from "@/lib/utils/constants"
 import { formatScore } from "@/lib/utils/format"
 import { getScoreColor } from "@/lib/utils/colors"
+import { CommentsPanel } from "./comments-panel"
 
 interface AuditTabsProps {
   audit: CallAuditWithCloser
+  currentTime?: number
+  onSeek?: (sec: number) => void
 }
 
 /* ─────────────── SCORECARD TAB ─────────────── */
@@ -350,7 +353,7 @@ function PlanoAcaoContent({ audit }: { audit: CallAuditWithCloser }) {
 }
 
 /* ─────────────── MAIN TABS COMPONENT ─────────────── */
-export function AuditTabs({ audit }: AuditTabsProps) {
+export function AuditTabs({ audit, currentTime, onSeek }: AuditTabsProps) {
   return (
     <Tabs defaultValue="scorecard">
       <TabsList className="flex-wrap">
@@ -360,6 +363,7 @@ export function AuditTabs({ audit }: AuditTabsProps) {
         <TabsTrigger value="erros">Erros & Acertos</TabsTrigger>
         <TabsTrigger value="reescrita">Reescrita</TabsTrigger>
         <TabsTrigger value="plano">Plano de Ação</TabsTrigger>
+        <TabsTrigger value="coaching">Coaching</TabsTrigger>
       </TabsList>
 
       <TabsContent value="scorecard">
@@ -424,6 +428,21 @@ export function AuditTabs({ audit }: AuditTabsProps) {
           </CardHeader>
           <CardContent>
             <PlanoAcaoContent audit={audit} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="coaching">
+        <Card>
+          <CardHeader>
+            <CardTitle>Coaching</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CommentsPanel
+              auditId={audit.id}
+              currentTime={currentTime}
+              onSeek={onSeek}
+            />
           </CardContent>
         </Card>
       </TabsContent>

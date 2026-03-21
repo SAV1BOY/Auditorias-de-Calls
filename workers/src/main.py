@@ -24,6 +24,7 @@ from src.drive.watcher import DriveWatcher
 from src.pipeline.analyzer import Analyzer
 from src.pipeline.notifier import Notifier
 from src.pipeline.transcriber import Transcriber
+from src.weekly_reporter import WeeklyReporter
 
 logging.basicConfig(
     level=logging.INFO,
@@ -81,6 +82,9 @@ def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync, anal
         analyzer.analyze(job.audit_id)
     elif job.job_type == "notify":
         notifier.notify(job.audit_id)
+    elif job.job_type == "weekly_report":
+        # Weekly reports are handled by the dedicated loop, not job queue
+        logger.info("Weekly report job — skipping (handled by weekly_reporter loop)")
     else:
         raise ValueError(f"Unknown job type: {job.job_type}")
 
@@ -105,6 +109,19 @@ def _drive_watcher_loop(config: Config, watcher: DriveWatcher, drive_sync: Drive
             logger.exception("Unexpected error in Drive watcher")
 
         _shutdown.wait(timeout=config.drive_poll_interval_seconds)
+
+
+def _weekly_reporter_loop(config: Config, reporter: WeeklyReporter) -> None:
+    """Check for weekly report generation every hour."""
+    logger.info("Weekly reporter started (interval: 3600s)")
+
+    while not _shutdown.is_set():
+        try:
+            reporter.run()
+        except Exception:
+            logger.exception("Unexpected error in weekly reporter")
+
+        _shutdown.wait(timeout=3600)  # Check every hour
 
 
 def _signal_handler(signum: int, frame) -> None:
@@ -133,6 +150,7 @@ def main() -> None:
     analyzer = Analyzer(config, db, drive_client)
     notifier = Notifier(config, db)
     watcher = DriveWatcher(config, db, drive_client)
+    weekly_reporter = WeeklyReporter(config, db)
 
     # Register signal handlers
     signal.signal(signal.SIGINT, _signal_handler)
@@ -151,9 +169,16 @@ def main() -> None:
         name="drive-watcher",
         daemon=True,
     )
+    weekly_thread = threading.Thread(
+        target=_weekly_reporter_loop,
+        args=(config, weekly_reporter),
+        name="weekly-reporter",
+        daemon=True,
+    )
 
     job_thread.start()
     drive_thread.start()
+    weekly_thread.start()
 
     logger.info("Worker running. Press Ctrl+C to stop.")
 
@@ -167,6 +192,7 @@ def main() -> None:
     # Wait for threads to finish
     job_thread.join(timeout=10)
     drive_thread.join(timeout=10)
+    weekly_thread.join(timeout=10)
 
     logger.info("Worker stopped.")
 
