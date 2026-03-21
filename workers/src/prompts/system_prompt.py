@@ -4,6 +4,9 @@ Source: 05-system-prompt-analista/system-prompt-analista-calls-v1.md
 Version: 1.0
 """
 
+# Bump this when the prompt changes materially
+PROMPT_VERSION: str = "1.0"
+
 SYSTEM_PROMPT: str = """# SYSTEM PROMPT — ANALISTA DE CALLS DE FECHAMENTO HIGH TICKET
 # Versão: 1.0 | Para uso em n8n, API ou qualquer orquestrador de LLM
 # Base: Protocolo de Elite 6 Fases + 10 Frameworks + Scorecard 13 Dimensões

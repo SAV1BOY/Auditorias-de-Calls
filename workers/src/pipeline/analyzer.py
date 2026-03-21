@@ -7,6 +7,8 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
+import hashlib
+
 import anthropic
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -16,7 +18,7 @@ from src.drive.client import DriveClient
 from src.pipeline.models import AnalysisResult
 from src.pipeline.parser import parse_analysis
 from src.pipeline.whatsapp import generate_whatsapp_summary
-from src.prompts.system_prompt import SYSTEM_PROMPT
+from src.prompts.system_prompt import SYSTEM_PROMPT, PROMPT_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +199,8 @@ class Analyzer:
             "tokens_input": tokens_input,
             "tokens_output": tokens_output,
             "custo_estimado": round(cost, 4),
+            "prompt_version": PROMPT_VERSION,
+            "report_hash": hashlib.sha256(raw_text.encode()).hexdigest()[:16],
             "analyzed_at": now,
         }
         self._db.update_audit_status(audit_id, "analyzed", extra=extra)

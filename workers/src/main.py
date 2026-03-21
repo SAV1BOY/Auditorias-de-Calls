@@ -15,6 +15,7 @@ import logging
 import signal
 import sys
 import threading
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 
 from src.config import load_config, Config
 from src.db import DB, Job
@@ -50,10 +51,25 @@ def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_syn
             if job:
                 logger.info("Processing job %s (type=%s, audit=%s, attempt=%d/%d)",
                             job.id, job.job_type, job.audit_id, job.attempts + 1, job.max_attempts)
+
+                # Per-job-type timeout (seconds)
+                timeouts = {"transcribe": 600, "analyze": 300, "notify": 120, "loss_pattern": 300, "weekly_report": 300}
+                timeout_sec = timeouts.get(job.job_type, 300)
+
                 try:
-                    _process_job(job, transcriber, drive_sync, analyzer, notifier, loss_analyzer)
+                    with ThreadPoolExecutor(max_workers=1) as executor:
+                        future = executor.submit(
+                            _process_job, job, transcriber, drive_sync, analyzer, notifier, loss_analyzer
+                        )
+                        future.result(timeout=timeout_sec)
                     db.complete_job(job.id)
                     logger.info("Job %s completed successfully", job.id)
+                except FuturesTimeoutError:
+                    error_msg = f"TimeoutError: job exceeded {timeout_sec}s timeout"
+                    logger.error("Job %s timed out after %ds", job.id, timeout_sec)
+                    db.fail_job(job.id, error_msg, job.attempts, job.max_attempts)
+                    if job.attempts + 1 >= job.max_attempts and job.audit_id:
+                        db.update_audit_status(job.audit_id, "error", extra={"error_message": error_msg})
                 except Exception as e:
                     error_msg = f"{type(e).__name__}: {e}"
                     logger.error("Job %s failed: %s", job.id, error_msg)

@@ -92,13 +92,19 @@ class DB:
         }).eq("id", job_id).execute()
 
     def fail_job(self, job_id: str, error: str, attempts: int, max_attempts: int) -> None:
-        """Mark a job as failed or reset to pending for retry."""
+        """Mark a job as failed/dead_letter or reset to pending for retry.
+
+        Jobs that exceed max_attempts are moved to dead_letter status
+        for manual investigation. Otherwise, they are reset to pending.
+        """
         if attempts + 1 >= max_attempts:
             self._client.table("job_queue").update({
-                "status": "failed",
+                "status": "dead_letter",
                 "error_message": error,
                 "attempts": attempts + 1,
+                "completed_at": datetime.now(timezone.utc).isoformat(),
             }).eq("id", job_id).execute()
+            logger.warning("Job %s moved to dead_letter after %d attempts", job_id, attempts + 1)
         else:
             self._client.table("job_queue").update({
                 "status": "pending",
