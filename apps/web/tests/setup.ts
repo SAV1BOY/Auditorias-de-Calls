@@ -140,6 +140,12 @@ export function createMockSupabaseClient(chainOverrides?: Parameters<typeof crea
   return client
 }
 
+// ─── Mock auth helpers ───
+vi.mock("@/lib/auth/require-role", () => ({
+  requireRole: vi.fn().mockResolvedValue({ userId: "user-001", role: "admin", organizationId: "org-001" }),
+  requireAuth: vi.fn().mockResolvedValue({ userId: "user-001", role: "admin", organizationId: "org-001" }),
+}))
+
 // ─── Mock Supabase server client ───
 const defaultMockClient = createMockSupabaseClient()
 

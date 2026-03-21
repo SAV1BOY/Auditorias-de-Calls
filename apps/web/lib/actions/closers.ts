@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import { requireRole } from "@/lib/auth/require-role"
 import type { CloserRow } from "@/lib/types/audit"
 
 export async function getClosersList(): Promise<CloserRow[]> {
@@ -89,6 +90,8 @@ export async function getCloserScoreEvolution(
 export async function createCloser(
   formData: FormData
 ): Promise<{ success?: boolean; error?: string }> {
+  await requireRole(["admin", "supervisor"])
+
   const name = formData.get("name")?.toString().trim()
   if (!name) return { error: "Nome é obrigatório." }
 
@@ -109,6 +112,8 @@ export async function createCloser(
 export async function updateCloser(
   formData: FormData
 ): Promise<{ success?: boolean; error?: string }> {
+  await requireRole(["admin", "supervisor"])
+
   const id = formData.get("id")?.toString()
   const name = formData.get("name")?.toString().trim()
   if (!id) return { error: "ID do closer não informado." }
@@ -136,6 +141,8 @@ export async function toggleCloserActive(
   closerId: string,
   active: boolean
 ): Promise<{ success?: boolean; error?: string }> {
+  await requireRole(["admin", "supervisor"])
+
   const supabase = await createClient()
   const { error } = await supabase
     .from("closers")

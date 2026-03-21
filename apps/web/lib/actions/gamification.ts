@@ -1,6 +1,8 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { requireRole } from "@/lib/auth/require-role"
+import { createCompetitionSchema } from "@/lib/validations/schemas"
 import type {
   BadgeRow,
   CloserBadgeWithInfo,
@@ -65,83 +67,93 @@ export async function getLeaderboard(
 
   if (!closers || closers.length === 0) return []
 
+  const closerIds = closers.map((c) => c.id)
   const dateFilter = getDateFilter(period)
   const prevDates = getPreviousPeriodDates(period)
 
-  const entries: LeaderboardEntry[] = []
+  // Batch: fetch all current period audits in ONE query
+  let currentQuery = supabase
+    .from("call_audits")
+    .select("closer_id, score_final, resultado")
+    .in("closer_id", closerIds)
+    .eq("status", "completed")
 
-  for (const closer of closers) {
-    // Current period audits
-    let query = supabase
+  if (dateFilter) {
+    currentQuery = currentQuery.gte("call_date", dateFilter)
+  }
+
+  const { data: allAudits } = await currentQuery
+
+  // Batch: fetch all previous period audits in ONE query
+  let allPrevAudits: typeof allAudits = null
+  if (prevDates) {
+    const { data } = await supabase
       .from("call_audits")
-      .select("score_final, resultado")
-      .eq("closer_id", closer.id)
+      .select("closer_id, score_final, resultado")
+      .in("closer_id", closerIds)
       .eq("status", "completed")
+      .gte("call_date", prevDates.from)
+      .lt("call_date", prevDates.to)
+    allPrevAudits = data
+  }
 
-    if (dateFilter) {
-      query = query.gte("call_date", dateFilter)
-    }
+  // Batch: fetch badge counts per closer in ONE query
+  const { data: badgeRows } = await db(supabase)
+    .from("closer_badges")
+    .select("closer_id")
+    .in("closer_id", closerIds)
 
-    const { data: audits } = await query
+  // Group badge counts by closer_id
+  const badgeCounts = new Map<string, number>()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const row of (badgeRows ?? []) as any[]) {
+    const cid = row.closer_id as string
+    badgeCounts.set(cid, (badgeCounts.get(cid) ?? 0) + 1)
+  }
 
-    if (!audits || audits.length === 0) continue
+  // Group audits by closer_id
+  const auditsByCloser = new Map<string, typeof allAudits>()
+  for (const audit of allAudits ?? []) {
+    const cid = audit.closer_id as string
+    if (!auditsByCloser.has(cid)) auditsByCloser.set(cid, [])
+    auditsByCloser.get(cid)!.push(audit)
+  }
 
-    // Calculate current metric value
-    let value = 0
+  const prevByCloser = new Map<string, typeof allPrevAudits>()
+  for (const audit of allPrevAudits ?? []) {
+    const cid = audit.closer_id as string
+    if (!prevByCloser.has(cid)) prevByCloser.set(cid, [])
+    prevByCloser.get(cid)!.push(audit)
+  }
+
+  function calcMetric(audits: NonNullable<typeof allAudits>): number {
     if (metric === "score_avg") {
       const scores = audits
         .map((a) => a.score_final)
         .filter((s): s is number => s !== null)
-      value = scores.length > 0
+      return scores.length > 0
         ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
         : 0
     } else if (metric === "volume") {
-      value = audits.length
-    } else if (metric === "taxa_fechamento") {
+      return audits.length
+    } else {
       const fechamentos = audits.filter((a) => a.resultado === "fechamento").length
-      value = Math.round((fechamentos / audits.length) * 100)
+      return Math.round((fechamentos / audits.length) * 100)
     }
+  }
 
-    // Calculate previous period value for trend
-    let prevValue = 0
-    let hasPrev = false
-    if (prevDates) {
-      const { data: prevAudits } = await supabase
-        .from("call_audits")
-        .select("score_final, resultado")
-        .eq("closer_id", closer.id)
-        .eq("status", "completed")
-        .gte("call_date", prevDates.from)
-        .lt("call_date", prevDates.to)
+  const entries: LeaderboardEntry[] = []
 
-      if (prevAudits && prevAudits.length > 0) {
-        hasPrev = true
-        if (metric === "score_avg") {
-          const scores = prevAudits
-            .map((a) => a.score_final)
-            .filter((s): s is number => s !== null)
-          prevValue = scores.length > 0
-            ? scores.reduce((a, b) => a + b, 0) / scores.length
-            : 0
-        } else if (metric === "volume") {
-          prevValue = prevAudits.length
-        } else if (metric === "taxa_fechamento") {
-          const fechamentos = prevAudits.filter(
-            (a) => a.resultado === "fechamento"
-          ).length
-          prevValue = Math.round((fechamentos / prevAudits.length) * 100)
-        }
-      }
-    }
+  for (const closer of closers) {
+    const audits = auditsByCloser.get(closer.id)
+    if (!audits || audits.length === 0) continue
 
-    // Badges count
-    const { count: badgesCount } = await db(supabase)
-      .from("closer_badges")
-      .select("id", { count: "exact", head: true })
-      .eq("closer_id", closer.id)
+    const value = calcMetric(audits)
 
     let trend: "up" | "down" | "stable" = "stable"
-    if (hasPrev) {
+    const prevAudits = prevByCloser.get(closer.id)
+    if (prevAudits && prevAudits.length > 0) {
+      const prevValue = calcMetric(prevAudits)
       if (value > prevValue) trend = "up"
       else if (value < prevValue) trend = "down"
     }
@@ -152,7 +164,7 @@ export async function getLeaderboard(
       closer_name: closer.name,
       avatar_url: closer.avatar_url ?? null,
       value,
-      badges_count: badgesCount ?? 0,
+      badges_count: badgeCounts.get(closer.id) ?? 0,
       trend,
     })
   }
@@ -264,6 +276,8 @@ export async function getCompetitions(): Promise<CompetitionWithStandings[]> {
 export async function createCompetition(
   formData: FormData
 ): Promise<{ success?: boolean; error?: string }> {
+  await requireRole(["admin", "supervisor"])
+
   const supabase = await createClient()
 
   const title = formData.get("title") as string
@@ -272,20 +286,27 @@ export async function createCompetition(
   const startDate = formData.get("start_date") as string
   const endDate = formData.get("end_date") as string
 
-  if (!title || !metric || !startDate || !endDate) {
-    return { error: "Preencha todos os campos obrigatórios." }
-  }
-
-  const now = new Date().toISOString().split("T")[0]
-  const status = startDate <= now ? "active" : "upcoming"
-
-  const { error } = await db(supabase).from("competitions").insert({
+  const parsed = createCompetitionSchema.safeParse({
     title,
     description: description || null,
     metric,
-    metric_params: {},
     start_date: startDate,
     end_date: endDate,
+  })
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." }
+  }
+
+  const now = new Date().toISOString().split("T")[0]
+  const status = parsed.data.start_date <= now ? "active" : "upcoming"
+
+  const { error } = await db(supabase).from("competitions").insert({
+    title: parsed.data.title,
+    description: parsed.data.description || null,
+    metric: parsed.data.metric,
+    metric_params: {},
+    start_date: parsed.data.start_date,
+    end_date: parsed.data.end_date,
     status,
   })
 
@@ -304,7 +325,7 @@ export async function getCompetitionStandings(
   // Fetch competition details
   const { data: comp } = await db(supabase)
     .from("competitions")
-    .select("*")
+    .select("id, metric, start_date, end_date")
     .eq("id", competitionId)
     .single()
 
@@ -319,17 +340,29 @@ export async function getCompetitionStandings(
 
   if (!closers || closers.length === 0) return []
 
+  const closerIds = closers.map((c) => c.id)
+
+  // Batch: fetch all audits for all closers in the competition date range
+  const { data: allAudits } = await supabase
+    .from("call_audits")
+    .select("closer_id, score_final, resultado")
+    .in("closer_id", closerIds)
+    .eq("status", "completed")
+    .gte("call_date", competition.start_date)
+    .lte("call_date", competition.end_date)
+
+  // Group by closer_id
+  const auditsByCloser = new Map<string, NonNullable<typeof allAudits>>()
+  for (const audit of allAudits ?? []) {
+    const cid = audit.closer_id as string
+    if (!auditsByCloser.has(cid)) auditsByCloser.set(cid, [])
+    auditsByCloser.get(cid)!.push(audit)
+  }
+
   const standings: CompetitionStanding[] = []
 
   for (const closer of closers) {
-    const { data: audits } = await supabase
-      .from("call_audits")
-      .select("score_final, resultado")
-      .eq("closer_id", closer.id)
-      .eq("status", "completed")
-      .gte("call_date", competition.start_date)
-      .lte("call_date", competition.end_date)
-
+    const audits = auditsByCloser.get(closer.id)
     if (!audits || audits.length === 0) continue
 
     let value = 0
