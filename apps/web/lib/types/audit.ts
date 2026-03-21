@@ -140,3 +140,103 @@ export interface AudioMarker {
   label?: string
   color?: string
 }
+
+// ─── Sprint 11: Gamification Types ───
+
+export interface BadgeRow {
+  id: string
+  slug: string
+  name: string
+  description: string
+  icon: string
+  category: "score" | "streak" | "volume" | "dimension" | "special"
+  criteria: Record<string, unknown>
+}
+
+export interface CloserBadgeWithInfo {
+  id: string
+  closer_id: string
+  badge: BadgeRow
+  audit_id: string | null
+  earned_at: string
+}
+
+export interface CloserStreakRow {
+  id: string
+  closer_id: string
+  streak_type: string
+  current_count: number
+  best_count: number
+  last_updated: string
+}
+
+export interface LeaderboardEntry {
+  rank: number
+  closer_id: string
+  closer_name: string
+  avatar_url: string | null
+  value: number
+  badges_count: number
+  trend: "up" | "down" | "stable"
+}
+
+export interface CompetitionRow {
+  id: string
+  title: string
+  description: string | null
+  metric: string
+  metric_params: Record<string, unknown>
+  start_date: string
+  end_date: string
+  status: "upcoming" | "active" | "completed"
+}
+
+export interface CompetitionStanding {
+  closer_id: string
+  closer_name: string
+  rank: number
+  value: number
+}
+
+export interface CompetitionWithStandings extends CompetitionRow {
+  standings: CompetitionStanding[]
+}
+
+// ─── Sprint 11: Sentiment Types ───
+
+export interface SentimentTimelineEntry {
+  timestamp_range: string
+  sentiment: "positive" | "neutral" | "negative" | "mixed"
+  confidence: number
+  key_moment: string
+}
+
+export interface DetectedObjection {
+  timestamp: string
+  objection: string
+  closer_response: string
+  effectiveness: "good" | "poor"
+}
+
+// ─── Sprint 11: Loss Pattern Types ───
+
+export interface LossPattern {
+  pattern: string
+  frequency: number
+  severity: "high" | "medium" | "low"
+  affected_closers: string[]
+  example_audits: string[]
+  recommendation: string
+}
+
+export interface LossPatternReport {
+  id: string
+  generated_at: string
+  period_start: string
+  period_end: string
+  total_lost_calls: number
+  patterns: LossPattern[]
+  common_objections: { objection: string; count: number; best_response: string }[]
+  weakest_phases: { phase: string; avg_score: number }[]
+  report_markdown: string | null
+}

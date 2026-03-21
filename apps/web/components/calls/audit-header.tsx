@@ -25,6 +25,7 @@ import { getClassificacaoColor, getScoreColor } from "@/lib/utils/colors"
 import { RESULTADO_LABELS } from "@/lib/utils/constants"
 import { ProcessingStatus } from "./processing-status"
 import { BookmarkButton } from "./bookmark-button"
+import { ExportPdfButton } from "./export-pdf-button"
 import { resendNotification } from "@/lib/actions/calls"
 
 interface AuditHeaderProps {
@@ -148,6 +149,10 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                     <Download className="mr-1 h-4 w-4" />
                     Download Relatório
                   </Button>
+                )}
+                {(audit.status === "completed" ||
+                  audit.status === "analyzed") && (
+                  <ExportPdfButton auditId={audit.id} />
                 )}
                 {(audit.status === "completed" ||
                   audit.status === "analyzed") && (

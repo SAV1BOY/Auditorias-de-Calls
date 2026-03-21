@@ -186,6 +186,12 @@ class Analyzer:
             "reescrita_falas": result.reescrita_falas,
             "mapa_frameworks": result.mapa_frameworks,
             "fases_analise": result.fases_analise,
+            # Sentiment analysis
+            "sentiment_overall": result.sentiment_overall,
+            "sentiment_timeline": result.sentiment_timeline,
+            "sentiment_score": result.sentiment_score,
+            "engagement_level": result.engagement_level,
+            "objections_detected": result.objections_detected,
             # Meta
             "modelo_analise": MODEL,
             "tokens_input": tokens_input,
@@ -208,6 +214,16 @@ class Analyzer:
         # 9. Create notify job
         self._db.create_job(audit_id, "notify")
         logger.info("Created 'notify' job for audit %s", audit_id)
+
+        # 10. Evaluate badges (non-fatal)
+        try:
+            from src.pipeline.badge_evaluator import BadgeEvaluator
+            badge_evaluator = BadgeEvaluator(self._db)
+            earned = badge_evaluator.evaluate(audit_id)
+            if earned:
+                logger.info("Badges earned for audit %s: %s", audit_id, earned)
+        except Exception as e:
+            logger.warning("Badge evaluation failed for audit %s (non-fatal): %s", audit_id, e)
 
         return result
 

@@ -83,3 +83,53 @@ export const DIM_INDEX_MAP: Record<string, string> = {
   d12_checkpoints: "avg_d12",
   d13_fechamento: "avg_d13",
 }
+
+// ─── Sprint 11: Gamification Constants ───
+
+export const BADGE_CATEGORIES: Record<string, string> = {
+  score: "Score",
+  streak: "Sequência",
+  volume: "Volume",
+  dimension: "Dimensão",
+  special: "Especial",
+}
+
+export const LEADERBOARD_METRICS: { value: string; label: string }[] = [
+  { value: "score_avg", label: "Média de Score" },
+  { value: "volume", label: "Volume de Calls" },
+  { value: "taxa_fechamento", label: "Taxa de Fechamento" },
+]
+
+export const LEADERBOARD_PERIODS: { value: string; label: string }[] = [
+  { value: "week", label: "Esta Semana" },
+  { value: "month", label: "Este Mês" },
+  { value: "all", label: "Todos os Tempos" },
+]
+
+// ─── Sprint 11: Sentiment Constants ───
+
+export const SENTIMENT_LABELS: Record<string, string> = {
+  positive: "Positivo",
+  neutral: "Neutro",
+  negative: "Negativo",
+  mixed: "Misto",
+}
+
+export const SENTIMENT_COLORS: Record<string, string> = {
+  positive: "#22c55e",
+  neutral: "#a3a3a3",
+  negative: "#ef4444",
+  mixed: "#f59e0b",
+}
+
+export const ENGAGEMENT_LABELS: Record<string, string> = {
+  high: "Alto",
+  medium: "Médio",
+  low: "Baixo",
+}
+
+export const ENGAGEMENT_COLORS: Record<string, string> = {
+  high: "#22c55e",
+  medium: "#f59e0b",
+  low: "#ef4444",
+}

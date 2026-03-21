@@ -480,6 +480,131 @@ def calculate_weighted_score(dimensions: dict[str, float]) -> float:
     return round(total, 1)
 
 
+def parse_sentiment(raw_text: str) -> dict[str, Any]:
+    """Parse the sentiment analysis section from the report.
+
+    Returns dict with:
+    - sentiment_overall: str (positive/neutral/negative/mixed)
+    - sentiment_score: float (-1.0 to 1.0)
+    - engagement_level: str (high/medium/low)
+    - sentiment_timeline: list of dicts with timestamp_range, sentiment, confidence, key_moment
+    """
+    section = _extract_section(raw_text, 10)
+    result: dict[str, Any] = {
+        "sentiment_overall": "neutral",
+        "sentiment_score": 0.0,
+        "engagement_level": "medium",
+        "sentiment_timeline": [],
+    }
+
+    if not section:
+        return result
+
+    # Parse overall sentiment
+    sentiment_match = re.search(
+        r"\*\*Sentimento:\*\*\s*(positivo|neutro|negativo|misto)",
+        section,
+        re.IGNORECASE,
+    )
+    if sentiment_match:
+        mapping = {
+            "positivo": "positive",
+            "neutro": "neutral",
+            "negativo": "negative",
+            "misto": "mixed",
+        }
+        result["sentiment_overall"] = mapping.get(
+            sentiment_match.group(1).lower(), "neutral"
+        )
+
+    # Parse score
+    score_match = re.search(
+        r"\*\*Score de Sentimento:\*\*\s*([-]?[\d]+[,.][\d]+)",
+        section,
+        re.IGNORECASE,
+    )
+    if score_match:
+        try:
+            result["sentiment_score"] = float(
+                score_match.group(1).replace(",", ".")
+            )
+        except ValueError:
+            pass
+
+    # Parse engagement
+    engagement_match = re.search(
+        r"\*\*N[ií]vel de Engajamento:\*\*\s*(alto|m[ée]dio|baixo)",
+        section,
+        re.IGNORECASE,
+    )
+    if engagement_match:
+        mapping = {
+            "alto": "high",
+            "médio": "medium",
+            "medio": "medium",
+            "baixo": "low",
+        }
+        result["engagement_level"] = mapping.get(
+            engagement_match.group(1).lower(), "medium"
+        )
+
+    # Parse timeline table rows: | trecho | sentimento | confiança | momento |
+    timeline_pattern = (
+        r"\|\s*([^|]+?)\s*\|\s*(positivo|neutro|negativo|misto)\s*\|"
+        r"\s*([\d]+[,.][\d]+)\s*\|\s*([^|]+?)\s*\|"
+    )
+    for match in re.finditer(timeline_pattern, section, re.IGNORECASE):
+        sent_mapping = {
+            "positivo": "positive",
+            "neutro": "neutral",
+            "negativo": "negative",
+            "misto": "mixed",
+        }
+        entry = {
+            "timestamp_range": match.group(1).strip(),
+            "sentiment": sent_mapping.get(
+                match.group(2).strip().lower(), "neutral"
+            ),
+            "confidence": float(match.group(3).replace(",", ".")),
+            "key_moment": match.group(4).strip(),
+        }
+        result["sentiment_timeline"].append(entry)
+
+    return result
+
+
+def parse_objections(raw_text: str) -> list[dict[str, Any]]:
+    """Parse detected objections from the sentiment section.
+
+    Returns list of dicts with: timestamp, objection, closer_response, effectiveness
+    """
+    section = _extract_section(raw_text, 10)
+    if not section:
+        return []
+
+    objections: list[dict[str, Any]] = []
+    # Match: N. **Timestamp:** XX:XX | **Objeção:** "..." | **Resposta do Closer:** "..." | **Efetividade:** boa/ruim
+    quote = r'["\u201c\u201d]'
+    pattern = (
+        r"\d+\.\s*\*\*Timestamp:\*\*\s*([^|]+)\|"
+        r"\s*\*\*Obje[çc][ãa]o:\*\*\s*" + quote + r"?([^|]+?)" + quote + r"?\s*\|"
+        r"\s*\*\*Resposta[^:]*:\*\*\s*" + quote + r"?([^|]+?)" + quote + r"?\s*\|"
+        r"\s*\*\*Efetividade:\*\*\s*(boa|ruim)"
+    )
+    for match in re.finditer(pattern, section, re.IGNORECASE):
+        effectiveness_map = {"boa": "good", "ruim": "poor"}
+        objections.append({
+            "timestamp": match.group(1).strip(),
+            "objection": match.group(2).strip(),
+            "closer_response": match.group(3).strip(),
+            "effectiveness": effectiveness_map.get(
+                match.group(4).strip().lower(), "poor"
+            ),
+        })
+
+    return objections
+
+
 def parse_analysis(
     raw_text: str,
     tokens_input: int = 0,
@@ -514,6 +639,10 @@ def parse_analysis(
             score_final = calculated
             classificacao = _classify(score_final)
 
+    # Sentiment analysis
+    sentiment_data = parse_sentiment(raw_text)
+    objections = parse_objections(raw_text)
+
     return AnalysisResult(
         raw_text=raw_text,
         score_final=score_final,
@@ -526,6 +655,11 @@ def parse_analysis(
         reescrita_falas=parse_reescrita_falas(raw_text),
         mapa_frameworks=parse_mapa_frameworks(raw_text),
         fases_analise=parse_fases_analise(raw_text),
+        sentiment_overall=sentiment_data["sentiment_overall"],
+        sentiment_score=sentiment_data["sentiment_score"],
+        sentiment_timeline=sentiment_data["sentiment_timeline"],
+        engagement_level=sentiment_data["engagement_level"],
+        objections_detected=objections,
         tokens_input=tokens_input,
         tokens_output=tokens_output,
     )

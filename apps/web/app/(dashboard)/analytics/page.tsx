@@ -1,12 +1,18 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getClosersList } from "@/lib/actions/closers"
 import { getGoals } from "@/lib/actions/analytics"
+import { getLossPatterns } from "@/lib/actions/loss-patterns"
 import { ClosersComparison } from "@/components/analytics/closers-comparison"
 import { DimensionTrends } from "@/components/analytics/dimension-trends"
 import { GoalsDashboard } from "@/components/analytics/goals-dashboard"
+import { LossPatterns } from "@/components/analytics/loss-patterns"
 
 export default async function AnalyticsPage() {
-  const [closers, goals] = await Promise.all([getClosersList(), getGoals()])
+  const [closers, goals, lossPatterns] = await Promise.all([
+    getClosersList(),
+    getGoals(),
+    getLossPatterns(),
+  ])
 
   return (
     <div className="space-y-6">
@@ -23,6 +29,9 @@ export default async function AnalyticsPage() {
           <TabsTrigger value="metas" className="flex-1 sm:flex-none">
             Metas
           </TabsTrigger>
+          <TabsTrigger value="padroes-perda" className="flex-1 sm:flex-none">
+            Padrões de Perda
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="comparativo">
@@ -35,6 +44,10 @@ export default async function AnalyticsPage() {
 
         <TabsContent value="metas">
           <GoalsDashboard goals={goals} closers={closers} />
+        </TabsContent>
+
+        <TabsContent value="padroes-perda">
+          <LossPatterns reports={lossPatterns} />
         </TabsContent>
       </Tabs>
     </div>

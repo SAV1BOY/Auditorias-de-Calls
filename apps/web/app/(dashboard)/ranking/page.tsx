@@ -1,0 +1,21 @@
+import { getLeaderboard, getCompetitions, getAllBadges } from "@/lib/actions/gamification"
+import { RankingClient } from "./ranking-client"
+
+export default async function RankingPage() {
+  const [leaderboard, competitions, badges] = await Promise.all([
+    getLeaderboard("week", "score_avg"),
+    getCompetitions(),
+    getAllBadges(),
+  ])
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold tracking-tight">Ranking</h1>
+      <RankingClient
+        initialEntries={leaderboard}
+        competitions={competitions}
+        badges={badges}
+      />
+    </div>
+  )
+}

@@ -4,6 +4,14 @@ import type {
   CallComment,
   GoalWithProgress,
   WeeklyReport,
+  BadgeRow,
+  CloserBadgeWithInfo,
+  CloserStreakRow,
+  LeaderboardEntry,
+  CompetitionWithStandings,
+  LossPatternReport,
+  SentimentTimelineEntry,
+  DetectedObjection,
 } from "@/lib/types/audit"
 
 export const mockCloser = {
@@ -181,3 +189,162 @@ export const mockGoal: GoalWithProgress = {
   current_value: 7.8,
   progress: 98,
 }
+
+// ─── Sprint 11: Gamification Fixtures ───
+
+export const mockBadge: BadgeRow = {
+  id: "badge-001",
+  slug: "first_elite",
+  name: "Primeira ELITE",
+  description: "Primeira call classificada como ELITE",
+  icon: "award",
+  category: "score",
+  criteria: { type: "classificacao", value: "ELITE", count: 1 },
+}
+
+export const mockBadges: BadgeRow[] = [
+  mockBadge,
+  {
+    id: "badge-002",
+    slug: "streak_3",
+    name: "Sequência de 3",
+    description: "3 calls consecutivas acima de 7.0",
+    icon: "flame",
+    category: "streak",
+    criteria: { type: "streak_above", threshold: 7.0, count: 3 },
+  },
+  {
+    id: "badge-003",
+    slug: "perfect_dimension",
+    name: "Dimensão Perfeita",
+    description: "Qualquer dimensão com nota 10.0",
+    icon: "star",
+    category: "dimension",
+    criteria: { type: "dimension_perfect", value: 10.0 },
+  },
+]
+
+export const mockCloserBadge: CloserBadgeWithInfo = {
+  id: "cb-001",
+  closer_id: "closer-001",
+  badge: mockBadge,
+  audit_id: "audit-001",
+  earned_at: "2026-03-15T10:00:00Z",
+}
+
+export const mockStreak: CloserStreakRow = {
+  id: "streak-001",
+  closer_id: "closer-001",
+  streak_type: "daily_above_7",
+  current_count: 5,
+  best_count: 8,
+  last_updated: "2026-03-15T10:00:00Z",
+}
+
+export const mockLeaderboardEntry: LeaderboardEntry = {
+  rank: 1,
+  closer_id: "closer-001",
+  closer_name: "Evelyn",
+  avatar_url: null,
+  value: 8.5,
+  badges_count: 3,
+  trend: "up",
+}
+
+export const mockLeaderboard: LeaderboardEntry[] = [
+  mockLeaderboardEntry,
+  {
+    rank: 2,
+    closer_id: "closer-002",
+    closer_name: "Lucas",
+    avatar_url: null,
+    value: 7.9,
+    badges_count: 1,
+    trend: "stable",
+  },
+  {
+    rank: 3,
+    closer_id: "closer-003",
+    closer_name: "Ana",
+    avatar_url: null,
+    value: 7.2,
+    badges_count: 0,
+    trend: "down",
+  },
+]
+
+export const mockCompetition: CompetitionWithStandings = {
+  id: "comp-001",
+  title: "Desafio de Março",
+  description: "Maior média de score no mês",
+  metric: "score_avg",
+  metric_params: {},
+  start_date: "2026-03-01",
+  end_date: "2026-03-31",
+  status: "active",
+  standings: [
+    { closer_id: "closer-001", closer_name: "Evelyn", rank: 1, value: 8.5 },
+    { closer_id: "closer-002", closer_name: "Lucas", rank: 2, value: 7.9 },
+  ],
+}
+
+// ─── Sprint 11: Loss Pattern Fixtures ───
+
+export const mockLossPatternReport: LossPatternReport = {
+  id: "lp-001",
+  generated_at: "2026-03-16T08:00:00Z",
+  period_start: "2026-03-01",
+  period_end: "2026-03-15",
+  total_lost_calls: 15,
+  patterns: [
+    {
+      pattern: "Falta de diagnóstico quantitativo aprofundado",
+      frequency: 8,
+      severity: "high",
+      affected_closers: ["closer-002", "closer-003"],
+      example_audits: ["audit-005", "audit-008"],
+      recommendation: "Treinar perguntas de diagnóstico quantitativo com role-play",
+    },
+    {
+      pattern: "Objeção de preço não isolada corretamente",
+      frequency: 6,
+      severity: "medium",
+      affected_closers: ["closer-001", "closer-003"],
+      example_audits: ["audit-003"],
+      recommendation: "Praticar técnica de isolamento com script específico",
+    },
+  ],
+  common_objections: [
+    { objection: "Está caro", count: 8, best_response: "Entendo. Comparando com o custo de não resolver..." },
+    { objection: "Preciso pensar", count: 5, best_response: "O que especificamente você gostaria de avaliar?" },
+  ],
+  weakest_phases: [
+    { phase: "Diagnóstico Quantitativo", avg_score: 4.8 },
+    { phase: "Isolamento de Objeção", avg_score: 5.2 },
+  ],
+  report_markdown: "# Relatório de Padrões de Perda\n\n...",
+}
+
+// ─── Sprint 11: Sentiment Fixtures ───
+
+export const mockSentimentTimeline: SentimentTimelineEntry[] = [
+  { timestamp_range: "00:00-05:00", sentiment: "neutral", confidence: 0.8, key_moment: "Abertura da call" },
+  { timestamp_range: "05:00-15:00", sentiment: "positive", confidence: 0.7, key_moment: "Engajamento no diagnóstico" },
+  { timestamp_range: "15:00-25:00", sentiment: "negative", confidence: 0.6, key_moment: "Objeção de preço" },
+  { timestamp_range: "25:00-35:00", sentiment: "positive", confidence: 0.8, key_moment: "Ancoragem de valor" },
+]
+
+export const mockObjections: DetectedObjection[] = [
+  {
+    timestamp: "15:30",
+    objection: "Está muito caro para mim",
+    closer_response: "Entendo sua preocupação. Vamos comparar com o custo de não resolver esse problema.",
+    effectiveness: "good",
+  },
+  {
+    timestamp: "22:00",
+    objection: "Preciso falar com meu sócio",
+    closer_response: "Claro, quando vocês podem conversar?",
+    effectiveness: "poor",
+  },
+]

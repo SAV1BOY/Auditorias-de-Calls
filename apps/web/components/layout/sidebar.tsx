@@ -16,6 +16,7 @@ import {
   TrendingUp,
   BookMarked,
   FileText,
+  Trophy,
 } from "lucide-react"
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/analytics", label: "Analytics", icon: TrendingUp },
   { href: "/library", label: "Biblioteca", icon: BookMarked },
   { href: "/reports", label: "Relatórios", icon: FileText },
+  { href: "/ranking", label: "Ranking", icon: Trophy },
   { href: "/calls/upload", label: "Upload", icon: Upload },
   { href: "/settings", label: "Configurações", icon: Settings },
 ]
