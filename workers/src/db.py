@@ -91,6 +91,19 @@ class DB:
             "completed_at": now,
         }).eq("id", job_id).execute()
 
+    def refresh_views(self) -> None:
+        """Trigger debounced refresh of materialized views via RPC.
+
+        Calls refresh_dashboard_views_debounced() which uses advisory locks
+        and a 30s cooldown to prevent excessive refreshes.
+        Non-fatal: logs warning on failure.
+        """
+        try:
+            self._client.rpc("refresh_dashboard_views_debounced").execute()
+            logger.debug("Materialized views refresh requested")
+        except Exception as e:
+            logger.warning("Materialized views refresh failed (non-fatal): %s", e)
+
     def fail_job(self, job_id: str, error: str, attempts: int, max_attempts: int) -> None:
         """Mark a job as failed/dead_letter or reset to pending for retry.
 

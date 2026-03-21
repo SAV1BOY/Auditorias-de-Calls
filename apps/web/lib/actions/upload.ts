@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { AUDIO_FORMATS, MAX_FILE_SIZE_BYTES } from "@/lib/utils/constants"
+import { uploadMetadataSchema } from "@/lib/validations/schemas"
 import type { Database } from "@/lib/types/database"
 import { requireRole } from "@/lib/auth/require-role"
 
@@ -14,19 +15,17 @@ export type UploadResult = {
 }
 
 export async function uploadCall(formData: FormData): Promise<UploadResult> {
+  let organizationId: string | null = null
   try {
-    await requireRole(["admin", "supervisor", "closer"])
+    const ctx = await requireRole(["admin", "supervisor", "closer"])
+    organizationId = ctx.organizationId
   } catch {
     return { error: "Sem permissão para fazer upload de calls." }
   }
   const file = formData.get("file") as File | null
-  const closerId = formData.get("closerId") as string | null
-  const leadName = formData.get("leadName") as string | null
-  const callDate = formData.get("callDate") as string | null
-  const resultado = formData.get("resultado") as string | null
-  const valorFechamento = formData.get("valorFechamento") as string | null
+  const valorFechamentoRaw = formData.get("valorFechamento") as string | null
 
-  // Validation
+  // File validation
   if (!file || file.size === 0) {
     return { error: "Selecione um arquivo de áudio." }
   }
@@ -40,22 +39,23 @@ export async function uploadCall(formData: FormData): Promise<UploadResult> {
     return { error: `Formato não suportado. Use: ${AUDIO_FORMATS.join(", ")}` }
   }
 
-  if (!closerId) {
-    return { error: "Selecione um closer." }
+  // Metadata validation via Zod
+  const resultadoRaw = formData.get("resultado") as string | null
+  const parsed = uploadMetadataSchema.safeParse({
+    closerId: formData.get("closerId"),
+    leadName: formData.get("leadName"),
+    callDate: formData.get("callDate"),
+    resultado: resultadoRaw || null,
+    valorFechamento: valorFechamentoRaw && Number.isFinite(parseFloat(valorFechamentoRaw))
+      ? parseFloat(valorFechamentoRaw)
+      : null,
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." }
   }
 
-  if (!leadName?.trim()) {
-    return { error: "Nome do lead é obrigatório." }
-  }
-
-  if (!callDate) {
-    return { error: "Data da call é obrigatória." }
-  }
-
-  const validResultados = ["fechamento", "nao_fechou", "reagendar", "outro"]
-  if (resultado && !validResultados.includes(resultado)) {
-    return { error: "Resultado inválido." }
-  }
+  const { closerId, leadName, callDate, resultado } = parsed.data
 
   try {
     const supabase = await createClient()
@@ -65,13 +65,12 @@ export async function uploadCall(formData: FormData): Promise<UploadResult> {
       .from("call_audits")
       .insert({
         closer_id: closerId,
-        lead_name: leadName.trim(),
+        lead_name: leadName,
         call_date: callDate,
-        resultado: (resultado as CallAuditInsert["resultado"]) || null,
-        valor_fechamento: valorFechamento
-          ? (Number.isFinite(parseFloat(valorFechamento)) ? parseFloat(valorFechamento) : null)
-          : null,
+        resultado: (resultado as CallAuditInsert["resultado"]) ?? null,
+        valor_fechamento: parsed.data.valorFechamento ?? null,
         status: "uploaded" as const,
+        organization_id: organizationId,
       } satisfies CallAuditInsert)
       .select("id")
       .single()
