@@ -4,6 +4,41 @@ Passo a passo completo para colocar o app funcionando do zero.
 
 ---
 
+## 0. Pré-requisitos de Sistema
+
+Antes de começar, certifique-se de que tem instalado:
+
+| Ferramenta | Versão Mínima | Como verificar |
+|------------|--------------|----------------|
+| **Node.js** | ≥18 | `node --version` |
+| **npm** | ≥9 | `npm --version` |
+| **Python** | ≥3.11 | `python3 --version` |
+| **pip** | ≥23 | `pip --version` |
+| **Git** | ≥2.30 | `git --version` |
+
+### Instalação rápida (Ubuntu/Debian)
+
+```bash
+# Node.js 20 via NodeSource
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Python 3.11+
+sudo apt-get install -y python3 python3-venv python3-pip
+
+# Git
+sudo apt-get install -y git
+```
+
+### Instalação rápida (macOS)
+
+```bash
+# Via Homebrew
+brew install node@20 python@3.11 git
+```
+
+---
+
 ## 1. APIs e Chaves Necessárias
 
 Você vai precisar criar contas e obter chaves de **6 serviços**:
@@ -130,18 +165,33 @@ Você vai precisar criar contas e obter chaves de **6 serviços**:
 ### 2.1 Executar Migrations
 
 1. No Supabase Dashboard, vá em **SQL Editor**
-2. Execute os arquivos **na ordem**:
+2. Execute os arquivos **na ordem numérica** (um por vez, aguardando cada um completar):
 
-**Primeiro:** cole o conteúdo de `supabase/migrations/001_initial_schema.sql` e execute
-- Cria todas as tabelas, views, índices e triggers
+| # | Arquivo | O que faz |
+|---|---------|-----------|
+| 1 | `001_initial_schema.sql` | Tabelas core (organizations, profiles, closers, call_audits, job_queue, drive_sync, notifications, app_config), views, índices e triggers |
+| 2 | `002_rls_policies.sql` | Políticas de Row Level Security (RLS) básicas |
+| 3 | `003_goals.sql` | Tabela de metas/goals para closers |
+| 4 | `003_storage_bucket.sql` | Cria buckets `audios` e `reports` via SQL (alternativa ao passo 2.2 manual) |
+| 5 | `004_coaching.sql` | Tabelas de coaching: bookmarks e comentários em calls |
+| 6 | `005_gamification.sql` | Badges, conquistas e competições |
+| 7 | `006_sentiment_loss.sql` | Scores de sentimento e padrões de perda |
+| 8 | `007_rls_multitenant.sql` | RLS multi-tenant com isolamento por organização |
+| 9 | `008_data_constraints.sql` | CHECK constraints (scores 0-10), dedup de jobs, validação de status |
+| 10 | `009_materialized_views.sql` | Views materializadas para dashboard (performance) |
+| 11 | `010_async_mv_refresh.sql` | Refresh assíncrono das views materializadas |
 
-**Segundo:** cole o conteúdo de `supabase/migrations/002_rls_policies.sql` e execute
-- Configura as políticas de segurança (RLS)
+**Dica:** Para executar todos de uma vez via terminal (requer Supabase CLI):
+```bash
+supabase db push
+```
 
 ### 2.2 Criar Storage Buckets
 
+> **Nota:** Se você executou a migration `003_storage_bucket.sql`, os buckets já foram criados automaticamente. Verifique em Storage no Dashboard antes de criar manualmente.
+
 1. Vá em **Storage** no Dashboard
-2. Clique em **New Bucket** e crie:
+2. Se os buckets ainda não existem, clique em **New Bucket** e crie:
 
 | Bucket | Visibilidade | Tamanho Máx | Tipos Permitidos |
 |--------|-------------|-------------|-----------------|
@@ -339,7 +389,102 @@ Siga esta sequência para validar que tudo funciona:
 
 ---
 
-## 6. Checklist de APIs — O Que Enviar
+## 6. Testes Automatizados
+
+Depois de configurar o ambiente, rode os testes para validar que tudo está funcionando.
+
+### 6.1 Testes do Frontend (Vitest)
+
+Testes unitários dos componentes React e server actions.
+
+```bash
+cd apps/web
+
+# Rodar todos os testes
+npx vitest run
+
+# Rodar em modo watch (re-executa ao salvar)
+npm run test:watch
+
+# Com relatório de cobertura
+npm run test:coverage
+```
+
+**O que testa:** Server actions (upload, closers, settings), componentes (scorecard, upload form, processing status), validações Zod.
+
+### 6.2 Testes do Worker (pytest)
+
+Testes unitários do pipeline Python (transcrição, análise, parser, notificações).
+
+```bash
+cd workers
+source venv/bin/activate   # Ativar venv (Linux/Mac)
+
+# Rodar todos os testes
+pytest tests/ -v
+
+# Rodar com cobertura
+pytest tests/ -v --cov=src --cov-report=term-missing
+
+# Rodar apenas um módulo
+pytest tests/test_parser.py -v
+```
+
+**O que testa:** Transcriber (Whisper mock), Analyzer (Claude mock), Parser (extração de scores), Notifier (WhatsApp/Email mock), Drive Sync (anti-loop).
+
+### 6.3 Testes E2E (Playwright)
+
+Testes end-to-end que simulam o usuário no browser.
+
+```bash
+cd apps/web
+
+# Instalar browsers (primeira vez)
+npx playwright install chromium
+
+# Rodar testes E2E
+npx playwright test
+
+# Com interface visual (debug)
+npx playwright test --ui
+
+# Ver relatório HTML
+npx playwright show-report
+```
+
+**Pré-requisito:** O frontend deve estar rodando (`npm run dev`) ou o Playwright inicia automaticamente.
+
+**O que testa:** Fluxo completo: login → upload → processamento → visualização de resultado.
+
+### 6.4 Verificações de Qualidade
+
+```bash
+cd apps/web
+
+# TypeScript — verificar erros de tipo
+npx tsc --noEmit
+
+# ESLint — verificar padrões de código
+npm run lint
+
+# Build de produção — garante que compila
+npm run build
+```
+
+### 6.5 Resumo dos Comandos
+
+| Teste | Comando | Diretório | Tempo |
+|-------|---------|-----------|-------|
+| Unit Frontend | `npx vitest run` | `apps/web/` | ~10s |
+| Unit Worker | `pytest tests/ -v` | `workers/` | ~5s |
+| E2E | `npx playwright test` | `apps/web/` | ~30-60s |
+| TypeScript | `npx tsc --noEmit` | `apps/web/` | ~5s |
+| Lint | `npm run lint` | `apps/web/` | ~5s |
+| Build | `npm run build` | `apps/web/` | ~30s |
+
+---
+
+## 7. Checklist de APIs — O Que Enviar
 
 Para o app funcionar **100%**, você precisa de:
 
@@ -361,7 +506,7 @@ Para o app funcionar **100%**, você precisa de:
 
 ---
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 ### "Login não funciona"
 - Verifique se `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` estão corretos
@@ -396,7 +541,7 @@ Para o app funcionar **100%**, você precisa de:
 
 ---
 
-## 8. Custos Estimados (por Call)
+## 9. Custos Estimados (por Call)
 
 | Serviço | Custo por call de 30 min | Custo por call de 60 min |
 |---------|--------------------------|--------------------------|
