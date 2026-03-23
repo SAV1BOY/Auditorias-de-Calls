@@ -182,7 +182,7 @@ export async function getGoals(): Promise<GoalWithProgress[]> {
     .order("status")
     .order("end_date", { ascending: true })
 
-  if (!goals) return []
+  if (!goals || goals.length === 0) return []
 
   // Get closer names for goals that have closer_id
   const closerIds = Array.from(new Set(goals.filter((g) => g.closer_id).map((g) => g.closer_id!)))
