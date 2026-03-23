@@ -83,7 +83,7 @@ export async function uploadCall(formData: FormData): Promise<UploadResult> {
     const auditId = auditData.id
 
     // Upload to Supabase Storage
-    const storagePath = `${auditId}/${file.name}`
+    const storagePath = `${organizationId}/${auditId}/${file.name}`
     const arrayBuffer = await file.arrayBuffer()
 
     const { error: storageError } = await supabase.storage
