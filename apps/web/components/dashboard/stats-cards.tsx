@@ -15,7 +15,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
       icon: Phone,
     },
     {
-      title: "Score Médio",
+      title: "Score M\u00e9dio",
       value: formatScore(stats.mediaScore),
       icon: Target,
     },
@@ -24,7 +24,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
       value:
         stats.taxaFechamento !== null
           ? `${stats.taxaFechamento.toFixed(0)}%`
-          : "—",
+          : "\u2014",
       icon: TrendingUp,
     },
     {
@@ -39,13 +39,13 @@ export function StatsCards({ stats }: StatsCardsProps) {
       {cards.map((card) => (
         <Card key={card.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium font-technical text-muted-foreground">
               {card.title}
             </CardTitle>
-            <card.icon className="h-4 w-4 text-muted-foreground" />
+            <card.icon className="h-5 w-5 text-primary/60" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{card.value}</div>
+            <div className="text-3xl font-bold font-technical text-accent-foreground">{card.value}</div>
           </CardContent>
         </Card>
       ))}

@@ -22,7 +22,7 @@ export function RecentCalls({ calls }: RecentCallsProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Calls Recentes</CardTitle>
+        <CardTitle><span className="amber-keyword">Calls</span> Recentes</CardTitle>
       </CardHeader>
       <CardContent>
         {calls.length === 0 ? (
@@ -38,7 +38,7 @@ export function RecentCalls({ calls }: RecentCallsProps) {
                 <TableHead>Lead</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Score</TableHead>
-                <TableHead>Classificação</TableHead>
+                <TableHead>Classifica\u00e7\u00e3o</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -48,13 +48,13 @@ export function RecentCalls({ calls }: RecentCallsProps) {
                   <TableCell className="font-medium">
                     <Link
                       href={`/calls/${call.id}`}
-                      className="hover:underline"
+                      className="hover:text-accent-foreground transition-colors"
                     >
-                      {call.closers?.name ?? "—"}
+                      {call.closers?.name ?? "\u2014"}
                     </Link>
                   </TableCell>
                   <TableCell>{call.lead_name}</TableCell>
-                  <TableCell>{formatDate(call.call_date)}</TableCell>
+                  <TableCell className="font-technical text-muted-foreground">{formatDate(call.call_date)}</TableCell>
                   <TableCell>
                     <span className={getScoreColor(call.score_final)}>
                       {formatScore(call.score_final)}
@@ -69,7 +69,7 @@ export function RecentCalls({ calls }: RecentCallsProps) {
                         {call.classificacao}
                       </Badge>
                     ) : (
-                      "—"
+                      "\u2014"
                     )}
                   </TableCell>
                   <TableCell>
