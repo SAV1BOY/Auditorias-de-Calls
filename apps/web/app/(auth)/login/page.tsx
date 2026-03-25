@@ -44,15 +44,18 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm glass shadow-elevation-3">
       <CardHeader className="space-y-1 text-center">
         <div className="flex justify-center mb-2">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">CallAudit</span>
+            <span className="text-2xl font-bold font-display">
+              <span className="text-accent-foreground">Call</span>
+              <span className="text-primary-light">Audit</span>
+            </span>
           </div>
         </div>
-        <CardTitle className="text-xl">Entrar</CardTitle>
+        <CardTitle className="text-xl font-display">Entrar</CardTitle>
         <CardDescription>
           Acesse o sistema de auditoria de calls
         </CardDescription>
@@ -86,6 +89,14 @@ export default function LoginPage() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Entrando..." : "Entrar"}
           </Button>
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-[10px] font-technical uppercase tracking-widest text-muted-foreground">
+              System Digital
+            </span>
+            <span className="text-[10px] font-technical uppercase tracking-widest text-muted-foreground">
+              FACE 100K
+            </span>
+          </div>
         </form>
       </CardContent>
     </Card>
