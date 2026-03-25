@@ -70,8 +70,8 @@ export interface SupervisorAnalysisRow {
   downsell_used: boolean | null
   downsell_narrative_quality: number | null
   priority_improvements: string[]
-  training_actions: unknown[]
-  objections_detected: unknown[]
+  training_actions: Array<{ weakness_key: string; stage_key: string | null; recommendation: string; priority: string }>
+  objections_detected: Array<{ type: string; text: string; handled: boolean; quality: string }>
   modelo_analise: string
   tokens_input: number | null
   tokens_output: number | null
@@ -177,6 +177,7 @@ export const SUPERVISOR_CLASSIFICATION_THRESHOLDS = {
   BOA: 7.0,
   REGULAR: 5.0,
   FRACA: 3.0,
+  CRITICA: 0.0, // scores below FRACA (< 3.0)
 } as const
 
 export function getSupervisorClassificationColor(classification: SupervisorClassification | null): string {

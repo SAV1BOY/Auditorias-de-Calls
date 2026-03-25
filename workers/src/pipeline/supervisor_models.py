@@ -79,7 +79,7 @@ class SupervisorAnalysisResult:
     protocol_version: str = "v1.0"
     overall_score: float = 0.0
     overall_label: str = ""
-    classification: str = "REGULAR"
+    classification: str = ""
     executive_summary: str = ""
     stages: list[SupervisorStageResult] = field(default_factory=list)
     negotiation: NegotiationResult = field(default_factory=NegotiationResult)

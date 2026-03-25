@@ -125,6 +125,7 @@ CREATE INDEX idx_sup_analyses_org ON supervisor_analyses(organization_id);
 CREATE INDEX idx_sup_analyses_score ON supervisor_analyses(overall_score DESC);
 CREATE INDEX idx_sup_stage_analysis ON supervisor_stage_scores(analysis_id);
 CREATE INDEX idx_sup_stage_key ON supervisor_stage_scores(stage_key);
+CREATE INDEX idx_negotiation_rules_org ON negotiation_rules(organization_id);
 CREATE INDEX idx_protocol_rules_org ON protocol_rules(organization_id, version);
 CREATE INDEX idx_training_closer ON closer_training_actions(closer_id);
 CREATE INDEX idx_training_status ON closer_training_actions(status);

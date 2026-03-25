@@ -130,9 +130,13 @@ class SupervisorAnalyzer:
             SupervisorAnalysisResult if successful, None if transcription missing.
         """
         # 1. Fetch transcription
-        audit = self._db.client.table("call_audits").select(
-            "id, transcricao, organization_id, closer_id"
+        try:
+            audit = self._db.client.table("call_audits").select(
+                "id, transcricao, organization_id, closer_id"
         ).eq("id", audit_id).single().execute()
+        except Exception as e:
+            logger.error("Failed to fetch audit %s: %s", audit_id, e)
+            return None
 
         if not audit.data or not audit.data.get("transcricao"):
             logger.warning("No transcription found for audit %s", audit_id)
@@ -161,6 +165,22 @@ class SupervisorAnalyzer:
             (input_tokens / 1_000_000) * COST_INPUT_PER_MTOK
             + (output_tokens / 1_000_000) * COST_OUTPUT_PER_MTOK
         )
+
+        # 5b. Check for parse errors before saving
+        if isinstance(result.raw_json, dict) and "_parse_error" in result.raw_json:
+            logger.error(
+                "Supervisor analysis parse error for audit %s: %s",
+                audit_id, result.raw_json.get("_parse_error"),
+            )
+            return None  # Don't save broken analysis — job runner can retry
+
+        if not result.stages:
+            logger.error("Supervisor analysis returned 0 stages for audit %s", audit_id)
+            return None
+
+        if not result.classification:
+            logger.warning("No classification for audit %s, skipping save", audit_id)
+            return None
 
         # 6. Save supervisor_analyses
         analysis_data: dict[str, Any] = {

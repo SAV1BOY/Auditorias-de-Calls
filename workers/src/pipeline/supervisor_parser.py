@@ -30,8 +30,9 @@ def parse_supervisor_analysis(raw_text: str) -> SupervisorAnalysisResult:
     # Strip any markdown code fences if present
     text = raw_text.strip()
     if text.startswith("```"):
-        lines = text.split("\n")
-        text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+        import re
+        text = re.sub(r"^```(?:json)?\s*\n?", "", text)
+        text = re.sub(r"\n?```\s*$", "", text)
         text = text.strip()
 
     try:
@@ -103,11 +104,33 @@ def parse_supervisor_analysis(raw_text: str) -> SupervisorAnalysisResult:
             )
         )
 
-    return SupervisorAnalysisResult(
+    # Validate classification enum
+    valid_classifications = {"EXCELENTE", "BOA", "REGULAR", "FRACA", "CRITICA"}
+    classification = data.get("classification", "")
+    if classification not in valid_classifications:
+        logger.warning("Invalid classification '%s', defaulting to empty", classification)
+        classification = ""
+
+    # Validate who_spoke_first enum
+    valid_speakers = {"closer", "lead", "unknown"}
+    if negotiation.who_spoke_first not in valid_speakers:
+        logger.warning("Invalid who_spoke_first '%s', defaulting to 'unknown'", negotiation.who_spoke_first)
+        negotiation.who_spoke_first = "unknown"
+
+    # Warn if stages count is unexpected
+    if len(stages) != 16:
+        logger.warning("Expected 16 stages, got %d", len(stages))
+
+    # Warn if overall_score is 0 with populated stages (likely parse issue)
+    overall_score = float(data.get("overall_score", 0))
+    if overall_score == 0 and stages:
+        logger.warning("overall_score is 0 but %d stages found — possible parse issue", len(stages))
+
+    result = SupervisorAnalysisResult(
         protocol_version=data.get("protocol_version", "v1.0"),
-        overall_score=float(data.get("overall_score", 0)),
+        overall_score=overall_score,
         overall_label=data.get("overall_label", ""),
-        classification=data.get("classification", "REGULAR"),
+        classification=classification,
         executive_summary=data.get("executive_summary", ""),
         stages=stages,
         negotiation=negotiation,
@@ -116,3 +139,5 @@ def parse_supervisor_analysis(raw_text: str) -> SupervisorAnalysisResult:
         training_actions=actions,
         raw_json=data,
     )
+
+    return result
