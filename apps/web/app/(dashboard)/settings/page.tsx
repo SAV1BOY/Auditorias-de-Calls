@@ -1,14 +1,35 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bell, Settings, Wifi } from "lucide-react"
+import { Bell, Settings, ShieldAlert, Wifi } from "lucide-react"
 import { getNotificationConfig, getApiStatus } from "@/lib/actions/settings"
 import { NotificationConfigForm } from "@/components/settings/notification-config-form"
 import { ApiStatusCard } from "@/components/settings/api-status-card"
 
 export default async function SettingsPage() {
-  const [config, apiStatus] = await Promise.all([
-    getNotificationConfig(),
-    getApiStatus(),
-  ])
+  let config
+  let apiStatus
+
+  try {
+    ;[config, apiStatus] = await Promise.all([
+      getNotificationConfig(),
+      getApiStatus(),
+    ])
+  } catch {
+    return (
+      <div className="space-y-6">
+        <h1 className="flex items-center gap-2 text-2xl font-bold">
+          <Settings className="h-6 w-6" />
+          Configurações
+        </h1>
+        <div className="py-16 text-center text-muted-foreground">
+          <ShieldAlert className="mx-auto h-12 w-12 mb-3 opacity-20" />
+          <p>Sem permissão para acessar configurações.</p>
+          <p className="text-sm mt-1">
+            Solicite acesso ao administrador do sistema.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

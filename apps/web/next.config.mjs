@@ -15,6 +15,15 @@ const nextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
   },
+  async redirects() {
+    return [
+      { source: "/biblioteca", destination: "/library", permanent: true },
+      { source: "/relatorios", destination: "/reports", permanent: true },
+      { source: "/relatorios/:id", destination: "/reports/:id", permanent: true },
+      { source: "/upload", destination: "/calls/upload", permanent: true },
+      { source: "/configuracoes", destination: "/settings", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {
