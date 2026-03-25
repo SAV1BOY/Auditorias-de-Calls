@@ -13,6 +13,7 @@ const navItems = [
   { href: "/library", icon: "bookmark", label: "Biblioteca" },
   { href: "/reports", icon: "description", label: "Relatórios" },
   { href: "/ranking", icon: "emoji_events", label: "Ranking" },
+  { href: "/supervisor", icon: "supervisor_account", label: "Supervisor" },
   { href: "/settings", icon: "settings", label: "Settings" },
 ]
 
