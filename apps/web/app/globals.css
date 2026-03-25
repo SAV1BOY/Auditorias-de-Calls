@@ -70,4 +70,21 @@ body {
     backdrop-filter: blur(20px);
     background: rgba(41, 42, 45, 0.6);
   }
+
+  .glass {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background: rgba(41, 42, 45, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .luminance-separator {
+    background: #292a2d;
+    height: 1px;
+    border: none;
+  }
+
+  .amber-keyword {
+    color: #ffcc8d;
+  }
 }

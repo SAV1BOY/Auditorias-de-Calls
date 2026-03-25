@@ -36,9 +36,11 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-6">
-          <span className="material-symbols-outlined text-stone-400 cursor-pointer hover:text-amber-500">
-            notifications
-          </span>
+          <button aria-label="Notificações" className="p-2 rounded-full hover:bg-white/5 transition-all">
+            <span className="material-symbols-outlined text-stone-400 hover:text-amber-500">
+              notifications
+            </span>
+          </button>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#292a2d] border border-[#a08e79]/10">
             <span className="flex h-2 w-2 rounded-full bg-[#ffa600] animate-pulse" />
             <span className="font-label text-[10px] tracking-widest uppercase font-bold text-[#d8c3ac]">

@@ -73,15 +73,13 @@ export function Sidebar({ className }: SidebarProps) {
             Nova Auditoria
           </button>
         </Link>
-        <div className="space-y-4 font-headline text-xs font-semibold uppercase tracking-widest text-[#d8c3ac]/40">
-          <div
-            className="flex items-center gap-4 cursor-pointer hover:text-amber-200 transition-colors"
-            onClick={handleLogout}
-          >
-            <span className="material-symbols-outlined">logout</span>
-            Sair
-          </div>
-        </div>
+        <button
+          className="flex items-center gap-4 w-full font-headline text-xs font-semibold uppercase tracking-widest text-[#d8c3ac]/40 cursor-pointer hover:text-amber-200 transition-colors bg-transparent border-none"
+          onClick={handleLogout}
+        >
+          <span className="material-symbols-outlined">logout</span>
+          Sair
+        </button>
       </div>
     </aside>
   )

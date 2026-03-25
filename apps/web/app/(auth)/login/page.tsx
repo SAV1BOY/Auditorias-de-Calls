@@ -49,27 +49,33 @@ export default function LoginPage() {
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <label className="font-label text-[10px] uppercase tracking-widest font-bold text-stone-500">
+          <label htmlFor="email" className="font-label text-[10px] uppercase tracking-widest font-bold text-stone-500">
             Email
           </label>
           <input
+            id="email"
             type="email"
+            autoComplete="email"
             placeholder="seu@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            aria-invalid={error ? "true" : undefined}
             className="w-full bg-[#292a2d] border border-white/5 rounded-lg px-4 py-3 text-sm text-[#e3e2e5] placeholder:text-stone-600 focus:border-[#ffa600]/50 focus:ring-1 focus:ring-[#ffa600]/50 focus:outline-none transition-all"
           />
         </div>
         <div className="space-y-2">
-          <label className="font-label text-[10px] uppercase tracking-widest font-bold text-stone-500">
+          <label htmlFor="password" className="font-label text-[10px] uppercase tracking-widest font-bold text-stone-500">
             Senha
           </label>
           <input
+            id="password"
             type="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            aria-invalid={error ? "true" : undefined}
             className="w-full bg-[#292a2d] border border-white/5 rounded-lg px-4 py-3 text-sm text-[#e3e2e5] placeholder:text-stone-600 focus:border-[#ffa600]/50 focus:ring-1 focus:ring-[#ffa600]/50 focus:outline-none transition-all"
           />
         </div>

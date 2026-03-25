@@ -20,10 +20,9 @@ export default function DashboardLayout({
           <span className="font-label text-xs font-bold text-amber-500 tracking-[0.2em] uppercase">
             SYSTEM DIGITAL
           </span>
-          <div className="flex gap-4 text-[10px] font-bold text-stone-700 uppercase tracking-widest">
-            <span className="hover:text-amber-500 transition-colors cursor-pointer">Privacy</span>
-            <span className="hover:text-amber-500 transition-colors cursor-pointer">Terms</span>
-          </div>
+          <span className="text-[10px] font-bold text-stone-700 uppercase tracking-widest">
+            CallAudit v1.0
+          </span>
         </div>
         <span className="font-headline font-bold text-sm text-[#d8c3ac] tracking-tighter">
           FACE 100K
