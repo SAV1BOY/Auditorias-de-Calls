@@ -25,10 +25,10 @@ const navItems = [
   { href: "/closers", label: "Closers", icon: Users },
   { href: "/analytics", label: "Analytics", icon: TrendingUp },
   { href: "/library", label: "Biblioteca", icon: BookMarked },
-  { href: "/reports", label: "Relatórios", icon: FileText },
+  { href: "/reports", label: "Relat\u00f3rios", icon: FileText },
   { href: "/ranking", label: "Ranking", icon: Trophy },
   { href: "/calls/upload", label: "Upload", icon: Upload },
-  { href: "/settings", label: "Configurações", icon: Settings },
+  { href: "/settings", label: "Configura\u00e7\u00f5es", icon: Settings },
 ]
 
 interface SidebarProps {
@@ -47,11 +47,12 @@ export function Sidebar({ className }: SidebarProps) {
   }
 
   return (
-    <div className={cn("flex h-full flex-col border-r bg-card", className)}>
-      <div className="flex h-14 items-center border-b px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <BarChart3 className="h-6 w-6" />
-          <span>CallAudit</span>
+    <div className={cn("flex h-full flex-col bg-surface-secondary", className)}>
+      <div className="flex h-14 items-center px-4">
+        <Link href="/" className="flex items-center gap-2 font-display font-bold">
+          <BarChart3 className="h-6 w-6 text-primary" />
+          <span className="text-accent-foreground">Call</span>
+          <span className="text-primary-light">Audit</span>
         </Link>
       </div>
 
@@ -66,20 +67,20 @@ export function Sidebar({ className }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium font-display transition-all duration-200",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-surface-interaction text-accent-foreground border-l-[3px] border-primary"
+                  : "text-muted-foreground hover:bg-surface-interaction hover:text-foreground"
               )}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon className={cn("h-4 w-4", isActive && "text-primary")} />
               {item.label}
             </Link>
           )
         })}
       </nav>
 
-      <div className="border-t p-2">
+      <div className="p-2">
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-muted-foreground"

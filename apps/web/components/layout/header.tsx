@@ -12,7 +12,10 @@ const pageTitles: Record<string, string> = {
   "/calls/upload": "Upload de Call",
   "/closers": "Closers",
   "/analytics": "Analytics",
-  "/settings": "Configurações",
+  "/library": "Biblioteca",
+  "/reports": "Relat\u00f3rios",
+  "/ranking": "Ranking",
+  "/settings": "Configura\u00e7\u00f5es",
 }
 
 export function Header() {
@@ -26,7 +29,7 @@ export function Header() {
     "CallAudit"
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:px-6">
+    <header className="flex h-14 items-center gap-4 bg-surface-secondary px-4 lg:px-6">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="lg:hidden">
@@ -35,12 +38,12 @@ export function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
-          <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
+          <SheetTitle className="sr-only">Menu de navega\u00e7\u00e3o</SheetTitle>
           <Sidebar />
         </SheetContent>
       </Sheet>
 
-      <h1 className="text-lg font-semibold">{title}</h1>
+      <h1 className="text-lg font-semibold font-display">{title}</h1>
     </header>
   )
 }

@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
+import { FooterInstitutional } from "@/components/layout/footer-institutional"
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,7 @@ export default function DashboardLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
         <main className="flex-1 overflow-auto p-4 lg:p-6">{children}</main>
+        <FooterInstitutional />
       </div>
     </div>
   )
