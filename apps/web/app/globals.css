@@ -2,138 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    /* ═══ SURFACE HIERARCHY ═══ */
-    --background: 228 10% 8%;           /* #121316 */
-    --foreground: 30 33% 76%;           /* #d8c3ac */
+body {
+  background-color: #050608;
+  background-image:
+    radial-gradient(circle at 50% 50%, #0F161C 0%, #050608 100%),
+    linear-gradient(rgba(255, 166, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 166, 0, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 40px 40px, 40px 40px;
+  background-attachment: fixed;
+}
 
-    --card: 210 6% 11%;                 /* #1a1c1e */
-    --card-foreground: 30 33% 76%;      /* #d8c3ac */
-
-    --popover: 210 6% 11%;
-    --popover-foreground: 30 33% 76%;
-
-    /* ═══ PRIMARY (AMBER) ═══ */
-    --primary: 39 100% 50%;             /* #ffa600 */
-    --primary-foreground: 228 10% 8%;   /* #121316 */
-
-    /* ═══ SECONDARY ═══ */
-    --secondary: 225 4% 17%;            /* #292a2d */
-    --secondary-foreground: 30 33% 76%;
-
-    /* ═══ MUTED ═══ */
-    --muted: 225 4% 17%;
-    --muted-foreground: 0 0% 54%;       /* #8a8a8a */
-
-    /* ═══ ACCENT ═══ */
-    --accent: 225 4% 17%;
-    --accent-foreground: 34 100% 78%;   /* #ffcc8d */
-
-    /* ═══ DESTRUCTIVE ═══ */
-    --destructive: 0 84% 60%;           /* #ef4444 */
-    --destructive-foreground: 0 0% 98%;
-
-    /* ═══ BORDERS (No-Line Rule: use sparingly) ═══ */
-    --border: 225 4% 17%;
-    --input: 225 4% 17%;
-    --ring: 39 100% 50%;                /* amber focus ring */
-
-    --radius: 0.75rem;
-
-    /* ═══ CUSTOM TOKENS ═══ */
-    --surface-base: 228 10% 8%;
-    --surface-secondary: 210 6% 11%;
-    --surface-interaction: 225 4% 17%;
-    --surface-highest: 225 3% 21%;
-    --primary-dim: 39 100% 38%;
-    --primary-light: 34 100% 78%;
-    --text-muted-deep: 0 0% 35%;
-    --amber-glow: 0.12;
-  }
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
 @layer base {
+  .dark {
+    --background: 220 12% 5%;
+    --foreground: 220 5% 90%;
+    --card: 220 10% 11%;
+    --card-foreground: 220 5% 90%;
+    --popover: 220 12% 9%;
+    --popover-foreground: 220 5% 90%;
+    --primary: 36 100% 50%;
+    --primary-foreground: 30 100% 13%;
+    --secondary: 36 100% 77%;
+    --secondary-foreground: 30 100% 13%;
+    --muted: 220 10% 16%;
+    --muted-foreground: 30 25% 65%;
+    --accent: 36 100% 50%;
+    --accent-foreground: 30 100% 13%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 30 20% 20%;
+    --input: 30 20% 20%;
+    --ring: 36 100% 50%;
+    --radius: 1rem;
+  }
+
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground font-technical antialiased;
-    position: relative;
+    @apply bg-background text-foreground;
   }
 
-  /* ═══ VIGNETTE OVERLAY ═══ */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.35));
-  }
-
-  /* ═══ TECHNICAL GRID ═══ */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background-image:
-      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-    background-size: 40px 40px;
-    opacity: 0.6;
-  }
-
-  /* ═══ SCROLLBAR CUSTOM ═══ */
+  /* Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: hsl(var(--surface-base));
+    background: #0d0e11;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--surface-interaction));
+    background: #343538;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--surface-highest));
+    background: #534433;
   }
 }
 
 @layer components {
-  /* ═══ GLASSMORPHISM ═══ */
-  .glass {
-    background: rgba(26, 28, 30, 0.8);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  /* ═══ AMBER GLOW ═══ */
-  .amber-glow {
-    box-shadow: 0 0 20px rgba(255, 166, 0, var(--amber-glow));
-  }
-
-  /* ═══ AMBER KEYWORD (for headlines) ═══ */
-  .amber-keyword {
-    color: hsl(var(--primary-light));
-  }
-
-  /* ═══ NO-LINE SEPARATOR ═══ */
-  .luminance-separator {
-    background: hsl(var(--surface-interaction));
-    height: 1px;
-    border: none;
-  }
-}
-
-@layer utilities {
-  .content-above-overlays {
-    position: relative;
-    z-index: 2;
+  .glass-panel {
+    backdrop-filter: blur(20px);
+    background: rgba(41, 42, 45, 0.6);
   }
 }

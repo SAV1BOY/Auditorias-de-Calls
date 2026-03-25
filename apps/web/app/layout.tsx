@@ -1,12 +1,12 @@
 import type { Metadata } from "next"
-import { Plus_Jakarta_Sans, Manrope } from "next/font/google"
+import { Plus_Jakarta_Sans, Manrope, JetBrains_Mono } from "next/font/google"
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
-const plusJakarta = Plus_Jakarta_Sans({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  weight: ["400", "500", "600", "700"],
+  variable: "--font-jakarta",
+  weight: ["400", "600", "700", "800"],
   display: "swap",
 })
 
@@ -17,11 +17,18 @@ const manrope = Manrope({
   display: "swap",
 })
 
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  weight: ["400"],
+  display: "swap",
+})
+
 export const metadata: Metadata = {
-  title: "CallAudit \u2014 Auditoria de Calls",
+  title: "CallAudit | System Digital",
   description:
-    "Sistema de auditoria autom\u00e1tica de calls de fechamento high ticket",
-  themeColor: "#121316",
+    "Sistema de Auditoria de Calls de Fechamento",
+  themeColor: "#050608",
 }
 
 export default function RootLayout({
@@ -31,12 +38,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="dark">
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body
-        className={`${plusJakarta.variable} ${manrope.variable} font-technical antialiased`}
+        className={`${jakarta.variable} ${manrope.variable} ${jetbrains.variable} font-body text-on-surface selection:bg-primary-container selection:text-on-primary-fixed overflow-x-hidden`}
       >
-        <div className="content-above-overlays min-h-screen">
-          {children}
-        </div>
+        {children}
         <Toaster />
       </body>
     </html>
