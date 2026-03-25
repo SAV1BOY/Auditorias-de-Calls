@@ -15,6 +15,7 @@ import { CommentsPanel } from "./comments-panel"
 import { SentimentTimeline } from "./sentiment-timeline"
 import { EngagementMeter } from "./engagement-meter"
 import { ObjectionsList } from "./objections-list"
+import { SupervisorTabContent } from "./supervisor-tab-content"
 
 interface AuditTabsProps {
   audit: CallAuditWithCloser
@@ -251,6 +252,7 @@ export function AuditTabs({ audit, currentTime, onSeek }: AuditTabsProps) {
         <TabsTrigger value="plano">Plano de A\u00e7\u00e3o</TabsTrigger>
         <TabsTrigger value="sentimento">Sentimento</TabsTrigger>
         <TabsTrigger value="coaching">Coaching</TabsTrigger>
+        <TabsTrigger value="supervisor">Supervisor</TabsTrigger>
       </TabsList>
 
       <TabsContent value="scorecard"><Card><CardHeader><CardTitle>Scorecard \u2014 13 Dimens\u00f5es</CardTitle></CardHeader><CardContent><ScorecardContent audit={audit} /></CardContent></Card></TabsContent>
@@ -261,6 +263,7 @@ export function AuditTabs({ audit, currentTime, onSeek }: AuditTabsProps) {
       <TabsContent value="plano"><Card><CardHeader><CardTitle>Plano de A\u00e7\u00e3o</CardTitle></CardHeader><CardContent><PlanoAcaoContent audit={audit} /></CardContent></Card></TabsContent>
       <TabsContent value="sentimento"><Card><CardHeader><CardTitle>An\u00e1lise de Sentimento</CardTitle></CardHeader><CardContent><SentimentoContent audit={audit} /></CardContent></Card></TabsContent>
       <TabsContent value="coaching"><Card><CardHeader><CardTitle>Coaching</CardTitle></CardHeader><CardContent><CommentsPanel auditId={audit.id} currentTime={currentTime} onSeek={onSeek} /></CardContent></Card></TabsContent>
+      <TabsContent value="supervisor"><Card><CardHeader><CardTitle>An\u00e1lise do Supervisor</CardTitle></CardHeader><CardContent><SupervisorTabContent auditId={audit.id} /></CardContent></Card></TabsContent>
     </Tabs>
   )
 }
