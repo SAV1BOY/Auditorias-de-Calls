@@ -1,6 +1,15 @@
 "use server"
 
+// TODO: After applying migration 011_supervisor_analysis.sql and regenerating
+// Supabase types with `supabase gen types typescript`, remove the `as any` casts.
+
 import { createClient } from "@/lib/supabase/server"
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getSupabase(): Promise<any> {
+  return await createClient()
+}
+
 import type {
   SupervisorAnalysis,
   SupervisorAnalysisFilters,
@@ -15,7 +24,7 @@ import type { PaginatedResult } from "@/lib/types/audit"
 // ─── Dashboard Stats ───
 
 export async function getSupervisorDashboardStats(): Promise<SupervisorDashboardStats> {
-  const supabase = await createClient()
+  const supabase = await getSupabase()
 
   // Total analyses + avg score + classification distribution
   const { data: analyses } = await supabase
@@ -24,18 +33,18 @@ export async function getSupervisorDashboardStats(): Promise<SupervisorDashboard
 
   const total = analyses?.length ?? 0
   const scores = (analyses ?? [])
-    .map((a) => a.overall_score)
-    .filter((s): s is number => s !== null)
+    .map((a: any) => a.overall_score)
+    .filter((s: any): s is number => s !== null)
   const avgScore = scores.length > 0
-    ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
+    ? Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 10) / 10
     : null
 
   const byClassification = {
-    excelente: (analyses ?? []).filter((a) => a.classification === "EXCELENTE").length,
-    boa: (analyses ?? []).filter((a) => a.classification === "BOA").length,
-    regular: (analyses ?? []).filter((a) => a.classification === "REGULAR").length,
-    fraca: (analyses ?? []).filter((a) => a.classification === "FRACA").length,
-    critica: (analyses ?? []).filter((a) => a.classification === "CRITICA").length,
+    excelente: (analyses ?? []).filter((a: any) => a.classification === "EXCELENTE").length,
+    boa: (analyses ?? []).filter((a: any) => a.classification === "BOA").length,
+    regular: (analyses ?? []).filter((a: any) => a.classification === "REGULAR").length,
+    fraca: (analyses ?? []).filter((a: any) => a.classification === "FRACA").length,
+    critica: (analyses ?? []).filter((a: any) => a.classification === "CRITICA").length,
   }
 
   // Weakest stages
@@ -51,7 +60,7 @@ export async function getSupervisorDashboardStats(): Promise<SupervisorDashboard
     .order("created_at", { ascending: false })
     .limit(5)
 
-  const recentAnalyses: SupervisorAnalysis[] = (recent ?? []).map((row) => ({
+  const recentAnalyses: SupervisorAnalysis[] = (recent ?? []).map((row: any) => ({
     ...row,
     stages: [],
     negotiation: {
@@ -73,7 +82,7 @@ export async function getSupervisorDashboardStats(): Promise<SupervisorDashboard
     total_analyses: total,
     avg_score: avgScore,
     by_classification: byClassification,
-    weakest_stages: (weakestStages ?? []).map((s) => ({
+    weakest_stages: (weakestStages ?? []).map((s: any) => ({
       stage_key: s.stage_key,
       stage_name: s.stage_name,
       avg_score: Number(s.avg_score ?? 0),
@@ -89,7 +98,7 @@ export async function getSupervisorDashboardStats(): Promise<SupervisorDashboard
 export async function getSupervisorAnalysis(
   analysisId: string
 ): Promise<SupervisorAnalysis | null> {
-  const supabase = await createClient()
+  const supabase = await getSupabase()
 
   const { data: row } = await supabase
     .from("supervisor_analyses")
@@ -130,7 +139,7 @@ export async function getSupervisorAnalysis(
 export async function getSupervisorAnalysisByAudit(
   auditId: string
 ): Promise<SupervisorAnalysis | null> {
-  const supabase = await createClient()
+  const supabase = await getSupabase()
 
   const { data: row } = await supabase
     .from("supervisor_analyses")
@@ -150,7 +159,7 @@ export async function getSupervisorAnalysisByAudit(
 export async function listSupervisorAnalyses(
   filters: SupervisorAnalysisFilters = {}
 ): Promise<PaginatedResult<SupervisorAnalysis>> {
-  const supabase = await createClient()
+  const supabase = await getSupabase()
   const page = filters.page ?? 1
   const pageSize = filters.pageSize ?? 10
   const from = (page - 1) * pageSize
@@ -177,7 +186,7 @@ export async function listSupervisorAnalyses(
 
   const { data, count } = await query
 
-  const analyses: SupervisorAnalysis[] = (data ?? []).map((row) => ({
+  const analyses: SupervisorAnalysis[] = (data ?? []).map((row: any) => ({
     ...row,
     stages: [],
     negotiation: {
@@ -211,7 +220,7 @@ export async function listSupervisorAnalyses(
 export async function getProtocolRules(
   version?: string
 ): Promise<ProtocolRule[]> {
-  const supabase = await createClient()
+  const supabase = await getSupabase()
 
   let query = supabase
     .from("protocol_rules")
@@ -225,7 +234,7 @@ export async function getProtocolRules(
 
   const { data } = await query
 
-  return (data ?? []).map((row) => ({
+  return (data ?? []).map((row: any) => ({
     ...row,
     expected_behaviors: (row.expected_behaviors ?? []) as string[],
     failure_behaviors: (row.failure_behaviors ?? []) as string[],
@@ -236,7 +245,7 @@ export async function updateProtocolRule(
   id: string,
   data: Partial<Pick<ProtocolRule, "stage_name" | "expected_behaviors" | "failure_behaviors" | "scoring_weight" | "is_active">>
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
+  const supabase = await getSupabase()
 
   const { error } = await supabase
     .from("protocol_rules")
@@ -253,7 +262,7 @@ export async function getWeakestStages(
   closerId?: string,
   _period?: string
 ): Promise<Array<{ stage_key: string; stage_name: string; avg_score: number; total_evaluations: number; critical_count: number }>> {
-  const supabase = await createClient()
+  const supabase = await getSupabase()
 
   if (closerId) {
     // Per-closer weakest stages (manual aggregation)
@@ -266,7 +275,7 @@ export async function getWeakestStages(
 
     const grouped = new Map<string, { scores: number[]; criticals: number; name: string }>()
     for (const row of data) {
-      const existing = grouped.get(row.stage_key) ?? { scores: [], criticals: 0, name: row.stage_name }
+      const existing = grouped.get(row.stage_key) ?? { scores: [] as number[], criticals: 0, name: row.stage_name }
       existing.scores.push(Number(row.score))
       if (row.status === "critical") existing.criticals++
       grouped.set(row.stage_key, existing)
@@ -276,7 +285,7 @@ export async function getWeakestStages(
       .map(([key, val]) => ({
         stage_key: key,
         stage_name: val.name,
-        avg_score: Math.round((val.scores.reduce((a, b) => a + b, 0) / val.scores.length) * 10) / 10,
+        avg_score: Math.round((val.scores.reduce((a: number, b: number) => a + b, 0) / val.scores.length) * 10) / 10,
         total_evaluations: val.scores.length,
         critical_count: val.criticals,
       }))
@@ -288,7 +297,7 @@ export async function getWeakestStages(
     .from("v_supervisor_weakest_stages")
     .select("*")
 
-  return (data ?? []).map((s) => ({
+  return (data ?? []).map((s: any) => ({
     stage_key: s.stage_key,
     stage_name: s.stage_name,
     avg_score: Number(s.avg_score ?? 0),
@@ -302,7 +311,7 @@ export async function getWeakestStages(
 export async function getTrainingActions(
   closerId?: string
 ): Promise<TrainingAction[]> {
-  const supabase = await createClient()
+  const supabase = await getSupabase()
 
   let query = supabase
     .from("closer_training_actions")
@@ -323,7 +332,7 @@ export async function getTrainingActions(
 export async function requestSupervisorAnalysis(
   auditId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
+  const supabase = await getSupabase()
 
   // Verify audit exists and has transcription
   const { data: audit } = await supabase
@@ -358,7 +367,7 @@ export async function getCloserSupervisorPerformance(
   regular_count: number
   fraca_count: number
 } | null> {
-  const supabase = await createClient()
+  const supabase = await getSupabase()
 
   const { data } = await supabase
     .from("v_supervisor_closer_performance")

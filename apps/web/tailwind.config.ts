@@ -93,14 +93,6 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        secondary: {
-          DEFAULT: "#ffd38f",
-          foreground: "hsl(var(--foreground))",
-        },
-        primary: {
-          DEFAULT: "#ffcc8d",
-          foreground: "hsl(var(--primary-foreground))",
-        },
       },
       fontFamily: {
         headline: ["var(--font-jakarta)", "Plus Jakarta Sans", "sans-serif"],
