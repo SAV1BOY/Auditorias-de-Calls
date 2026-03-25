@@ -16,13 +16,13 @@ export default async function SettingsPage() {
   } catch {
     return (
       <div className="space-y-6">
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Settings className="h-6 w-6" />
-          Configurações
+        <h1 className="flex items-center gap-2 text-2xl font-bold font-display">
+          <Settings className="h-6 w-6 text-primary" />
+          <span className="amber-keyword">Configura\u00e7\u00f5es</span>
         </h1>
         <div className="py-16 text-center text-muted-foreground">
           <ShieldAlert className="mx-auto h-12 w-12 mb-3 opacity-20" />
-          <p>Sem permissão para acessar configurações.</p>
+          <p>Sem permiss\u00e3o para acessar configura\u00e7\u00f5es.</p>
           <p className="text-sm mt-1">
             Solicite acesso ao administrador do sistema.
           </p>
@@ -33,17 +33,17 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="flex items-center gap-2 text-2xl font-bold">
-        <Settings className="h-6 w-6" />
-        Configurações
+      <h1 className="flex items-center gap-2 text-2xl font-bold font-display">
+        <Settings className="h-6 w-6 text-primary" />
+        <span className="amber-keyword">Configura\u00e7\u00f5es</span>
       </h1>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Bell className="h-4 w-4" />
-              Destinatários de Notificações
+              <Bell className="h-4 w-4 text-primary" />
+              Destinat\u00e1rios de Notifica\u00e7\u00f5es
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -54,8 +54,8 @@ export default async function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Wifi className="h-4 w-4" />
-              Status das Integrações
+              <Wifi className="h-4 w-4 text-primary" />
+              Status das Integra\u00e7\u00f5es
             </CardTitle>
           </CardHeader>
           <CardContent>
