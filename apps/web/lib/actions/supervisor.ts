@@ -334,6 +334,13 @@ export async function requestSupervisorAnalysis(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await getSupabase()
 
+  // Rate limit: 5 analysis requests per hour
+  const { rateLimit: rl, RATE_LIMITS } = await import("@/lib/security/rate-limit")
+  const check = rl(`analysis:${auditId}`, RATE_LIMITS.analysis)
+  if (!check.success) {
+    return { success: false, error: "Muitas solicitações. Aguarde antes de solicitar nova análise." }
+  }
+
   // Verify audit exists and has transcription
   const { data: audit } = await supabase
     .from("call_audits")

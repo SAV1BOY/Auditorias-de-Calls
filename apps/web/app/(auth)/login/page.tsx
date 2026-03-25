@@ -2,28 +2,29 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { loginAction } from "@/lib/actions/auth"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [retryAfter, setRetryAfter] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setRetryAfter(null)
     setLoading(true)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const result = await loginAction(email, password)
 
-    if (error) {
-      setError("Email ou senha incorretos.")
+    if (result.error) {
+      setError(result.error)
+      if (result.retryAfter) {
+        setRetryAfter(result.retryAfter)
+      }
       setLoading(false)
       return
     }
@@ -80,11 +81,18 @@ export default function LoginPage() {
           />
         </div>
         {error && (
-          <p className="text-sm text-red-500">{error}</p>
+          <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
+            <p className="text-sm text-red-400">{error}</p>
+            {retryAfter && (
+              <p className="text-xs text-red-400/60 mt-1">
+                Tente novamente em {Math.ceil(retryAfter / 60)} minuto(s).
+              </p>
+            )}
+          </div>
         )}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !!retryAfter}
           className="w-full bg-[#ffa600] text-[#2a1800] py-3 rounded-lg font-headline font-bold text-sm tracking-widest uppercase hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
         >
           {loading ? "Entrando..." : "Entrar"}

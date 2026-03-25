@@ -2,9 +2,34 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+  // ─── CSP Nonce Generation ───
+  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("base64")
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+  const supabaseWs = supabaseUrl.replace(/^https?:\/\//, "wss://")
+  const connectSrc = [
+    "'self'",
+    supabaseUrl,
+    supabaseWs,
+    "https://*.supabase.co",
+    "wss://*.supabase.co",
+  ].filter(Boolean).join(" ")
+
+  const csp = [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}'`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https:",
+    "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+    `connect-src ${connectSrc}`,
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join("; ")
+
+  // ─── Supabase Auth ───
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,9 +43,7 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
-          supabaseResponse = NextResponse.next({
-            request,
-          })
+          supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -51,6 +74,10 @@ export async function middleware(request: NextRequest) {
     url.pathname = "/"
     return NextResponse.redirect(url)
   }
+
+  // ─── Set Security Headers ───
+  supabaseResponse.headers.set("Content-Security-Policy", csp)
+  supabaseResponse.headers.set("x-nonce", nonce)
 
   return supabaseResponse
 }
