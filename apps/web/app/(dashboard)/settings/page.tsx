@@ -5,20 +5,41 @@ import { NotificationConfigForm } from "@/components/settings/notification-confi
 import { ApiStatusCard } from "@/components/settings/api-status-card"
 import { DimensionWeightsEditor } from "@/components/settings/dimension-weights-editor"
 import { WebhookConfig } from "@/components/settings/webhook-config"
+import { UserList } from "@/components/settings/user-list"
+import { listUsers } from "@/lib/actions/users"
+import { requireRole } from "@/lib/auth/require-role"
 
 export default async function SettingsPage() {
   let config
   let apiStatus
   let dimensionWeights
   let webhookConfig
+  let isAdmin = false
+  let users: Awaited<ReturnType<typeof listUsers>> = []
 
   try {
-    ;[config, apiStatus, dimensionWeights, webhookConfig] = await Promise.all([
+    const ctx = await requireRole(["admin", "supervisor"])
+    isAdmin = ctx.role === "admin"
+
+    const promises: Promise<unknown>[] = [
       getNotificationConfig(),
       getApiStatus(),
       getDimensionWeights(),
       getWebhookConfig(),
-    ])
+    ]
+
+    if (isAdmin) {
+      promises.push(listUsers())
+    }
+
+    const results = await Promise.all(promises)
+    config = results[0] as Awaited<ReturnType<typeof getNotificationConfig>>
+    apiStatus = results[1] as Awaited<ReturnType<typeof getApiStatus>>
+    dimensionWeights = results[2] as Awaited<ReturnType<typeof getDimensionWeights>>
+    webhookConfig = results[3] as Awaited<ReturnType<typeof getWebhookConfig>>
+    if (isAdmin && results[4]) {
+      users = results[4] as Awaited<ReturnType<typeof listUsers>>
+    }
   } catch {
     return (
       <div className="space-y-6">
@@ -43,6 +64,21 @@ export default async function SettingsPage() {
         <Settings className="h-6 w-6 text-primary" />
         <span className="amber-keyword">Configura\u00e7\u00f5es</span>
       </h1>
+
+      {/* User Management — Admin Only */}
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <span className="material-symbols-outlined text-primary text-lg">manage_accounts</span>
+              Gest\u00e3o de Usu\u00e1rios
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <UserList users={users} />
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
