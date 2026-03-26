@@ -1,17 +1,23 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Bell, Settings, ShieldAlert, Wifi } from "lucide-react"
-import { getNotificationConfig, getApiStatus } from "@/lib/actions/settings"
+import { getNotificationConfig, getApiStatus, getDimensionWeights, getWebhookConfig } from "@/lib/actions/settings"
 import { NotificationConfigForm } from "@/components/settings/notification-config-form"
 import { ApiStatusCard } from "@/components/settings/api-status-card"
+import { DimensionWeightsEditor } from "@/components/settings/dimension-weights-editor"
+import { WebhookConfig } from "@/components/settings/webhook-config"
 
 export default async function SettingsPage() {
   let config
   let apiStatus
+  let dimensionWeights
+  let webhookConfig
 
   try {
-    ;[config, apiStatus] = await Promise.all([
+    ;[config, apiStatus, dimensionWeights, webhookConfig] = await Promise.all([
       getNotificationConfig(),
       getApiStatus(),
+      getDimensionWeights(),
+      getWebhookConfig(),
     ])
   } catch {
     return (
@@ -60,6 +66,30 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent>
             <ApiStatusCard status={apiStatus} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <span className="material-symbols-outlined text-primary text-lg">tune</span>
+              Pesos das Dimens\u00f5es (Scorecard)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DimensionWeightsEditor weights={dimensionWeights} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <span className="material-symbols-outlined text-primary text-lg">webhook</span>
+              Webhook CRM
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <WebhookConfig config={webhookConfig} />
           </CardContent>
         </Card>
       </div>
