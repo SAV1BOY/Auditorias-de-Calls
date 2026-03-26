@@ -20,6 +20,9 @@ jobs:
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
       - run: npm ci
+      - name: Security audit
+        run: npm audit --audit-level=critical
+        continue-on-error: true  # Known HIGH vulns in next@14 — upgrade tracked in backlog
       - run: npx tsc --noEmit
       - run: npm run lint
       - run: npx vitest run --reporter=verbose

@@ -18,39 +18,39 @@ export function ApiStatusCard({ status }: ApiStatusCardProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm">Supabase</span>
+        <span className="text-sm font-body">Supabase</span>
         <Badge
           variant="secondary"
           className={
             status.supabase
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
-              : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+              ? "bg-emerald-900/30 text-emerald-400"
+              : "bg-surface-container-high text-muted-foreground"
           }
         >
-          {status.supabase ? "Configurado" : "Não configurado"}
+          {status.supabase ? "Configurado" : "N\u00e3o configurado"}
         </Badge>
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-sm">Google Drive</span>
+        <span className="text-sm font-body">Google Drive</span>
         <Badge
           variant="secondary"
           className={
             status.googleDrive
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
-              : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+              ? "bg-emerald-900/30 text-emerald-400"
+              : "bg-surface-container-high text-muted-foreground"
           }
         >
-          {status.googleDrive ? "Configurado" : "Não configurado"}
+          {status.googleDrive ? "Configurado" : "N\u00e3o configurado"}
         </Badge>
       </div>
 
       {WORKER_APIS.map((api) => (
         <div key={api.key} className="flex items-center justify-between">
-          <span className="text-sm">{api.name}</span>
+          <span className="text-sm font-body">{api.name}</span>
           <Badge
             variant="secondary"
-            className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+            className="bg-amber-900/30 text-amber-400"
           >
             Configurado no Worker
           </Badge>

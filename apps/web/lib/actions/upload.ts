@@ -5,6 +5,7 @@ import { AUDIO_FORMATS, MAX_FILE_SIZE_BYTES } from "@/lib/utils/constants"
 import { uploadMetadataSchema } from "@/lib/validations/schemas"
 import type { Database } from "@/lib/types/database"
 import { requireRole } from "@/lib/auth/require-role"
+import { rateLimit, RATE_LIMITS } from "@/lib/security/rate-limit"
 
 type CallAuditInsert = Database["public"]["Tables"]["call_audits"]["Insert"]
 type JobQueueInsert = Database["public"]["Tables"]["job_queue"]["Insert"]
@@ -16,11 +17,21 @@ export type UploadResult = {
 
 export async function uploadCall(formData: FormData): Promise<UploadResult> {
   let organizationId: string | null = null
+  let userId: string | null = null
   try {
     const ctx = await requireRole(["admin", "supervisor", "closer"])
     organizationId = ctx.organizationId
+    userId = ctx.userId
   } catch {
     return { error: "Sem permissão para fazer upload de calls." }
+  }
+
+  // Rate limit: 10 uploads per hour per user
+  if (userId) {
+    const rl = rateLimit(`upload:${userId}`, RATE_LIMITS.upload)
+    if (!rl.success) {
+      return { error: "Muitos uploads em pouco tempo. Aguarde e tente novamente." }
+    }
   }
   const file = formData.get("file") as File | null
   const valorFechamentoRaw = formData.get("valorFechamento") as string | null

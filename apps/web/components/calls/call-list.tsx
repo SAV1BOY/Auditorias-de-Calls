@@ -31,9 +31,9 @@ const columns = [
   { key: "closers", label: "Closer", sortable: false },
   { key: "lead_name", label: "Lead", sortable: true },
   { key: "call_date", label: "Data", sortable: true },
-  { key: "duration_minutes", label: "Duração", sortable: true },
+  { key: "duration_minutes", label: "Dura\u00e7\u00e3o", sortable: true },
   { key: "score_final", label: "Score", sortable: true },
-  { key: "classificacao", label: "Classificação", sortable: true },
+  { key: "classificacao", label: "Classifica\u00e7\u00e3o", sortable: true },
   { key: "status", label: "Status", sortable: true },
 ]
 
@@ -72,14 +72,14 @@ export function CallList({ audits, sortBy, sortOrder }: CallListProps) {
   }
 
   return (
-    <div className="rounded-md border overflow-x-auto">
+    <div className="rounded-md overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
             {columns.map((col) => (
               <TableHead
                 key={col.key}
-                className={`${col.sortable ? "cursor-pointer select-none" : ""} ${
+                className={`${col.sortable ? "cursor-pointer select-none hover:text-on-surface-variant transition-colors" : ""} ${
                   col.key === "duration_minutes" || col.key === "classificacao"
                     ? "hidden sm:table-cell"
                     : ""
@@ -90,9 +90,9 @@ export function CallList({ audits, sortBy, sortOrder }: CallListProps) {
                   {col.label}
                   {col.sortable && sortBy === col.key && (
                     sortOrder === "asc" ? (
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className="h-4 w-4 text-primary" />
                     ) : (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-primary" />
                     )
                   )}
                 </div>
@@ -108,11 +108,11 @@ export function CallList({ audits, sortBy, sortOrder }: CallListProps) {
               onClick={() => handleRowClick(audit.id)}
             >
               <TableCell className="font-medium">
-                {audit.closers?.name ?? "—"}
+                {audit.closers?.name ?? "\u2014"}
               </TableCell>
               <TableCell>{audit.lead_name}</TableCell>
-              <TableCell>{formatDate(audit.call_date)}</TableCell>
-              <TableCell className="hidden sm:table-cell">
+              <TableCell className="font-body text-muted-foreground">{formatDate(audit.call_date)}</TableCell>
+              <TableCell className="hidden sm:table-cell font-body text-muted-foreground">
                 {formatDuration(audit.duration_minutes)}
               </TableCell>
               <TableCell>
@@ -129,7 +129,7 @@ export function CallList({ audits, sortBy, sortOrder }: CallListProps) {
                     {audit.classificacao}
                   </Badge>
                 ) : (
-                  "—"
+                  "\u2014"
                 )}
               </TableCell>
               <TableCell>

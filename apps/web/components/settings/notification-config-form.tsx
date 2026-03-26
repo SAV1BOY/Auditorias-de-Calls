@@ -29,7 +29,7 @@ export function NotificationConfigForm({
           variant: "destructive",
         })
       } else {
-        toast({ title: "Configurações salvas" })
+        toast({ title: "Configura\u00e7\u00f5es salvas" })
       }
     })
   }
@@ -38,30 +38,30 @@ export function NotificationConfigForm({
     <form action={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="whatsapp_numbers">
-          Números WhatsApp (um por linha)
+          N\u00fameros WhatsApp (um por linha)
         </Label>
         <textarea
           id="whatsapp_numbers"
           name="whatsapp_numbers"
-          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="flex min-h-[80px] w-full rounded-md border border-transparent bg-surface-container-high px-3 py-2 text-sm font-body ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-all duration-200"
           placeholder={"5511999999999\n5521988888888"}
           defaultValue={config.whatsapp_numbers.join("\n")}
         />
       </div>
       <div className="space-y-2">
         <Label htmlFor="email_addresses">
-          Endereços de Email (um por linha)
+          Endere\u00e7os de Email (um por linha)
         </Label>
         <textarea
           id="email_addresses"
           name="email_addresses"
-          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="flex min-h-[80px] w-full rounded-md border border-transparent bg-surface-container-high px-3 py-2 text-sm font-body ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-all duration-200"
           placeholder={"supervisor@empresa.com\ngestor@empresa.com"}
           defaultValue={config.email_addresses.join("\n")}
         />
       </div>
       <Button type="submit" disabled={isPending}>
-        {isPending ? "Salvando..." : "Salvar Configurações"}
+        {isPending ? "Salvando..." : "Salvar Configura\u00e7\u00f5es"}
       </Button>
     </form>
   )

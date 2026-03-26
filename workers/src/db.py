@@ -139,15 +139,32 @@ class DB:
         self._client.table("call_audits").update(data).eq("id", audit_id).execute()
 
     def get_audit(self, audit_id: str) -> dict[str, Any] | None:
-        """Fetch a single call_audit by id."""
+        """Fetch a single call_audit by id, including closer notification_emails."""
         result = (
             self._client.table("call_audits")
-            .select("*, closers(name)")
+            .select("*, closers(name, notification_emails)")
             .eq("id", audit_id)
             .limit(1)
             .execute()
         )
         return result.data[0] if result.data else None
+
+    def get_closer_notification_emails(self, closer_id: str) -> list[str]:
+        """Fetch notification_emails for a specific closer.
+
+        Returns:
+            List of email addresses, or empty list if not configured.
+        """
+        result = (
+            self._client.table("closers")
+            .select("notification_emails")
+            .eq("id", closer_id)
+            .limit(1)
+            .execute()
+        )
+        if result.data and result.data[0].get("notification_emails"):
+            return result.data[0]["notification_emails"]
+        return []
 
     def create_job(self, audit_id: str, job_type: str) -> str:
         """Insert a new job into the queue. Returns the job id."""

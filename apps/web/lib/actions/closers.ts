@@ -155,3 +155,41 @@ export async function toggleCloserActive(
   revalidatePath("/closers")
   return { success: true }
 }
+
+// ─── Notification Email Routing ───
+
+export async function updateCloserNotificationEmails(
+  closerId: string,
+  emails: string[]
+): Promise<{ success?: boolean; error?: string }> {
+  await requireRole(["admin"])
+
+  const validEmails = emails
+    .map((e) => e.trim())
+    .filter((e) => e.length > 0)
+    .filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from("closers")
+    .update({ notification_emails: validEmails } as Record<string, unknown>)
+    .eq("id", closerId)
+
+  if (error) return { error: "Erro ao atualizar emails de notificação." }
+
+  revalidatePath(`/closers/${closerId}`)
+  return { success: true }
+}
+
+export async function getCloserNotificationEmails(
+  closerId: string
+): Promise<string[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("closers")
+    .select("notification_emails" as string)
+    .eq("id", closerId)
+    .single()
+
+  return ((data as unknown as Record<string, unknown>)?.notification_emails as string[]) ?? []
+}

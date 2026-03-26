@@ -28,6 +28,7 @@ from src.health import register_thread, start_health_server
 from src.pipeline.analyzer import Analyzer
 from src.pipeline.loss_pattern_analyzer import LossPatternAnalyzer
 from src.pipeline.notifier import Notifier
+from src.pipeline.supervisor_analyzer import SupervisorAnalyzer
 from src.pipeline.transcriber import Transcriber
 from src.weekly_reporter import WeeklyReporter
 
@@ -38,7 +39,7 @@ logger = logging.getLogger(__name__)
 _shutdown = threading.Event()
 
 
-def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_sync: DriveSync, analyzer: Analyzer, notifier: Notifier, loss_analyzer: LossPatternAnalyzer) -> None:
+def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_sync: DriveSync, analyzer: Analyzer, notifier: Notifier, loss_analyzer: LossPatternAnalyzer, supervisor_analyzer: SupervisorAnalyzer) -> None:
     """Poll job_queue for pending jobs and process them."""
     register_thread("job-runner", "running")
     logger.info("Job runner started (interval: %ds)", config.job_poll_interval_seconds)
@@ -51,14 +52,14 @@ def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_syn
                             job.id, job.job_type, job.audit_id, job.attempts + 1, job.max_attempts)
 
                 # Per-job-type timeout (seconds)
-                timeouts = {"transcribe": 600, "analyze": 300, "notify": 120, "loss_pattern": 300, "weekly_report": 300}
+                timeouts = {"transcribe": 600, "analyze": 300, "notify": 120, "loss_pattern": 300, "weekly_report": 300, "supervisor_analyze": 300}
                 timeout_sec = timeouts.get(job.job_type, 300)
 
                 start_time = time.monotonic()
                 try:
                     with ThreadPoolExecutor(max_workers=1) as executor:
                         future = executor.submit(
-                            _process_job, job, transcriber, drive_sync, analyzer, notifier, loss_analyzer
+                            _process_job, job, transcriber, drive_sync, analyzer, notifier, loss_analyzer, supervisor_analyzer
                         )
                         future.result(timeout=timeout_sec)
                     elapsed_ms = int((time.monotonic() - start_time) * 1000)
@@ -69,7 +70,7 @@ def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_syn
                         extra={"job_id": job.id, "audit_id": job.audit_id, "job_type": job.job_type, "duration_ms": elapsed_ms},
                     )
                     # Refresh materialized views after data-changing jobs
-                    if job.job_type in ("analyze", "notify"):
+                    if job.job_type in ("analyze", "notify", "supervisor_analyze"):
                         db.refresh_views()
                 except FuturesTimeoutError:
                     elapsed_ms = int((time.monotonic() - start_time) * 1000)
@@ -106,7 +107,7 @@ def _job_runner_loop(config: Config, db: DB, transcriber: Transcriber, drive_syn
         _shutdown.wait(timeout=config.job_poll_interval_seconds)
 
 
-def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync, analyzer: Analyzer, notifier: Notifier, loss_analyzer: LossPatternAnalyzer) -> None:
+def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync, analyzer: Analyzer, notifier: Notifier, loss_analyzer: LossPatternAnalyzer, supervisor_analyzer: SupervisorAnalyzer) -> None:
     """Route a job to the appropriate handler."""
     if job.job_type == "transcribe":
         result = transcriber.transcribe(job.audit_id)
@@ -117,6 +118,11 @@ def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync, anal
             logger.warning("Drive sync failed for audit %s (non-fatal): %s", job.audit_id, e)
     elif job.job_type == "analyze":
         analyzer.analyze(job.audit_id)
+        # After standard analysis, trigger supervisor analysis in parallel
+        try:
+            supervisor_analyzer.analyze(job.audit_id)
+        except Exception as e:
+            logger.warning("Supervisor analysis failed for audit %s (non-fatal): %s", job.audit_id, e)
     elif job.job_type == "notify":
         notifier.notify(job.audit_id)
     elif job.job_type == "loss_pattern":
@@ -126,6 +132,8 @@ def _process_job(job: Job, transcriber: Transcriber, drive_sync: DriveSync, anal
     elif job.job_type == "weekly_report":
         # Weekly reports are handled by the dedicated loop, not job queue
         logger.info("Weekly report job — skipping (handled by weekly_reporter loop)")
+    elif job.job_type == "supervisor_analyze":
+        supervisor_analyzer.analyze(job.audit_id)
     else:
         raise ValueError(f"Unknown job type: {job.job_type}")
 
@@ -195,6 +203,7 @@ def main() -> None:
     notifier = Notifier(config, db)
     watcher = DriveWatcher(config, db, drive_client)
     loss_analyzer = LossPatternAnalyzer(config, db)
+    supervisor_analyzer = SupervisorAnalyzer(config, db)
     weekly_reporter = WeeklyReporter(config, db)
 
     # Register signal handlers
@@ -207,7 +216,7 @@ def main() -> None:
     # Start threads
     job_thread = threading.Thread(
         target=_job_runner_loop,
-        args=(config, db, transcriber, drive_sync, analyzer, notifier, loss_analyzer),
+        args=(config, db, transcriber, drive_sync, analyzer, notifier, loss_analyzer, supervisor_analyzer),
         name="job-runner",
         daemon=True,
     )

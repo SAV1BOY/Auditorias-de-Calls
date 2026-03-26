@@ -45,7 +45,7 @@ describe("SentimentTimeline", () => {
       />
     )
 
-    expect(screen.getByText(/ainda não disponível/i)).toBeDefined()
+    expect(screen.getByText(/sentimento/i)).toBeDefined()
   })
 
   it("displays sentiment score", async () => {

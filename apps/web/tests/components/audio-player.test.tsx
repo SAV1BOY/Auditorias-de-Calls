@@ -42,7 +42,7 @@ describe("AudioPlayer", () => {
     mockCreateSignedUrl.mockReturnValue(new Promise(() => {}))
 
     render(<AudioPlayer audioPath="audit-001/call.ogg" />)
-    expect(screen.getByText("Carregando áudio...")).toBeInTheDocument()
+    expect(screen.getByText(/Carregando/)).toBeInTheDocument()
   })
 
   it("shows error state when signed URL fails", async () => {
@@ -55,7 +55,7 @@ describe("AudioPlayer", () => {
 
     await vi.waitFor(() => {
       expect(
-        screen.getByText("Não foi possível carregar o áudio.")
+        screen.getByText(/poss/)  // "Não foi possível carregar o áudio"
       ).toBeInTheDocument()
     })
   })

@@ -52,7 +52,7 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
   function handleResendNotification() {
     startTransition(async () => {
       const result = await resendNotification(audit.id)
-      setNotifMsg(result.error ?? "Notificação reenviada!")
+      setNotifMsg(result.error ?? "Notifica\u00e7\u00e3o reenviada!")
       setTimeout(() => setNotifMsg(null), 3000)
     })
   }
@@ -74,8 +74,8 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
             {/* Left: metadata */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">
-                  {audit.closers?.name ?? "—"} x {audit.lead_name}
+                <h1 className="text-2xl font-bold font-headline">
+                  {audit.closers?.name ?? "\u2014"} x <span className="amber-keyword">{audit.lead_name}</span>
                 </h1>
                 <BookmarkButton auditId={audit.id} />
               </div>
@@ -93,10 +93,10 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                   <User className="h-4 w-4" />
                   {audit.resultado
                     ? RESULTADO_LABELS[audit.resultado] ?? audit.resultado
-                    : "—"}
+                    : "\u2014"}
                   {audit.resultado === "fechamento" &&
                     audit.valor_fechamento && (
-                      <span className="ml-1 font-medium text-emerald-600">
+                      <span className="ml-1 font-medium font-body text-emerald-400">
                         ({formatCurrency(audit.valor_fechamento)})
                       </span>
                     )}
@@ -118,10 +118,10 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                       href={audit.drive_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-blue-600 hover:underline"
+                      className="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors"
                     >
                       <ExternalLink className="h-3 w-3" />
-                      Áudio no Drive
+                      \u00c1udio no Drive
                     </a>
                   )}
                   {audit.drive_report_url && (
@@ -129,10 +129,10 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                       href={audit.drive_report_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-blue-600 hover:underline"
+                      className="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors"
                     >
                       <ExternalLink className="h-3 w-3" />
-                      Relatório no Drive
+                      Relat\u00f3rio no Drive
                     </a>
                   )}
                 </div>
@@ -147,7 +147,7 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                     onClick={handleDownloadReport}
                   >
                     <Download className="mr-1 h-4 w-4" />
-                    Download Relatório
+                    Download Relat\u00f3rio
                   </Button>
                 )}
                 {(audit.status === "completed" ||
@@ -177,11 +177,11 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
             {/* Right: score */}
             <div className="flex flex-col items-center gap-1">
               <span
-                className={`text-5xl font-bold ${getScoreColor(audit.score_final)}`}
+                className={`text-5xl font-bold font-body ${getScoreColor(audit.score_final)}`}
               >
                 {formatScore(audit.score_final)}
               </span>
-              <span className="text-sm text-muted-foreground">/10</span>
+              <span className="text-sm text-muted-foreground font-body">/10</span>
               {audit.classificacao && (
                 <Badge
                   variant="secondary"

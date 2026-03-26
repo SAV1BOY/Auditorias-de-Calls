@@ -1,5 +1,6 @@
-import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
+import { Sidebar } from "@/components/layout/sidebar"
+import { FloatingActionButton } from "@/components/layout/fab"
 
 export default function DashboardLayout({
   children,
@@ -7,17 +8,26 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex h-screen">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-64 lg:block">
-        <Sidebar className="h-full" />
-      </aside>
-
-      {/* Main content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-auto p-4 lg:p-6">{children}</main>
-      </div>
-    </div>
+    <>
+      <Header />
+      <Sidebar />
+      <main className="md:ml-64 pt-24 px-6 md:px-12 pb-28 min-h-screen max-w-7xl mx-auto">
+        {children}
+      </main>
+      <FloatingActionButton />
+      <footer className="fixed bottom-0 left-0 md:left-64 right-0 h-16 bg-[#0d0e11] flex justify-between items-center px-8 border-t border-white/5 z-40">
+        <div className="flex items-center gap-8">
+          <span className="font-label text-xs font-bold text-amber-500 tracking-[0.2em] uppercase">
+            SYSTEM DIGITAL
+          </span>
+          <span className="text-[10px] font-bold text-stone-700 uppercase tracking-widest">
+            CallAudit v1.0
+          </span>
+        </div>
+        <span className="font-headline font-bold text-sm text-[#d8c3ac] tracking-tighter">
+          FACE 100K
+        </span>
+      </footer>
+    </>
   )
 }

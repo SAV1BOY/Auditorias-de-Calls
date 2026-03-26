@@ -301,4 +301,5 @@ class TestJobTimeoutBehavior:
                 MagicMock(),  # analyzer
                 MagicMock(),  # notifier
                 MagicMock(),  # loss_analyzer
+                MagicMock(),  # supervisor_analyzer
             )

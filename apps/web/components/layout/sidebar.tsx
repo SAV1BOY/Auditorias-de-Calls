@@ -3,32 +3,18 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import {
-  LayoutDashboard,
-  Phone,
-  Users,
-  Upload,
-  Settings,
-  LogOut,
-  BarChart3,
-  TrendingUp,
-  BookMarked,
-  FileText,
-  Trophy,
-} from "lucide-react"
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/calls", label: "Calls", icon: Phone },
-  { href: "/closers", label: "Closers", icon: Users },
-  { href: "/analytics", label: "Analytics", icon: TrendingUp },
-  { href: "/library", label: "Biblioteca", icon: BookMarked },
-  { href: "/reports", label: "Relatórios", icon: FileText },
-  { href: "/ranking", label: "Ranking", icon: Trophy },
-  { href: "/calls/upload", label: "Upload", icon: Upload },
-  { href: "/settings", label: "Configurações", icon: Settings },
+  { href: "/", icon: "terminal", label: "Dashboard" },
+  { href: "/calls", icon: "phone_in_talk", label: "Calls" },
+  { href: "/calls/upload", icon: "cloud_upload", label: "Upload" },
+  { href: "/closers", icon: "group", label: "Closers" },
+  { href: "/analytics", icon: "query_stats", label: "Analytics" },
+  { href: "/library", icon: "bookmark", label: "Biblioteca" },
+  { href: "/reports", icon: "description", label: "Relatórios" },
+  { href: "/ranking", icon: "emoji_events", label: "Ranking" },
+  { href: "/supervisor", icon: "supervisor_account", label: "Supervisor" },
+  { href: "/settings", icon: "settings", label: "Settings" },
 ]
 
 interface SidebarProps {
@@ -47,15 +33,19 @@ export function Sidebar({ className }: SidebarProps) {
   }
 
   return (
-    <div className={cn("flex h-full flex-col border-r bg-card", className)}>
-      <div className="flex h-14 items-center border-b px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <BarChart3 className="h-6 w-6" />
-          <span>CallAudit</span>
-        </Link>
+    <aside
+      className={`fixed left-0 top-0 h-full w-64 z-40 bg-[#1a1c1e] shadow-2xl shadow-black flex-col pt-24 pb-8 hidden md:flex ${className ?? ""}`}
+    >
+      <div className="px-6 mb-8">
+        <h2 className="text-lg font-black text-amber-500 font-headline uppercase">
+          CALLAUDIT
+        </h2>
+        <p className="font-label text-[10px] font-semibold uppercase tracking-[0.2em] text-[#d8c3ac]/60">
+          Audit Intelligence
+        </p>
       </div>
 
-      <nav className="flex-1 space-y-1 p-2">
+      <nav className="flex-1 font-headline text-xs font-semibold uppercase tracking-widest">
         {navItems.map((item) => {
           const isActive =
             item.href === "/"
@@ -65,30 +55,33 @@ export function Sidebar({ className }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              className={
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              )}
+                  ? "bg-amber-500/10 text-amber-500 border-r-4 border-amber-500 py-4 px-6 flex items-center gap-4 hover:translate-x-1 transition-transform cursor-pointer"
+                  : "text-[#d8c3ac]/60 py-4 px-6 flex items-center gap-4 hover:text-amber-200 hover:bg-[#292a2d] transition-all duration-300 hover:translate-x-1 cursor-pointer"
+              }
             >
-              <item.icon className="h-4 w-4" />
+              <span className="material-symbols-outlined">{item.icon}</span>
               {item.label}
             </Link>
           )
         })}
       </nav>
 
-      <div className="border-t p-2">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 text-muted-foreground"
+      <div className="px-6 mt-auto">
+        <Link href="/calls/upload">
+          <button className="w-full bg-[#ffa600] text-[#2a1800] py-3 rounded-lg text-[10px] font-bold tracking-[0.2em] uppercase hover:brightness-110 active:scale-95 transition-all mb-8">
+            Nova Auditoria
+          </button>
+        </Link>
+        <button
+          className="flex items-center gap-4 w-full font-headline text-xs font-semibold uppercase tracking-widest text-[#d8c3ac]/40 cursor-pointer hover:text-amber-200 transition-colors bg-transparent border-none"
           onClick={handleLogout}
         >
-          <LogOut className="h-4 w-4" />
+          <span className="material-symbols-outlined">logout</span>
           Sair
-        </Button>
+        </button>
       </div>
-    </div>
+    </aside>
   )
 }

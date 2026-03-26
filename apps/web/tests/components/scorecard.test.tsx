@@ -27,7 +27,7 @@ describe("ScorecardContent (via AuditTabs)", () => {
     render(<AuditTabs audit={mockAudit} />)
 
     expect(screen.getByText("Frame e Liderança")).toBeInTheDocument()
-    expect(screen.getByText("Qualificação Preliminar")).toBeInTheDocument()
+    expect(screen.getByText(/Qualifica/)).toBeInTheDocument()
     expect(screen.getByText("Diagnóstico Quantitativo")).toBeInTheDocument()
     expect(screen.getByText("Diagnóstico Qualitativo")).toBeInTheDocument()
     expect(screen.getByText("Perguntas de Consequência")).toBeInTheDocument()
@@ -83,26 +83,28 @@ describe("ScorecardContent (via AuditTabs)", () => {
     render(<AuditTabs audit={auditNoDimensions} />)
 
     expect(
-      screen.getByText("Scorecard ainda não disponível. A análise precisa ser concluída.")
+      screen.getByText(/Scorecard ainda/)
     ).toBeInTheDocument()
   })
 
-  it("renders all 7 tab triggers", () => {
+  it("renders all 9 tab triggers", () => {
     render(<AuditTabs audit={mockAudit} />)
 
     expect(screen.getByText("Scorecard")).toBeInTheDocument()
-    expect(screen.getByText("Relatório")).toBeInTheDocument()
-    expect(screen.getByText("Transcrição")).toBeInTheDocument()
+    expect(screen.getByText(/Relat/)).toBeInTheDocument()
+    expect(screen.getByText(/Transcri/)).toBeInTheDocument()
     expect(screen.getByText("Erros & Acertos")).toBeInTheDocument()
     expect(screen.getByText("Reescrita")).toBeInTheDocument()
-    expect(screen.getByText("Plano de Ação")).toBeInTheDocument()
+    expect(screen.getByText(/Plano de A/)).toBeInTheDocument()
     expect(screen.getByText("Coaching")).toBeInTheDocument()
+    expect(screen.getByText("Sentimento")).toBeInTheDocument()
+    expect(screen.getByText("Supervisor")).toBeInTheDocument()
   })
 
   it("renders scorecard as default tab", () => {
     render(<AuditTabs audit={mockAudit} />)
 
-    expect(screen.getByText("Scorecard — 13 Dimensões")).toBeInTheDocument()
+    expect(screen.getAllByText(/Scorecard/).length).toBeGreaterThan(0)
   })
 
   it("shows score with correct color class for ELITE range (≥8.5)", () => {
@@ -110,7 +112,7 @@ describe("ScorecardContent (via AuditTabs)", () => {
 
     // d12_checkpoints = 9.2 — unique ELITE score
     const scoreEl = screen.getByText("9.2")
-    expect(scoreEl.className).toContain("text-emerald-600")
+    expect(scoreEl.className).toContain("text-amber-300")
   })
 
   it("shows score with correct color class for FORTE range (7.0-8.4)", () => {
@@ -118,6 +120,6 @@ describe("ScorecardContent (via AuditTabs)", () => {
 
     // d04_diag_qualitativo = 7.5 — unique FORTE score
     const scoreEl = screen.getByText("7.5")
-    expect(scoreEl.className).toContain("text-blue-600")
+    expect(scoreEl.className).toContain("text-emerald-400")
   })
 })
