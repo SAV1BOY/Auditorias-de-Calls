@@ -1,6 +1,4 @@
 import type { CallAuditWithCloser } from "@/lib/types/audit"
-import { formatScore } from "@/lib/utils/format"
-import { getScoreColor } from "@/lib/utils/colors"
 
 const DIMENSIONS = [
   { key: "d01_frame", label: "Frame e Liderança", icon: "record_voice_over", peso: 8 },

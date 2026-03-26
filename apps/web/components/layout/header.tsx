@@ -1,14 +1,11 @@
 "use client"
 
-import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
 import { Sidebar } from "./sidebar"
 
 export function Header() {
-  const pathname = usePathname()
-
   return (
     <header className="fixed top-0 w-full z-50 bg-[#050608]/80 backdrop-blur-xl shadow-[0_40px_40px_-10px_rgba(0,0,0,0.4)]">
       <div className="flex justify-between items-center px-8 h-16 md:ml-64">

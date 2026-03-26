@@ -86,7 +86,7 @@ export function AnalysisResult({ analysis }: AnalysisResultProps) {
             {analysis.objections_detected.map((obj, i) => (
               <div key={i} className="bg-[#121316]/50 rounded-lg p-3 flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-[#d8c3ac]">"{obj.text}"</p>
+                  <p className="text-sm text-[#d8c3ac]">{`"${obj.text}"`}</p>
                   <p className="text-[10px] text-stone-500 uppercase tracking-widest">{obj.type}</p>
                 </div>
                 <span

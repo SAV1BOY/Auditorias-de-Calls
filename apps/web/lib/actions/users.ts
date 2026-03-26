@@ -3,7 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { requireRole } from "@/lib/auth/require-role"
-import { rateLimit, RATE_LIMITS } from "@/lib/security/rate-limit"
+import { rateLimit } from "@/lib/security/rate-limit"
 
 // ─── Types ───
 
@@ -37,7 +37,7 @@ export async function listUsers(): Promise<UserProfile[]> {
 
   // Fetch emails from auth (admin client needed)
   const admin = createAdminClient()
-  const { data: authUsers } = await admin.auth.admin.listUsers()
+  const { data: authUsers } = await admin.auth.admin.listUsers({ perPage: 1000 })
 
   const emailMap = new Map<string, string>()
   if (authUsers?.users) {
@@ -48,6 +48,7 @@ export async function listUsers(): Promise<UserProfile[]> {
 
   return data.map((profile) => ({
     ...profile,
+    created_at: profile.created_at ?? "",
     email: emailMap.get(profile.id) ?? undefined,
   }))
 }

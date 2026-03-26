@@ -18,10 +18,11 @@ export async function middleware(request: NextRequest) {
   const csp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'`,
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https:",
-    "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+    "font-src 'self' https://fonts.gstatic.com",
     `connect-src ${connectSrc}`,
+    `media-src 'self' ${supabaseUrl} https://*.supabase.co`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

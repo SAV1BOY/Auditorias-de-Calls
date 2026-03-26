@@ -172,7 +172,7 @@ export async function updateCloserNotificationEmails(
   const supabase = await createClient()
   const { error } = await supabase
     .from("closers")
-    .update({ notification_emails: validEmails } as Record<string, unknown>)
+    .update({ notification_emails: validEmails })
     .eq("id", closerId)
 
   if (error) return { error: "Erro ao atualizar emails de notificação." }
@@ -184,12 +184,13 @@ export async function updateCloserNotificationEmails(
 export async function getCloserNotificationEmails(
   closerId: string
 ): Promise<string[]> {
+  await requireRole(["admin", "supervisor"])
   const supabase = await createClient()
   const { data } = await supabase
     .from("closers")
-    .select("notification_emails" as string)
+    .select("notification_emails")
     .eq("id", closerId)
     .single()
 
-  return ((data as unknown as Record<string, unknown>)?.notification_emails as string[]) ?? []
+  return data?.notification_emails ?? []
 }
