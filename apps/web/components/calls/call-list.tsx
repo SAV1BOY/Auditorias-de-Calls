@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { ChevronUp, ChevronDown } from "lucide-react"
-import type { CallAuditWithCloser } from "@/lib/types/audit"
+import type { CallAuditWithCloser, Classificacao } from "@/lib/types/audit"
 import { formatDate, formatScore, formatDuration } from "@/lib/utils/format"
 import {
   getClassificacaoColor,
@@ -124,7 +124,7 @@ export function CallList({ audits, sortBy, sortOrder }: CallListProps) {
                 {audit.classificacao ? (
                   <Badge
                     variant="secondary"
-                    className={getClassificacaoColor(audit.classificacao)}
+                    className={getClassificacaoColor(audit.classificacao as Classificacao)}
                   >
                     {audit.classificacao}
                   </Badge>

@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Star, ExternalLink } from "lucide-react"
-import type { CallBookmark } from "@/lib/types/audit"
+import type { CallBookmark, Classificacao } from "@/lib/types/audit"
 import { getBookmarkedCalls } from "@/lib/actions/bookmarks"
 import { formatDate, formatScore } from "@/lib/utils/format"
 import { getClassificacaoColor } from "@/lib/utils/colors"
@@ -153,7 +153,7 @@ export function LibraryContent({
                         {audit?.classificacao && (
                           <Badge
                             className={getClassificacaoColor(
-                              audit.classificacao
+                              audit.classificacao as Classificacao
                             )}
                           >
                             {audit.classificacao}
@@ -165,7 +165,7 @@ export function LibraryContent({
                       </div>
                     </div>
 
-                    {bm.tags.length > 0 && (
+                    {bm.tags && bm.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {bm.tags.map((tag) => (
                           <Badge

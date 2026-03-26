@@ -11,7 +11,7 @@ export default async function LibraryPage() {
   // Collect all unique tags from bookmarks
   const allTags = Array.from(
     new Set(bookmarks.flatMap((b) => b.tags))
-  ).sort()
+  ).filter((t): t is string => t !== null).sort()
 
   return (
     <div className="space-y-6">

@@ -11,6 +11,8 @@ import type {
   GoalRow,
   GoalWithProgress,
   GoalMetric,
+  GoalType,
+  GoalStatus,
 } from "@/lib/types/audit"
 
 // ─── Closers Comparison ───
@@ -31,8 +33,8 @@ export async function getClosersComparison(
       .in("closer_id", closerIds)
 
     return (data ?? []).map((row) => ({
-      closer_id: row.closer_id,
-      closer_name: row.closer_name,
+      closer_id: row.closer_id ?? "",
+      closer_name: row.closer_name ?? "",
       media_score: row.media_score != null ? Number(row.media_score) : null,
       total_calls: Number(row.total_calls ?? 0),
       dimensions: DIMENSIONS.map((dim) => ({
@@ -214,26 +216,29 @@ export async function getGoals(): Promise<GoalWithProgress[]> {
   const results: GoalWithProgress[] = []
 
   for (const goal of goals) {
-    const currentValue = calculateCurrentValueFromCache(goal, allCalls ?? [])
-    const progress =
-      goal.target_value > 0
-        ? Math.min(100, Math.round((currentValue / Number(goal.target_value)) * 100))
-        : 100
-
-    results.push({
+    const goalRow: GoalRow = {
       id: goal.id,
       organization_id: goal.organization_id,
       title: goal.title,
-      type: goal.type,
+      type: goal.type as GoalType,
       metric: goal.metric as GoalMetric,
       target_value: Number(goal.target_value),
       dimension_id: goal.dimension_id,
       closer_id: goal.closer_id,
       start_date: goal.start_date,
       end_date: goal.end_date,
-      status: goal.status,
-      created_at: goal.created_at,
-      updated_at: goal.updated_at,
+      status: goal.status as GoalStatus,
+      created_at: goal.created_at ?? "",
+      updated_at: goal.updated_at ?? "",
+    }
+    const currentValue = calculateCurrentValueFromCache(goalRow, allCalls ?? [])
+    const progress =
+      goal.target_value > 0
+        ? Math.min(100, Math.round((currentValue / Number(goal.target_value)) * 100))
+        : 100
+
+    results.push({
+      ...goalRow,
       current_value: currentValue,
       progress,
       closer_name: goal.closer_id ? closerNames.get(goal.closer_id) : undefined,

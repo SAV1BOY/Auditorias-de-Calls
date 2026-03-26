@@ -48,6 +48,7 @@ export async function listUsers(): Promise<UserProfile[]> {
 
   return data.map((profile) => ({
     ...profile,
+    created_at: profile.created_at ?? "",
     email: emailMap.get(profile.id) ?? undefined,
   }))
 }

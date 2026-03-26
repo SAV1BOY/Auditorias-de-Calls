@@ -1,15 +1,7 @@
 "use server"
 
-// TODO: After applying migration 011_supervisor_analysis.sql and regenerating
-// Supabase types with `supabase gen types typescript`, remove the `as any` casts.
-
 import { createClient } from "@/lib/supabase/server"
 import { requireRole } from "@/lib/auth/require-role"
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function getSupabase(): Promise<any> {
-  return await createClient()
-}
 
 import type {
   SupervisorAnalysis,
@@ -22,10 +14,32 @@ import type {
 } from "@/lib/types/supervisor"
 import type { PaginatedResult } from "@/lib/types/audit"
 
+// ─── Row mapper: DB row → SupervisorAnalysis ───
+
+function mapRowToAnalysis(row: Record<string, unknown>, stages: SupervisorStageScore[] = []): SupervisorAnalysis {
+  return {
+    ...(row as Record<string, unknown>),
+    stages,
+    negotiation: {
+      table_price_presented: (row.table_price_presented as boolean) ?? false,
+      silence_applied: (row.silence_applied as boolean) ?? false,
+      who_spoke_first: (row.who_spoke_first as string) ?? "unknown",
+      protagonist_transition_quality: (row.protagonist_transition_quality as number) ?? 0,
+      cac_explained: (row.cac_explained as boolean) ?? false,
+      negotiation_firmness: (row.negotiation_firmness as number) ?? 0,
+      downsell_used: (row.downsell_used as boolean) ?? false,
+      downsell_narrative_quality: row.downsell_narrative_quality as number | undefined,
+    } as NegotiationAnalysis,
+    priority_improvements: ((row.priority_improvements ?? []) as string[]),
+    training_actions: ((row.training_actions ?? []) as SupervisorAnalysis["training_actions"]),
+    objections_detected: ((row.objections_detected ?? []) as SupervisorAnalysis["objections_detected"]),
+  } as SupervisorAnalysis
+}
+
 // ─── Dashboard Stats ───
 
 export async function getSupervisorDashboardStats(): Promise<SupervisorDashboardStats> {
-  const supabase = await getSupabase()
+  const supabase = await createClient()
 
   // Total analyses + avg score + classification distribution
   const { data: analyses } = await supabase
@@ -34,22 +48,18 @@ export async function getSupervisorDashboardStats(): Promise<SupervisorDashboard
 
   const total = analyses?.length ?? 0
   const scores = (analyses ?? [])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((a: any) => a.overall_score)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .filter((s: any): s is number => s !== null)
+    .map((a) => a.overall_score)
+    .filter((s): s is number => s !== null)
   const avgScore = scores.length > 0
-    ? Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 10) / 10
+    ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
     : null
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const typedAnalyses = (analyses ?? []) as any[]
   const byClassification = {
-    excelente: typedAnalyses.filter((a) => a.classification === "EXCELENTE").length,
-    boa: typedAnalyses.filter((a) => a.classification === "BOA").length,
-    regular: typedAnalyses.filter((a) => a.classification === "REGULAR").length,
-    fraca: typedAnalyses.filter((a) => a.classification === "FRACA").length,
-    critica: typedAnalyses.filter((a) => a.classification === "CRITICA").length,
+    excelente: (analyses ?? []).filter((a) => a.classification === "EXCELENTE").length,
+    boa: (analyses ?? []).filter((a) => a.classification === "BOA").length,
+    regular: (analyses ?? []).filter((a) => a.classification === "REGULAR").length,
+    fraca: (analyses ?? []).filter((a) => a.classification === "FRACA").length,
+    critica: (analyses ?? []).filter((a) => a.classification === "CRITICA").length,
   }
 
   // Weakest stages
@@ -65,33 +75,17 @@ export async function getSupervisorDashboardStats(): Promise<SupervisorDashboard
     .order("created_at", { ascending: false })
     .limit(5)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recentAnalyses: SupervisorAnalysis[] = (recent ?? []).map((row: any) => ({
-    ...row,
-    stages: [],
-    negotiation: {
-      table_price_presented: row.table_price_presented ?? false,
-      silence_applied: row.silence_applied ?? false,
-      who_spoke_first: row.who_spoke_first ?? "unknown",
-      protagonist_transition_quality: row.protagonist_transition_quality ?? 0,
-      cac_explained: row.cac_explained ?? false,
-      negotiation_firmness: row.negotiation_firmness ?? 0,
-      downsell_used: row.downsell_used ?? false,
-      downsell_narrative_quality: row.downsell_narrative_quality,
-    } as NegotiationAnalysis,
-    priority_improvements: (row.priority_improvements ?? []) as string[],
-    training_actions: (row.training_actions ?? []) as SupervisorAnalysis["training_actions"],
-    objections_detected: (row.objections_detected ?? []) as SupervisorAnalysis["objections_detected"],
-  }))
+  const recentAnalyses = (recent ?? []).map((row) =>
+    mapRowToAnalysis(row as unknown as Record<string, unknown>)
+  )
 
   return {
     total_analyses: total,
     avg_score: avgScore,
     by_classification: byClassification,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    weakest_stages: (weakestStages ?? []).map((s: any) => ({
-      stage_key: s.stage_key,
-      stage_name: s.stage_name,
+    weakest_stages: (weakestStages ?? []).map((s) => ({
+      stage_key: s.stage_key as string,
+      stage_name: s.stage_name as string,
       avg_score: Number(s.avg_score ?? 0),
       total_evaluations: Number(s.total_evaluations ?? 0),
       critical_count: Number(s.critical_count ?? 0),
@@ -105,7 +99,7 @@ export async function getSupervisorDashboardStats(): Promise<SupervisorDashboard
 export async function getSupervisorAnalysis(
   analysisId: string
 ): Promise<SupervisorAnalysis | null> {
-  const supabase = await getSupabase()
+  const supabase = await createClient()
 
   const { data: row } = await supabase
     .from("supervisor_analyses")
@@ -122,23 +116,10 @@ export async function getSupervisorAnalysis(
     .eq("analysis_id", analysisId)
     .order("stage_order")
 
-  return {
-    ...row,
-    stages: (stages ?? []) as SupervisorStageScore[],
-    negotiation: {
-      table_price_presented: row.table_price_presented ?? false,
-      silence_applied: row.silence_applied ?? false,
-      who_spoke_first: row.who_spoke_first ?? "unknown",
-      protagonist_transition_quality: row.protagonist_transition_quality ?? 0,
-      cac_explained: row.cac_explained ?? false,
-      negotiation_firmness: row.negotiation_firmness ?? 0,
-      downsell_used: row.downsell_used ?? false,
-      downsell_narrative_quality: row.downsell_narrative_quality,
-    } as NegotiationAnalysis,
-    priority_improvements: (row.priority_improvements ?? []) as string[],
-    training_actions: (row.training_actions ?? []) as SupervisorAnalysis["training_actions"],
-    objections_detected: (row.objections_detected ?? []) as SupervisorAnalysis["objections_detected"],
-  }
+  return mapRowToAnalysis(
+    row as unknown as Record<string, unknown>,
+    (stages ?? []) as SupervisorStageScore[]
+  )
 }
 
 // ─── Analysis by Audit ───
@@ -146,7 +127,7 @@ export async function getSupervisorAnalysis(
 export async function getSupervisorAnalysisByAudit(
   auditId: string
 ): Promise<SupervisorAnalysis | null> {
-  const supabase = await getSupabase()
+  const supabase = await createClient()
 
   const { data: row } = await supabase
     .from("supervisor_analyses")
@@ -166,7 +147,7 @@ export async function getSupervisorAnalysisByAudit(
 export async function listSupervisorAnalyses(
   filters: SupervisorAnalysisFilters = {}
 ): Promise<PaginatedResult<SupervisorAnalysis>> {
-  const supabase = await getSupabase()
+  const supabase = await createClient()
   const page = filters.page ?? 1
   const pageSize = filters.pageSize ?? 10
   const from = (page - 1) * pageSize
@@ -193,24 +174,9 @@ export async function listSupervisorAnalyses(
 
   const { data, count } = await query
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const analyses: SupervisorAnalysis[] = (data ?? []).map((row: any) => ({
-    ...row,
-    stages: [],
-    negotiation: {
-      table_price_presented: row.table_price_presented ?? false,
-      silence_applied: row.silence_applied ?? false,
-      who_spoke_first: row.who_spoke_first ?? "unknown",
-      protagonist_transition_quality: row.protagonist_transition_quality ?? 0,
-      cac_explained: row.cac_explained ?? false,
-      negotiation_firmness: row.negotiation_firmness ?? 0,
-      downsell_used: row.downsell_used ?? false,
-      downsell_narrative_quality: row.downsell_narrative_quality,
-    } as NegotiationAnalysis,
-    priority_improvements: (row.priority_improvements ?? []) as string[],
-    training_actions: (row.training_actions ?? []) as SupervisorAnalysis["training_actions"],
-    objections_detected: (row.objections_detected ?? []) as SupervisorAnalysis["objections_detected"],
-  }))
+  const analyses = (data ?? []).map((row) =>
+    mapRowToAnalysis(row as unknown as Record<string, unknown>)
+  )
 
   const total = count ?? 0
 
@@ -228,7 +194,7 @@ export async function listSupervisorAnalyses(
 export async function getProtocolRules(
   version?: string
 ): Promise<ProtocolRule[]> {
-  const supabase = await getSupabase()
+  const supabase = await createClient()
 
   let query = supabase
     .from("protocol_rules")
@@ -242,12 +208,11 @@ export async function getProtocolRules(
 
   const { data } = await query
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((row: any) => ({
+  return (data ?? []).map((row) => ({
     ...row,
     expected_behaviors: (row.expected_behaviors ?? []) as string[],
     failure_behaviors: (row.failure_behaviors ?? []) as string[],
-  }))
+  })) as ProtocolRule[]
 }
 
 export async function updateProtocolRule(
@@ -255,7 +220,7 @@ export async function updateProtocolRule(
   data: Partial<Pick<ProtocolRule, "stage_name" | "expected_behaviors" | "failure_behaviors" | "scoring_weight" | "is_active">>
 ): Promise<{ success: boolean; error?: string }> {
   await requireRole(["admin"])
-  const supabase = await getSupabase()
+  const supabase = await createClient()
 
   const { error } = await supabase
     .from("protocol_rules")
@@ -273,7 +238,7 @@ export async function getWeakestStages(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _period?: string,
 ): Promise<Array<{ stage_key: string; stage_name: string; avg_score: number; total_evaluations: number; critical_count: number }>> {
-  const supabase = await getSupabase()
+  const supabase = await createClient()
 
   if (closerId) {
     // Per-closer weakest stages (manual aggregation)
@@ -296,7 +261,7 @@ export async function getWeakestStages(
       .map(([key, val]) => ({
         stage_key: key,
         stage_name: val.name,
-        avg_score: Math.round((val.scores.reduce((a: number, b: number) => a + b, 0) / val.scores.length) * 10) / 10,
+        avg_score: Math.round((val.scores.reduce((a, b) => a + b, 0) / val.scores.length) * 10) / 10,
         total_evaluations: val.scores.length,
         critical_count: val.criticals,
       }))
@@ -308,10 +273,9 @@ export async function getWeakestStages(
     .from("v_supervisor_weakest_stages")
     .select("*")
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((s: any) => ({
-    stage_key: s.stage_key,
-    stage_name: s.stage_name,
+  return (data ?? []).map((s) => ({
+    stage_key: s.stage_key as string,
+    stage_name: s.stage_name as string,
     avg_score: Number(s.avg_score ?? 0),
     total_evaluations: Number(s.total_evaluations ?? 0),
     critical_count: Number(s.critical_count ?? 0),
@@ -323,7 +287,7 @@ export async function getWeakestStages(
 export async function getTrainingActions(
   closerId?: string
 ): Promise<TrainingAction[]> {
-  const supabase = await getSupabase()
+  const supabase = await createClient()
 
   let query = supabase
     .from("closer_training_actions")
@@ -344,7 +308,7 @@ export async function getTrainingActions(
 export async function requestSupervisorAnalysis(
   auditId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await getSupabase()
+  const supabase = await createClient()
 
   // Rate limit: 5 analysis requests per hour
   const { rateLimit: rl, RATE_LIMITS } = await import("@/lib/security/rate-limit")
@@ -386,7 +350,7 @@ export async function getCloserSupervisorPerformance(
   regular_count: number
   fraca_count: number
 } | null> {
-  const supabase = await getSupabase()
+  const supabase = await createClient()
 
   const { data } = await supabase
     .from("v_supervisor_closer_performance")
