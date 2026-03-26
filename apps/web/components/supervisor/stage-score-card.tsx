@@ -73,7 +73,7 @@ export function StageScoreCard({ stage }: StageScoreCardProps) {
               <p className="text-[10px] font-label uppercase tracking-widest text-stone-500 mb-1">
                 Evidência
               </p>
-              <p className="text-sm text-stone-400 italic">"{stage.evidence_excerpt}"</p>
+              <p className="text-sm text-stone-400 italic">{`"${stage.evidence_excerpt}"`}</p>
             </div>
           )}
           {stage.missed_actions.length > 0 && (

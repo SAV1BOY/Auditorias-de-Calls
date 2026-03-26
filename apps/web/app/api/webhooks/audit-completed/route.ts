@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Log delivery (cast to any — notifications table accepts webhook channel)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any).from("notifications").insert({
       audit_id,
       channel: "webhook",

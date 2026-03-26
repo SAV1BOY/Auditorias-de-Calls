@@ -25,7 +25,7 @@ export function ScoreChart({ data, title = "Evolução de Score" }: ScoreChartPr
     <div className="bg-[#1a1c1e] rounded-xl border border-white/5 p-8">
       <div className="flex justify-between items-center mb-10">
         <h3 className="text-xl font-headline font-bold">
-          Score <span className="text-[#ffa600]">EVOLUTION</span>
+          {title}
         </h3>
         <div className="flex gap-4">
           <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest border-b-2 border-[#ffa600] pb-1">

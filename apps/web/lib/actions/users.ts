@@ -3,7 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { requireRole } from "@/lib/auth/require-role"
-import { rateLimit, RATE_LIMITS } from "@/lib/security/rate-limit"
+import { rateLimit } from "@/lib/security/rate-limit"
 
 // ─── Types ───
 

@@ -33,18 +33,22 @@ export async function getSupervisorDashboardStats(): Promise<SupervisorDashboard
 
   const total = analyses?.length ?? 0
   const scores = (analyses ?? [])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((a: any) => a.overall_score)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .filter((s: any): s is number => s !== null)
   const avgScore = scores.length > 0
     ? Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 10) / 10
     : null
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const typedAnalyses = (analyses ?? []) as any[]
   const byClassification = {
-    excelente: (analyses ?? []).filter((a: any) => a.classification === "EXCELENTE").length,
-    boa: (analyses ?? []).filter((a: any) => a.classification === "BOA").length,
-    regular: (analyses ?? []).filter((a: any) => a.classification === "REGULAR").length,
-    fraca: (analyses ?? []).filter((a: any) => a.classification === "FRACA").length,
-    critica: (analyses ?? []).filter((a: any) => a.classification === "CRITICA").length,
+    excelente: typedAnalyses.filter((a) => a.classification === "EXCELENTE").length,
+    boa: typedAnalyses.filter((a) => a.classification === "BOA").length,
+    regular: typedAnalyses.filter((a) => a.classification === "REGULAR").length,
+    fraca: typedAnalyses.filter((a) => a.classification === "FRACA").length,
+    critica: typedAnalyses.filter((a) => a.classification === "CRITICA").length,
   }
 
   // Weakest stages
@@ -60,6 +64,7 @@ export async function getSupervisorDashboardStats(): Promise<SupervisorDashboard
     .order("created_at", { ascending: false })
     .limit(5)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recentAnalyses: SupervisorAnalysis[] = (recent ?? []).map((row: any) => ({
     ...row,
     stages: [],
@@ -82,6 +87,7 @@ export async function getSupervisorDashboardStats(): Promise<SupervisorDashboard
     total_analyses: total,
     avg_score: avgScore,
     by_classification: byClassification,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     weakest_stages: (weakestStages ?? []).map((s: any) => ({
       stage_key: s.stage_key,
       stage_name: s.stage_name,
@@ -186,6 +192,7 @@ export async function listSupervisorAnalyses(
 
   const { data, count } = await query
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const analyses: SupervisorAnalysis[] = (data ?? []).map((row: any) => ({
     ...row,
     stages: [],
@@ -234,6 +241,7 @@ export async function getProtocolRules(
 
   const { data } = await query
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []).map((row: any) => ({
     ...row,
     expected_behaviors: (row.expected_behaviors ?? []) as string[],
@@ -260,7 +268,8 @@ export async function updateProtocolRule(
 
 export async function getWeakestStages(
   closerId?: string,
-  _period?: string
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _period?: string,
 ): Promise<Array<{ stage_key: string; stage_name: string; avg_score: number; total_evaluations: number; critical_count: number }>> {
   const supabase = await getSupabase()
 
@@ -297,6 +306,7 @@ export async function getWeakestStages(
     .from("v_supervisor_weakest_stages")
     .select("*")
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []).map((s: any) => ({
     stage_key: s.stage_key,
     stage_name: s.stage_name,
