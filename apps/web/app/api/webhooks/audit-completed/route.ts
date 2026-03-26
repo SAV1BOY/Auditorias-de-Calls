@@ -11,6 +11,16 @@ import { createClient } from "@/lib/supabase/server"
  */
 export async function POST(request: NextRequest) {
   try {
+    // Validate internal API key
+    const apiKey = request.headers.get("x-api-key")
+    const expectedKey = process.env.WEBHOOK_INTERNAL_API_KEY
+    if (expectedKey && apiKey !== expectedKey) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     const { audit_id } = body
 

@@ -308,6 +308,7 @@ export async function getTrainingActions(
 export async function requestSupervisorAnalysis(
   auditId: string
 ): Promise<{ success: boolean; error?: string }> {
+  await requireRole(["admin", "supervisor"])
   const supabase = await createClient()
 
   // Rate limit: 5 analysis requests per hour

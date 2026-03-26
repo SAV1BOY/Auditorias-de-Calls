@@ -38,9 +38,10 @@ import { CloserFormDialog } from "./closer-form-dialog"
 
 interface CloserListProps {
   closers: CloserRow[]
+  isAdmin?: boolean
 }
 
-export function CloserList({ closers }: CloserListProps) {
+export function CloserList({ closers, isAdmin = false }: CloserListProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
@@ -153,6 +154,8 @@ export function CloserList({ closers }: CloserListProps) {
           setEditOpen(open)
           if (!open) setEditCloser(undefined)
         }}
+        isAdmin={isAdmin}
+        notificationEmails={editCloser?.notification_emails ?? []}
       />
 
       <AlertDialog

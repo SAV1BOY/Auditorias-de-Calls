@@ -3,9 +3,11 @@ import { Users } from "lucide-react"
 import { getClosersList } from "@/lib/actions/closers"
 import { CloserList } from "@/components/closers/closer-list"
 import { CloserPageActions } from "@/components/closers/closer-page-actions"
+import { requireAuth } from "@/lib/auth/require-role"
 
 export default async function ClosersPage() {
-  const closers = await getClosersList()
+  const [closers, ctx] = await Promise.all([getClosersList(), requireAuth()])
+  const isAdmin = ctx.role === "admin"
 
   return (
     <div className="space-y-4">
@@ -25,7 +27,7 @@ export default async function ClosersPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <CloserList closers={closers} />
+          <CloserList closers={closers} isAdmin={isAdmin} />
         </CardContent>
       </Card>
     </div>

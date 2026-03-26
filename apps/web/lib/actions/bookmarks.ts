@@ -12,6 +12,7 @@ export async function toggleBookmark(
     notes?: string
   }
 ): Promise<{ success: boolean }> {
+  await requireAuth()
   const supabase = await createClient()
 
   const { data: existing } = await supabase

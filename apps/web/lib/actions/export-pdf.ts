@@ -1,12 +1,14 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { requireAuth } from "@/lib/auth/require-role"
 import type { CallAuditWithCloser } from "@/lib/types/audit"
 
 export async function generateAuditPDF(
   auditId: string
 ): Promise<{ url?: string; error?: string }> {
   try {
+    await requireAuth()
     const supabase = await createClient()
 
     // Fetch audit data
@@ -61,6 +63,7 @@ export async function generateAuditPDF(
 export async function generateBatchPDF(
   auditIds: string[]
 ): Promise<{ url?: string; error?: string }> {
+  await requireAuth()
   if (auditIds.length === 0) {
     return { error: "Nenhuma auditoria selecionada" }
   }

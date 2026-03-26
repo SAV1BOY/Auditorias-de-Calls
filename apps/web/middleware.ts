@@ -79,6 +79,9 @@ export async function middleware(request: NextRequest) {
   // ─── Set Security Headers ───
   supabaseResponse.headers.set("Content-Security-Policy", csp)
   supabaseResponse.headers.set("x-nonce", nonce)
+  supabaseResponse.headers.set("X-Content-Type-Options", "nosniff")
+  supabaseResponse.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
+  supabaseResponse.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
 
   return supabaseResponse
 }
