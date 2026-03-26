@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import { Plus_Jakarta_Sans, Manrope, JetBrains_Mono } from "next/font/google"
 import { Toaster } from "@/components/ui/toaster"
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 
 const jakarta = Plus_Jakarta_Sans({
@@ -49,6 +51,8 @@ export default function RootLayout({
       >
         {children}
         <Toaster />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
