@@ -1,6 +1,11 @@
 import { vi } from "vitest"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { mockLossPatternReport } from "../fixtures/audit"
+
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: vi.fn(),
+}))
 
 // ─── Helpers ───
 
@@ -69,12 +74,17 @@ describe("loss-patterns actions", () => {
 
   describe("generateLossPatternAnalysis", () => {
     it("should create a loss_pattern job", async () => {
-      const client = makeMockClient({ data: [{ id: "job-001" }] })
+      const client = makeMockClient({ data: { id: "report-001" } })
       vi.mocked(createClient).mockResolvedValue(client as any)
+
+      const adminChain = mockChain({ data: null, error: null })
+      const adminClient = { from: vi.fn().mockReturnValue(adminChain) }
+      vi.mocked(createAdminClient).mockReturnValue(adminClient as any)
 
       const { generateLossPatternAnalysis } = await import("@/lib/actions/loss-patterns")
       const result = await generateLossPatternAnalysis("2026-03-01", "2026-03-15")
       expect(result).toBeDefined()
+      expect(adminClient.from).toHaveBeenCalledWith("job_queue")
     })
 
     it("should return error on failure", async () => {

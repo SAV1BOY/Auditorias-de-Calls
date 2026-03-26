@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { requireAuth, requireRole } from "@/lib/auth/require-role"
-import type { Database } from "@/lib/types/database"
+
 import type {
   AuditFilters,
   CallAuditWithCloser,
@@ -10,8 +10,6 @@ import type {
   DashboardStats,
   PaginatedResult,
 } from "@/lib/types/audit"
-
-type JobQueueInsert = Database["public"]["Tables"]["job_queue"]["Insert"]
 
 function groupByDateAvg(
   rows: Array<{ call_date: string; score_final: number | null }> | null
@@ -202,11 +200,10 @@ export async function resendNotification(
     return { error: "Auditoria precisa estar completa para reenviar." }
   }
 
-  const { error: jobError } = await supabase.from("job_queue").insert({
-    audit_id: auditId,
-    job_type: "notify",
-    status: "pending",
-  } satisfies JobQueueInsert)
+  const { error: jobError } = await supabase.rpc("enqueue_job", {
+    p_audit_id: auditId,
+    p_job_type: "notify",
+  })
 
   if (jobError) {
     return { error: "Erro ao criar job de notificação." }

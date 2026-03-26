@@ -2,14 +2,9 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { requireRole, requireAuth } from "@/lib/auth/require-role"
 import type { LossPatternReport } from "@/lib/types/audit"
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-function db(supabase: any): { from: (table: string) => any } {
-  return supabase
-}
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export async function getLossPatterns(
   dateFrom?: string,
@@ -18,7 +13,7 @@ export async function getLossPatterns(
   await requireAuth()
   const supabase = await createClient()
 
-  let query = db(supabase)
+  let query = supabase
     .from("loss_patterns")
     .select("*")
     .gt("total_lost_calls", 0)
@@ -38,16 +33,15 @@ export async function getLossPatterns(
     return []
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((row: any) => ({
+  return (data ?? []).map((row) => ({
     id: row.id,
-    generated_at: row.generated_at,
+    generated_at: row.generated_at ?? "",
     period_start: row.period_start,
     period_end: row.period_end,
     total_lost_calls: row.total_lost_calls,
-    patterns: (row.patterns ?? []) as LossPatternReport["patterns"],
-    common_objections: (row.common_objections ?? []) as LossPatternReport["common_objections"],
-    weakest_phases: (row.weakest_phases ?? []) as LossPatternReport["weakest_phases"],
+    patterns: (row.patterns ?? []) as unknown as LossPatternReport["patterns"],
+    common_objections: (row.common_objections ?? []) as unknown as LossPatternReport["common_objections"],
+    weakest_phases: (row.weakest_phases ?? []) as unknown as LossPatternReport["weakest_phases"],
     report_markdown: row.report_markdown,
   }))
 }
@@ -69,7 +63,7 @@ export async function generateLossPatternAnalysis(
   const supabase = await createClient()
 
   // Create a placeholder row in loss_patterns (total_lost_calls=0 signals pending)
-  const { data: report, error: insertError } = await db(supabase)
+  const { data: report, error: insertError } = await supabase
     .from("loss_patterns")
     .insert({
       period_start: dateFrom,
@@ -88,10 +82,13 @@ export async function generateLossPatternAnalysis(
     return { error: "Erro ao criar relatorio." }
   }
 
-  // Insert a job into job_queue to trigger the worker
-  const jobData = { audit_id: null, job_type: "loss_pattern", status: "pending" }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: jobError } = await db(supabase).from("job_queue").insert(jobData as any)
+  // Insert job via admin client (loss_pattern jobs have no audit_id, can't use enqueue_job RPC)
+  const admin = createAdminClient()
+  const { error: jobError } = await admin.from("job_queue").insert({
+    audit_id: null,
+    job_type: "loss_pattern",
+    status: "pending",
+  })
 
   if (jobError) {
     console.error("Error creating loss pattern job:", jobError)
@@ -108,7 +105,7 @@ export async function getLossPatternDetail(
   await requireAuth()
   const supabase = await createClient()
 
-  const { data, error } = await db(supabase)
+  const { data, error } = await supabase
     .from("loss_patterns")
     .select("*")
     .eq("id", id)
@@ -120,13 +117,13 @@ export async function getLossPatternDetail(
 
   return {
     id: data.id,
-    generated_at: data.generated_at,
+    generated_at: data.generated_at ?? "",
     period_start: data.period_start,
     period_end: data.period_end,
     total_lost_calls: data.total_lost_calls,
-    patterns: (data.patterns ?? []) as LossPatternReport["patterns"],
-    common_objections: (data.common_objections ?? []) as LossPatternReport["common_objections"],
-    weakest_phases: (data.weakest_phases ?? []) as LossPatternReport["weakest_phases"],
+    patterns: (data.patterns ?? []) as unknown as LossPatternReport["patterns"],
+    common_objections: (data.common_objections ?? []) as unknown as LossPatternReport["common_objections"],
+    weakest_phases: (data.weakest_phases ?? []) as unknown as LossPatternReport["weakest_phases"],
     report_markdown: data.report_markdown,
   }
 }

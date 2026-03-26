@@ -238,12 +238,9 @@ describe("getAuditDetail", () => {
 describe("resendNotification", () => {
   it("creates notify job for completed audit", async () => {
     const chain = mockChain({ data: { id: "audit-001", status: "completed" } })
-    const insertChain = mockChain({ data: null, error: null })
     const client = {
-      from: vi.fn().mockImplementation((table: string) => {
-        if (table === "job_queue") return insertChain
-        return chain
-      }),
+      from: vi.fn().mockReturnValue(chain),
+      rpc: vi.fn().mockResolvedValue({ data: "job-001", error: null }),
       auth: {
         getUser: vi.fn().mockResolvedValue({
           data: { user: { id: "user-001" } },
@@ -257,24 +254,17 @@ describe("resendNotification", () => {
     const result = await resendNotification("audit-001")
 
     expect(result).toEqual({ success: true })
-    expect(client.from).toHaveBeenCalledWith("job_queue")
-    expect(insertChain.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        audit_id: "audit-001",
-        job_type: "notify",
-        status: "pending",
-      })
-    )
+    expect(client.rpc).toHaveBeenCalledWith("enqueue_job", {
+      p_audit_id: "audit-001",
+      p_job_type: "notify",
+    })
   })
 
   it("creates notify job for analyzed audit", async () => {
     const chain = mockChain({ data: { id: "audit-002", status: "analyzed" } })
-    const insertChain = mockChain({ data: null, error: null })
     const client = {
-      from: vi.fn().mockImplementation((table: string) => {
-        if (table === "job_queue") return insertChain
-        return chain
-      }),
+      from: vi.fn().mockReturnValue(chain),
+      rpc: vi.fn().mockResolvedValue({ data: "job-002", error: null }),
       auth: {
         getUser: vi.fn().mockResolvedValue({
           data: { user: { id: "user-001" } },
