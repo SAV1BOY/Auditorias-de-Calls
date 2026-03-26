@@ -8,7 +8,6 @@ import { requireRole } from "@/lib/auth/require-role"
 import { rateLimit, RATE_LIMITS } from "@/lib/security/rate-limit"
 
 type CallAuditInsert = Database["public"]["Tables"]["call_audits"]["Insert"]
-type JobQueueInsert = Database["public"]["Tables"]["job_queue"]["Insert"]
 
 export type UploadResult = {
   auditId?: string
@@ -117,12 +116,11 @@ export async function uploadCall(formData: FormData): Promise<UploadResult> {
       .update({ audio_path: storagePath })
       .eq("id", auditId)
 
-    // Create transcribe job
-    const { error: jobError } = await supabase.from("job_queue").insert({
-      audit_id: auditId,
-      job_type: "transcribe",
-      status: "pending",
-    } satisfies JobQueueInsert)
+    // Create transcribe job via RPC (respects RLS)
+    const { error: jobError } = await supabase.rpc("enqueue_job", {
+      p_audit_id: auditId,
+      p_job_type: "transcribe",
+    })
 
     if (jobError) {
       console.error("Failed to create job:", jobError)

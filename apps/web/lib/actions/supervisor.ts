@@ -233,11 +233,10 @@ export async function requestSupervisorAnalysis(
   if (!audit) return { success: false, error: "Auditoria não encontrada." }
   if (!audit.transcricao) return { success: false, error: "Transcrição ainda não disponível." }
 
-  // Create job in queue
-  const { error } = await supabase.from("job_queue").insert({
-    audit_id: auditId,
-    job_type: "supervisor_analyze",
-    status: "pending",
+  // Create job in queue via RPC (respects RLS)
+  const { error } = await supabase.rpc("enqueue_job", {
+    p_audit_id: auditId,
+    p_job_type: "supervisor_analyze",
   })
 
   if (error) return { success: false, error: "Erro ao solicitar análise." }

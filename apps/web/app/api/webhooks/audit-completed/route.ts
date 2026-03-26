@@ -7,14 +7,14 @@ import { createClient } from "@/lib/supabase/server"
  * Internal webhook endpoint called by the worker after an audit is completed.
  * Forwards audit data to configured external CRM webhook URL.
  *
- * Security: Requires X-API-Key header matching the configured webhook API key.
+ * Security: Requires X-API-Key header (fail-closed — rejects if key not configured).
  */
 export async function POST(request: NextRequest) {
   try {
-    // Validate internal API key
+    // Validate internal API key (fail-closed: reject if not configured)
     const apiKey = request.headers.get("x-api-key")
     const expectedKey = process.env.WEBHOOK_INTERNAL_API_KEY
-    if (expectedKey && apiKey !== expectedKey) {
+    if (!expectedKey || apiKey !== expectedKey) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -50,6 +50,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: "webhook_disabled" })
     }
 
+    // Validate external URL is HTTPS
+    try {
+      const parsedUrl = new URL(webhookConfig.url)
+      if (parsedUrl.protocol !== "https:") {
+        return NextResponse.json(
+          { error: "Webhook URL must use HTTPS" },
+          { status: 400 }
+        )
+      }
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid webhook URL" },
+        { status: 400 }
+      )
+    }
+
     // Fetch audit data
     const { data: audit } = await supabase
       .from("call_audits")
@@ -77,21 +93,28 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     }
 
-    // Send to external webhook
-    const response = await fetch(webhookConfig.url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(webhookConfig.api_key
-          ? { "X-API-Key": webhookConfig.api_key }
-          : {}),
-      },
-      body: JSON.stringify(payload),
-    })
+    // Send to external webhook with timeout
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 10000)
+    let response: Response
+    try {
+      response = await fetch(webhookConfig.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(webhookConfig.api_key
+            ? { "X-API-Key": webhookConfig.api_key }
+            : {}),
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timeout)
+    }
 
-    // Log delivery (cast to any — notifications table accepts webhook channel)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from("notifications").insert({
+    // Log delivery — channel constraint now includes 'webhook' (migration 013)
+    await supabase.from("notifications").insert({
       audit_id,
       channel: "webhook",
       recipient: webhookConfig.url,

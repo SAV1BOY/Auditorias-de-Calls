@@ -56,7 +56,7 @@ export async function listUsers(): Promise<UserProfile[]> {
 // ─── Create User ───
 
 export async function createUser(formData: FormData): Promise<CreateUserResult> {
-  const { userId } = await requireRole(["admin"])
+  const { userId, organizationId } = await requireRole(["admin"])
 
   // Rate limit: 5 user creations per hour
   const rl = rateLimit(`create_user:${userId}`, { interval: 60 * 60 * 1000, maxRequests: 5 })
@@ -109,11 +109,12 @@ export async function createUser(formData: FormData): Promise<CreateUserResult> 
       return { error: "Erro inesperado na criação do usuário." }
     }
 
-    // 2. Create profile
+    // 2. Create profile (inherit organization_id from admin)
     const { error: profileError } = await admin.from("profiles").insert({
       id: authData.user.id,
       full_name: fullName,
       role,
+      organization_id: organizationId,
     })
 
     if (profileError) {
