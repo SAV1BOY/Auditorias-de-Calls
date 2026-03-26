@@ -45,7 +45,7 @@ function CommentThread({ comment, auditId, onSeek, onRefresh }: { comment: CallC
       <p className="text-sm">{comment.content}</p>
       {comment.resolved && <p className="text-xs text-emerald-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Resolvido</p>}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="ml-4 space-y-2 pl-3" style={{ borderLeft: '2px solid hsl(var(--surface-container-high))' }}>
+        <div className="ml-4 space-y-2 pl-3" style={{ borderLeft: '2px solid #292a2d' }}>
           {comment.replies.map((reply) => (
             <div key={reply.id} className="space-y-1">
               <div className="flex items-center gap-2 text-sm">
