@@ -47,7 +47,7 @@ export function Pagination({
 
   return (
     <div className="flex items-center justify-between px-2">
-      <p className="text-sm text-muted-foreground font-technical">
+      <p className="text-sm text-muted-foreground font-body">
         Mostrando {from}-{to} de {total} calls
       </p>
       <div className="flex items-center gap-1">
@@ -69,7 +69,7 @@ export function Pagination({
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <span className="px-2 text-sm font-technical text-accent-foreground">
+        <span className="px-2 text-sm font-body text-on-surface-variant">
           {page} / {totalPages}
         </span>
         <Button

@@ -16,7 +16,7 @@ export default async function SettingsPage() {
   } catch {
     return (
       <div className="space-y-6">
-        <h1 className="flex items-center gap-2 text-2xl font-bold font-display">
+        <h1 className="flex items-center gap-2 text-2xl font-bold font-headline">
           <Settings className="h-6 w-6 text-primary" />
           <span className="amber-keyword">Configura\u00e7\u00f5es</span>
         </h1>
@@ -33,7 +33,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="flex items-center gap-2 text-2xl font-bold font-display">
+      <h1 className="flex items-center gap-2 text-2xl font-bold font-headline">
         <Settings className="h-6 w-6 text-primary" />
         <span className="amber-keyword">Configura\u00e7\u00f5es</span>
       </h1>

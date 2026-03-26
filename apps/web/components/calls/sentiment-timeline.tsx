@@ -32,7 +32,7 @@ export function SentimentTimeline({ timeline, overallSentiment, sentimentScore }
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Score:</span>
-          <span className="text-lg font-bold font-technical" style={{ color: scoreColor }}>
+          <span className="text-lg font-bold font-body" style={{ color: scoreColor }}>
             {sentimentScore > 0 ? "+" : ""}{sentimentScore.toFixed(2)}
           </span>
         </div>
@@ -40,7 +40,7 @@ export function SentimentTimeline({ timeline, overallSentiment, sentimentScore }
 
       {timeline.length > 0 && (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold font-display">Timeline de Sentimento</h4>
+          <h4 className="text-sm font-semibold font-headline">Timeline de Sentimento</h4>
           <div className="flex h-8 overflow-hidden rounded-md">
             {timeline.map((entry, i) => {
               const color = SENTIMENT_COLORS[entry.sentiment] ?? "#8a8a8a"
@@ -55,14 +55,14 @@ export function SentimentTimeline({ timeline, overallSentiment, sentimentScore }
             {timeline.map((entry, i) => {
               const color = SENTIMENT_COLORS[entry.sentiment] ?? "#8a8a8a"
               return (
-                <div key={i} className="flex items-start gap-3 rounded-lg bg-surface-interaction/30 p-3">
+                <div key={i} className="flex items-start gap-3 rounded-lg bg-surface-container-high/30 p-3">
                   <div className="mt-0.5 h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium font-technical">{entry.timestamp_range}</span>
+                      <span className="text-sm font-medium font-body">{entry.timestamp_range}</span>
                       <div className="flex items-center gap-2">
                         <SentimentBadge sentiment={entry.sentiment} />
-                        <span className="text-xs text-muted-foreground font-technical">{(entry.confidence * 100).toFixed(0)}% conf.</span>
+                        <span className="text-xs text-muted-foreground font-body">{(entry.confidence * 100).toFixed(0)}% conf.</span>
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">{entry.key_moment}</p>

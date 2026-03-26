@@ -26,14 +26,14 @@ export function ObjectionsChart({ objections }: ObjectionsChartProps) {
               <Tooltip content={({ active, payload }) => {
                 if (!active || !payload?.length) return null
                 const item = payload[0].payload as (typeof data)[0]
-                return (<div className="glass rounded-lg p-3 shadow-elevation-2 max-w-xs"><p className="font-medium text-sm">{item.fullName}</p><p className="text-xs text-muted-foreground mt-1">Ocorr\u00eancias: {item.count}</p>{item.best_response && <p className="text-xs mt-2"><span className="font-medium">Melhor resposta: </span>{item.best_response}</p>}</div>)
+                return (<div className="glass rounded-lg p-3 shadow-panel max-w-xs"><p className="font-medium text-sm">{item.fullName}</p><p className="text-xs text-muted-foreground mt-1">Ocorr\u00eancias: {item.count}</p>{item.best_response && <p className="text-xs mt-2"><span className="font-medium">Melhor resposta: </span>{item.best_response}</p>}</div>)
               }} />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>{data.map((_, i) => (<Cell key={`cell-${i}`} fill={CHART_COLORS[i % CHART_COLORS.length]} />))}</Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="space-y-2">
-          {objections.map((o, i) => (<div key={i} className="rounded-md bg-surface-interaction/50 p-3"><p className="text-sm font-medium">{o.objection}</p>{o.best_response && <p className="text-xs text-muted-foreground mt-1">Resposta sugerida: {o.best_response}</p>}</div>))}
+          {objections.map((o, i) => (<div key={i} className="rounded-md bg-surface-container-high/50 p-3"><p className="text-sm font-medium">{o.objection}</p>{o.best_response && <p className="text-xs text-muted-foreground mt-1">Resposta sugerida: {o.best_response}</p>}</div>))}
         </div>
       </CardContent>
     </Card>

@@ -74,7 +74,7 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
             {/* Left: metadata */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold font-display">
+                <h1 className="text-2xl font-bold font-headline">
                   {audit.closers?.name ?? "\u2014"} x <span className="amber-keyword">{audit.lead_name}</span>
                 </h1>
                 <BookmarkButton auditId={audit.id} />
@@ -96,7 +96,7 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                     : "\u2014"}
                   {audit.resultado === "fechamento" &&
                     audit.valor_fechamento && (
-                      <span className="ml-1 font-medium font-technical text-emerald-400">
+                      <span className="ml-1 font-medium font-body text-emerald-400">
                         ({formatCurrency(audit.valor_fechamento)})
                       </span>
                     )}
@@ -118,7 +118,7 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                       href={audit.drive_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-accent-foreground hover:text-primary transition-colors"
+                      className="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors"
                     >
                       <ExternalLink className="h-3 w-3" />
                       \u00c1udio no Drive
@@ -129,7 +129,7 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                       href={audit.drive_report_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-accent-foreground hover:text-primary transition-colors"
+                      className="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors"
                     >
                       <ExternalLink className="h-3 w-3" />
                       Relat\u00f3rio no Drive
@@ -177,11 +177,11 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
             {/* Right: score */}
             <div className="flex flex-col items-center gap-1">
               <span
-                className={`text-5xl font-bold font-technical ${getScoreColor(audit.score_final)}`}
+                className={`text-5xl font-bold font-body ${getScoreColor(audit.score_final)}`}
               >
                 {formatScore(audit.score_final)}
               </span>
-              <span className="text-sm text-muted-foreground font-technical">/10</span>
+              <span className="text-sm text-muted-foreground font-body">/10</span>
               {audit.classificacao && (
                 <Badge
                   variant="secondary"

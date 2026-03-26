@@ -8,7 +8,7 @@ export function SentimentBadge({ sentiment }: SentimentBadgeProps) {
   const color = SENTIMENT_COLORS[sentiment] ?? "#8a8a8a"
 
   return (
-    <Badge variant="outline" className="text-xs font-medium font-technical" style={{ color, borderColor: `${color}40`, backgroundColor: `${color}15` }}>
+    <Badge variant="outline" className="text-xs font-medium font-body" style={{ color, borderColor: `${color}40`, backgroundColor: `${color}15` }}>
       {label}
     </Badge>
   )

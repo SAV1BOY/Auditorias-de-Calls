@@ -3,12 +3,23 @@ import { StatsCards } from "@/components/dashboard/stats-cards"
 import { RecentCalls } from "@/components/dashboard/recent-calls"
 import { ScoreChart } from "@/components/dashboard/score-chart"
 import { ClassificacaoChart } from "@/components/dashboard/classificacao-chart"
+import { GrowthMetrics } from "@/components/dashboard/growth-metrics"
 
 export default async function DashboardPage() {
   const [stats, recentCalls] = await Promise.all([
     getDashboardStats(),
     getRecentCalls(),
   ])
+
+  // Generate closing rate evolution data from score evolution
+  const closingRateData = stats.evolucaoScore.map((point) => ({
+    date: point.date,
+    value: Math.round(point.score * 10), // approximate closing rate from score
+  }))
+
+  const closingRateValue = stats.taxaFechamento !== null
+    ? `${stats.taxaFechamento.toFixed(1)}%`
+    : "—"
 
   return (
     <div className="space-y-12">
@@ -30,6 +41,12 @@ export default async function DashboardPage() {
         </div>
         <ClassificacaoChart stats={stats.porClassificacao} />
       </section>
+
+      <GrowthMetrics
+        data={closingRateData}
+        value={closingRateValue}
+        label="Closing Rate"
+      />
 
       <RecentCalls calls={recentCalls} />
     </div>

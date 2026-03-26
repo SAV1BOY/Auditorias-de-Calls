@@ -12,11 +12,11 @@ export function StreakDisplay({ streaks }: StreakDisplayProps) {
   return (
     <div className="flex flex-wrap gap-4">
       {streaks.map((streak) => (
-        <div key={streak.id} className="flex items-center gap-2 rounded-md bg-surface-interaction px-3 py-2">
+        <div key={streak.id} className="flex items-center gap-2 rounded-md bg-surface-container-high px-3 py-2">
           <Flame className="h-4 w-4 text-primary" />
           <div className="text-sm">
             <span className="font-medium">{STREAK_TYPE_LABELS[streak.streak_type] ?? streak.streak_type}</span>
-            <span className="text-muted-foreground ml-2 font-technical">Atual: {streak.current_count} | Melhor: {streak.best_count}</span>
+            <span className="text-muted-foreground ml-2 font-body">Atual: {streak.current_count} | Melhor: {streak.best_count}</span>
           </div>
         </div>
       ))}

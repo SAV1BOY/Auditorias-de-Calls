@@ -10,8 +10,8 @@ interface LeaderboardTableProps { entries: LeaderboardEntry[] }
 function RankBadge({ rank }: { rank: number }) {
   if (rank === 1) return <Trophy className="h-5 w-5 text-amber-400" />
   if (rank === 2) return <Medal className="h-5 w-5 text-muted-foreground" />
-  if (rank === 3) return <Medal className="h-5 w-5 text-primary-dim" />
-  return <span className="text-sm text-muted-foreground font-technical">{rank}</span>
+  if (rank === 3) return <Medal className="h-5 w-5 text-primary-fixed-dim" />
+  return <span className="text-sm text-muted-foreground font-body">{rank}</span>
 }
 
 function TrendIcon({ trend }: { trend: "up" | "down" | "stable" }) {
@@ -41,13 +41,13 @@ export function LeaderboardTable({ entries }: LeaderboardTableProps) {
             <TableCell><div className="flex items-center justify-center w-8"><RankBadge rank={entry.rank} /></div></TableCell>
             <TableCell>
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium font-technical">{entry.closer_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}</div>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium font-body">{entry.closer_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}</div>
                 <span className="font-medium">{entry.closer_name}</span>
               </div>
             </TableCell>
-            <TableCell className="text-right font-semibold font-technical tabular-nums">{entry.value}</TableCell>
+            <TableCell className="text-right font-semibold font-body tabular-nums">{entry.value}</TableCell>
             <TableCell className="text-center"><div className="flex items-center justify-center"><TrendIcon trend={entry.trend} /></div></TableCell>
-            <TableCell className="text-center"><div className="flex items-center justify-center gap-1"><Award className="h-3.5 w-3.5 text-muted-foreground" /><span className="text-sm font-technical">{entry.badges_count}</span></div></TableCell>
+            <TableCell className="text-center"><div className="flex items-center justify-center gap-1"><Award className="h-3.5 w-3.5 text-muted-foreground" /><span className="text-sm font-body">{entry.badges_count}</span></div></TableCell>
           </TableRow>
         ))}
       </TableBody>

@@ -48,14 +48,14 @@ function ScorecardContent({ audit }: { audit: CallAuditWithCloser }) {
                 {dim.name}{" "}
                 <span className="text-xs text-muted-foreground">({(dim.peso * 100).toFixed(0)}%)</span>
               </span>
-              <span className={`font-medium font-technical ${getScoreColor(score)}`}>{formatScore(score)}</span>
+              <span className={`font-medium font-body ${getScoreColor(score)}`}>{formatScore(score)}</span>
             </div>
-            <div className="h-2 rounded-full bg-surface-interaction">
+            <div className="h-2 rounded-full bg-surface-container-high">
               <div
                 className={`h-2 rounded-full transition-all duration-500 ${
                   score !== null && score !== undefined
                     ? score >= 8.5 ? "bg-amber-400" : score >= 7.0 ? "bg-emerald-500" : score >= 5.5 ? "bg-yellow-500" : "bg-red-500"
-                    : "bg-surface-highest"
+                    : "bg-surface-container-highest"
                 }`}
                 style={{ width: `${((score ?? 0) / 10) * 100}%` }}
               />
@@ -93,7 +93,7 @@ function TranscricaoContent({ audit }: { audit: CallAuditWithCloser }) {
   return (
     <div className="space-y-4">
       <Input placeholder="Buscar na transcri\u00e7\u00e3o..." value={search} onChange={(e) => setSearch(e.target.value)} />
-      <div className="max-h-[600px] overflow-y-auto rounded-lg bg-surface-interaction/30 p-4 text-sm leading-relaxed">
+      <div className="max-h-[600px] overflow-y-auto rounded-lg bg-surface-container-high/30 p-4 text-sm leading-relaxed">
         {lines.map((line, i) => {
           if (!search) return <p key={i} className="mb-1">{line || "\u00A0"}</p>
           if (!line.toLowerCase().includes(searchLower)) return <p key={i} className="mb-1 opacity-30">{line || "\u00A0"}</p>
@@ -127,12 +127,12 @@ function ErrosAcertosContent({ audit }: { audit: CallAuditWithCloser }) {
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <div className="space-y-3">
-        <h3 className="font-semibold font-display text-red-400">Top Erros</h3>
+        <h3 className="font-semibold font-headline text-red-400">Top Erros</h3>
         {erros.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum erro registrado.</p> : (
           erros.map((item) => (
             <div key={item.rank} className="rounded-lg bg-red-900/20 p-3">
               <div className="flex items-start gap-2">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-900/30 text-xs font-bold text-red-400 font-technical">{item.rank}</span>
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-900/30 text-xs font-bold text-red-400 font-body">{item.rank}</span>
                 <div>
                   <p className="font-medium text-sm">
                     {item.title}
@@ -147,12 +147,12 @@ function ErrosAcertosContent({ audit }: { audit: CallAuditWithCloser }) {
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-semibold font-display text-emerald-400">Top Acertos</h3>
+        <h3 className="font-semibold font-headline text-emerald-400">Top Acertos</h3>
         {acertos.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum acerto registrado.</p> : (
           acertos.map((item) => (
             <div key={item.rank} className="rounded-lg bg-emerald-900/20 p-3">
               <div className="flex items-start gap-2">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-900/30 text-xs font-bold text-emerald-400 font-technical">{item.rank}</span>
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-900/30 text-xs font-bold text-emerald-400 font-body">{item.rank}</span>
                 <div>
                   <p className="font-medium text-sm">{item.title}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
@@ -176,15 +176,15 @@ function ReescritaContent({ audit }: { audit: CallAuditWithCloser }) {
   return (
     <div className="space-y-6">
       {items.map((item, i) => (
-        <div key={i} className="rounded-lg bg-surface-interaction/30 p-4 space-y-3">
-          <h4 className="font-semibold text-sm font-display">Momento {i + 1}: {item.description}</h4>
+        <div key={i} className="rounded-lg bg-surface-container-high/30 p-4 space-y-3">
+          <h4 className="font-semibold text-sm font-headline">Momento {i + 1}: {item.description}</h4>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1">
-              <p className="text-xs font-medium text-red-400 uppercase font-technical">O que foi dito</p>
+              <p className="text-xs font-medium text-red-400 uppercase font-body">O que foi dito</p>
               <p className="rounded-lg bg-red-950/50 p-3 text-sm">{item.original ?? "\u2014"}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium text-emerald-400 uppercase font-technical">O que deveria ter sido dito</p>
+              <p className="text-xs font-medium text-emerald-400 uppercase font-body">O que deveria ter sido dito</p>
               <p className="rounded-lg bg-emerald-950/50 p-3 text-sm">{item.rewritten ?? "\u2014"}</p>
             </div>
           </div>
@@ -206,10 +206,10 @@ function PlanoAcaoContent({ audit }: { audit: CallAuditWithCloser }) {
   return (
     <div className="space-y-4">
       {items.map((item) => (
-        <div key={item.rank} className="rounded-lg bg-surface-interaction/30 p-4 space-y-2">
+        <div key={item.rank} className="rounded-lg bg-surface-container-high/30 p-4 space-y-2">
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-900/30 text-sm font-bold text-blue-400 font-technical">{item.rank}</span>
-            <h4 className="font-semibold text-sm font-display">{item.title}</h4>
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-900/30 text-sm font-bold text-blue-400 font-body">{item.rank}</span>
+            <h4 className="font-semibold text-sm font-headline">{item.title}</h4>
             {item.prioridade && <Badge variant="outline" className="ml-auto text-xs">{item.prioridade}</Badge>}
           </div>
           {item.o_que_fazer && <p className="text-sm"><strong className="text-muted-foreground">O que fazer:</strong> {item.o_que_fazer}</p>}

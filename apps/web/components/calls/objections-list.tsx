@@ -11,9 +11,9 @@ export function ObjectionsList({ objections }: ObjectionsListProps) {
 
   return (
     <div className="space-y-3">
-      <h4 className="text-sm font-semibold font-display">Obje\u00e7\u00f5es Detectadas</h4>
+      <h4 className="text-sm font-semibold font-headline">Obje\u00e7\u00f5es Detectadas</h4>
       {objections.map((obj, i) => (
-        <div key={i} className="rounded-lg bg-surface-interaction/30 p-3 space-y-2">
+        <div key={i} className="rounded-lg bg-surface-container-high/30 p-3 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono text-muted-foreground">{obj.timestamp}</span>
             <span className={`inline-flex items-center gap-1 text-xs font-medium ${obj.effectiveness === "good" ? "text-emerald-400" : "text-red-400"}`}>

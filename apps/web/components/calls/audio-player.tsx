@@ -45,14 +45,14 @@ export function AudioPlayer({ audioPath, markers = [], onTimeClick, onTimeUpdate
   const handleEnded = useCallback(() => { setPlaying(false) }, [])
 
   if (!audioPath) return null
-  if (error) return <div className="rounded-lg bg-surface-interaction/30 p-3 text-sm text-muted-foreground">N\u00e3o foi poss\u00edvel carregar o \u00e1udio.</div>
-  if (!src) return <div className="rounded-lg bg-surface-interaction/30 p-3 text-sm text-muted-foreground animate-amber-pulse">Carregando \u00e1udio...</div>
+  if (error) return <div className="rounded-lg bg-surface-container-high/30 p-3 text-sm text-muted-foreground">N\u00e3o foi poss\u00edvel carregar o \u00e1udio.</div>
+  if (!src) return <div className="rounded-lg bg-surface-container-high/30 p-3 text-sm text-muted-foreground animate-amber-pulse">Carregando \u00e1udio...</div>
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
   const pointMarkers = markers.filter((m) => m.type === "comment")
 
   return (
-    <div className="rounded-lg bg-card p-4 space-y-3 shadow-elevation-1">
+    <div className="rounded-lg bg-card p-4 space-y-3 shadow-panel">
       <audio ref={audioRef} src={src} preload="metadata" onTimeUpdate={handleTimeUpdate} onLoadedMetadata={handleLoadedMetadata} onEnded={handleEnded} />
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => skip(-10)} title="-10s"><SkipBack className="h-4 w-4" /></Button>
@@ -62,7 +62,7 @@ export function AudioPlayer({ audioPath, markers = [], onTimeClick, onTimeUpdate
         <span className="ml-auto text-xs font-mono text-muted-foreground">{formatTime(currentTime)} / {formatTime(duration)}</span>
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleMute}>{muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}</Button>
       </div>
-      <div ref={progressRef} className="relative h-3 cursor-pointer rounded-full bg-surface-interaction group" onClick={handleProgressClick}>
+      <div ref={progressRef} className="relative h-3 cursor-pointer rounded-full bg-surface-container-high group" onClick={handleProgressClick}>
         <div className="absolute left-0 top-0 h-full rounded-full bg-primary transition-[width] duration-100" style={{ width: `${progress}%` }} />
         {pointMarkers.map((marker) => {
           if (duration === 0) return null

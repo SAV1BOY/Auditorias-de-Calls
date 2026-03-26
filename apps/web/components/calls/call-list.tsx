@@ -79,7 +79,7 @@ export function CallList({ audits, sortBy, sortOrder }: CallListProps) {
             {columns.map((col) => (
               <TableHead
                 key={col.key}
-                className={`${col.sortable ? "cursor-pointer select-none hover:text-accent-foreground transition-colors" : ""} ${
+                className={`${col.sortable ? "cursor-pointer select-none hover:text-on-surface-variant transition-colors" : ""} ${
                   col.key === "duration_minutes" || col.key === "classificacao"
                     ? "hidden sm:table-cell"
                     : ""
@@ -111,8 +111,8 @@ export function CallList({ audits, sortBy, sortOrder }: CallListProps) {
                 {audit.closers?.name ?? "\u2014"}
               </TableCell>
               <TableCell>{audit.lead_name}</TableCell>
-              <TableCell className="font-technical text-muted-foreground">{formatDate(audit.call_date)}</TableCell>
-              <TableCell className="hidden sm:table-cell font-technical text-muted-foreground">
+              <TableCell className="font-body text-muted-foreground">{formatDate(audit.call_date)}</TableCell>
+              <TableCell className="hidden sm:table-cell font-body text-muted-foreground">
                 {formatDuration(audit.duration_minutes)}
               </TableCell>
               <TableCell>

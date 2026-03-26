@@ -36,7 +36,7 @@ export function BookmarkDialog({ auditId, open, onOpenChange, onSaved }: Bookmar
             <Input placeholder="Adicionar tag e pressionar Enter..." value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleKeyDown} />
             <div className="flex flex-wrap gap-1 mt-1">
               {SUGGESTED_TAGS.filter((t) => !tags.includes(t)).map((tag) => (
-                <button key={tag} className="text-xs text-muted-foreground hover:text-accent-foreground bg-surface-interaction rounded px-1.5 py-0.5 transition-colors" onClick={() => addTag(tag)}>+ {tag}</button>
+                <button key={tag} className="text-xs text-muted-foreground hover:text-on-surface-variant bg-surface-container-high rounded px-1.5 py-0.5 transition-colors" onClick={() => addTag(tag)}>+ {tag}</button>
               ))}
             </div>
           </div>

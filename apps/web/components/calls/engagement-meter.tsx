@@ -10,17 +10,17 @@ export function EngagementMeter({ level }: EngagementMeterProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium font-display">N\u00edvel de Engajamento</span>
-        <span className="text-sm font-semibold font-technical" style={{ color: ENGAGEMENT_COLORS[level] ?? "hsl(var(--muted-foreground))" }}>{label}</span>
+        <span className="text-sm font-medium font-headline">N\u00edvel de Engajamento</span>
+        <span className="text-sm font-semibold font-body" style={{ color: ENGAGEMENT_COLORS[level] ?? "hsl(var(--muted-foreground))" }}>{label}</span>
       </div>
       <div className="flex gap-1">
         {LEVELS.map((lvl, i) => {
           const isActive = i <= activeIndex
           const color = isActive ? ENGAGEMENT_COLORS[level] ?? "hsl(var(--muted-foreground))" : undefined
-          return <div key={lvl} className={`h-3 flex-1 rounded-sm ${isActive ? "" : "bg-surface-interaction"}`} style={isActive ? { backgroundColor: color } : undefined} />
+          return <div key={lvl} className={`h-3 flex-1 rounded-sm ${isActive ? "" : "bg-surface-container-high"}`} style={isActive ? { backgroundColor: color } : undefined} />
         })}
       </div>
-      <div className="flex justify-between text-xs text-muted-foreground font-technical"><span>Baixo</span><span>M\u00e9dio</span><span>Alto</span></div>
+      <div className="flex justify-between text-xs text-muted-foreground font-body"><span>Baixo</span><span>M\u00e9dio</span><span>Alto</span></div>
     </div>
   )
 }

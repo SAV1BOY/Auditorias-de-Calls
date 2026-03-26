@@ -35,7 +35,7 @@ export function GoalsDashboard({ goals, closers }: GoalsDashboardProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold font-display">Metas Ativas ({activeGoals.length})</h2>
+        <h2 className="text-lg font-semibold font-headline">Metas Ativas ({activeGoals.length})</h2>
         <Button onClick={() => setShowForm(true)} size="sm"><Plus className="mr-1 h-4 w-4" />Nova Meta</Button>
       </div>
       {activeGoals.length === 0 && <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma meta ativa. Crie sua primeira meta!</p>}
@@ -79,8 +79,8 @@ function GoalCard({ goal, isPending, onStatusChange, onDelete }: { goal: GoalWit
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="space-y-1">
-          <div className="flex justify-between text-xs text-muted-foreground font-technical"><span>{displayCurrent} / {displayTarget}</span><span>{goal.progress}%</span></div>
-          <div className="h-2 rounded-full bg-surface-interaction overflow-hidden"><div className={`h-full rounded-full transition-all ${progressColor}`} style={{ width: `${Math.min(goal.progress, 100)}%` }} /></div>
+          <div className="flex justify-between text-xs text-muted-foreground font-body"><span>{displayCurrent} / {displayTarget}</span><span>{goal.progress}%</span></div>
+          <div className="h-2 rounded-full bg-surface-container-high overflow-hidden"><div className={`h-full rounded-full transition-all ${progressColor}`} style={{ width: `${Math.min(goal.progress, 100)}%` }} /></div>
         </div>
         {goal.status === "active" && <p className="text-xs text-muted-foreground">{daysRemaining === 0 ? "Encerra hoje" : `${daysRemaining} dia${daysRemaining !== 1 ? "s" : ""} restante${daysRemaining !== 1 ? "s" : ""}`}</p>}
       </CardContent>

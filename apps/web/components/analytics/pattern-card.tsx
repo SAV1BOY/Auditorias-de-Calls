@@ -23,9 +23,9 @@ export function PatternCard({ pattern }: PatternCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        <div className="flex items-center gap-4 text-muted-foreground"><span>Frequ\u00eancia: <strong className="text-foreground font-technical">{pattern.frequency} calls</strong></span></div>
+        <div className="flex items-center gap-4 text-muted-foreground"><span>Frequ\u00eancia: <strong className="text-foreground font-body">{pattern.frequency} calls</strong></span></div>
         {pattern.affected_closers.length > 0 && <div><span className="text-muted-foreground">Closers afetados: </span><span>{pattern.affected_closers.join(", ")}</span></div>}
-        {pattern.recommendation && <div className="rounded-md bg-surface-interaction/50 p-3"><p className="text-xs font-medium text-muted-foreground mb-1">Recomenda\u00e7\u00e3o</p><p className="text-sm">{pattern.recommendation}</p></div>}
+        {pattern.recommendation && <div className="rounded-md bg-surface-container-high/50 p-3"><p className="text-xs font-medium text-muted-foreground mb-1">Recomenda\u00e7\u00e3o</p><p className="text-sm">{pattern.recommendation}</p></div>}
       </CardContent>
     </Card>
   )

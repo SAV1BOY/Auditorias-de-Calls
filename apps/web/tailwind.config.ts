@@ -61,13 +61,6 @@ const config: Config = {
         "on-background": "#e3e2e5",
         "surface-container-low": "#1a1c1e",
         "on-error-container": "#ffdad6",
-        // Legacy aliases (used by shadcn/ui components from previous design system)
-        "surface-interaction": "#292a2d",
-        "surface-secondary": "#1a1c1e",
-        "surface-highest": "#343538",
-        "surface-base": "#121316",
-        "primary-dim": "#c47f00",
-        "primary-light": "#ffcc8d",
         // shadcn compatibility
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -99,10 +92,7 @@ const config: Config = {
         body: ["var(--font-manrope)", "Manrope", "sans-serif"],
         label: ["var(--font-manrope)", "Manrope", "sans-serif"],
         mono: ["var(--font-jetbrains)", "JetBrains Mono", "monospace"],
-        // shadcn compat aliases
         sans: ["var(--font-manrope)", "Manrope", "sans-serif"],
-        display: ["var(--font-jakarta)", "Plus Jakarta Sans", "sans-serif"],
-        technical: ["var(--font-manrope)", "Manrope", "sans-serif"],
       },
       borderRadius: {
         DEFAULT: "1rem",
@@ -115,11 +105,7 @@ const config: Config = {
       boxShadow: {
         'panel': '0 40px 40px -10px rgba(0,0,0,0.4)',
         'amber-glow': '0 0 30px rgba(255,166,0,0.4)',
-        'elevation-1': '0 1px 3px rgba(0,0,0,0.3)',
-        'elevation-2': '0 4px 12px rgba(0,0,0,0.4)',
-        'elevation-3': '0 8px 24px rgba(0,0,0,0.5)',
-        'amber-sm': '0 0 10px rgba(255,166,0,0.08)',
-        'amber-md': '0 0 20px rgba(255,166,0,0.12)',
+        // Legacy shadows removed — all mapped to 'panel' and 'amber-glow'
       },
       animation: {
         'amber-pulse': 'amber-pulse 2s ease-in-out infinite',

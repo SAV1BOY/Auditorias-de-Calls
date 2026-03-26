@@ -60,10 +60,10 @@ export function DimensionTrends({ closers }: DimensionTrendsProps) {
 
       {data.length > 0 && (<>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground font-technical">Nota Atual</p><p className={`text-2xl font-bold font-technical ${getScoreColor(currentScore ?? null)}`}>{currentScore?.toFixed(1) ?? "\u2014"}</p></CardContent></Card>
-          <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground font-technical">M\u00e9dia do Per\u00edodo</p><p className={`text-2xl font-bold font-technical ${getScoreColor(avgScore)}`}>{avgScore?.toFixed(1) ?? "\u2014"}</p></CardContent></Card>
-          <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground font-technical">Melhor Nota</p><p className={`text-2xl font-bold font-technical ${getScoreColor(bestScore ?? null)}`}>{bestScore?.toFixed(1) ?? "\u2014"}</p></CardContent></Card>
-          <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground font-technical">Tend\u00eancia</p><p className="text-2xl font-bold font-technical">{trend ?? "\u2014"}</p></CardContent></Card>
+          <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground font-body">Nota Atual</p><p className={`text-2xl font-bold font-body ${getScoreColor(currentScore ?? null)}`}>{currentScore?.toFixed(1) ?? "\u2014"}</p></CardContent></Card>
+          <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground font-body">M\u00e9dia do Per\u00edodo</p><p className={`text-2xl font-bold font-body ${getScoreColor(avgScore)}`}>{avgScore?.toFixed(1) ?? "\u2014"}</p></CardContent></Card>
+          <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground font-body">Melhor Nota</p><p className={`text-2xl font-bold font-body ${getScoreColor(bestScore ?? null)}`}>{bestScore?.toFixed(1) ?? "\u2014"}</p></CardContent></Card>
+          <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground font-body">Tend\u00eancia</p><p className="text-2xl font-bold font-body">{trend ?? "\u2014"}</p></CardContent></Card>
         </div>
         <Card>
           <CardHeader><CardTitle className="text-base">{currentDim?.name ?? "Dimens\u00e3o"}</CardTitle></CardHeader>

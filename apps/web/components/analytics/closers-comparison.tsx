@@ -54,7 +54,7 @@ export function ClosersComparison({ closers }: ClosersComparisonProps) {
           <div className="flex items-center gap-4">
             <Select value={period} onValueChange={setPeriod}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="7">7 dias</SelectItem><SelectItem value="30">30 dias</SelectItem><SelectItem value="90">90 dias</SelectItem><SelectItem value="all">Todo per\u00edodo</SelectItem></SelectContent></Select>
             <Button onClick={handleCompare} disabled={selectedIds.length < 2 || isPending}>{isPending ? "Carregando..." : "Comparar"}</Button>
-            <span className="text-sm text-muted-foreground font-technical">{selectedIds.length}/5 selecionados</span>
+            <span className="text-sm text-muted-foreground font-body">{selectedIds.length}/5 selecionados</span>
           </div>
         </CardContent>
       </Card>
@@ -86,7 +86,7 @@ export function ClosersComparison({ closers }: ClosersComparisonProps) {
               <TableBody>
                 {data[0].dimensions.map((dim, i) => { const scores = data.map((c) => c.dimensions[i]?.score ?? 0); const mx = Math.max(...scores); return (<TableRow key={dim.name}><TableCell className="font-medium">{dim.name}</TableCell>{data.map((c) => { const s = c.dimensions[i]?.score ?? 0; return (<TableCell key={c.closer_id} className={`text-center ${getScoreColor(s)} ${s === mx && s > 0 ? "font-bold" : ""}`}>{s.toFixed(1)}</TableCell>) })}</TableRow>) })}
                 <TableRow><TableCell className="font-bold">Score M\u00e9dio</TableCell>{data.map((c) => (<TableCell key={c.closer_id} className={`text-center font-bold ${getScoreColor(c.media_score)}`}>{c.media_score?.toFixed(1) ?? "\u2014"}</TableCell>))}</TableRow>
-                <TableRow><TableCell className="text-muted-foreground">Total de Calls</TableCell>{data.map((c) => (<TableCell key={c.closer_id} className="text-center text-muted-foreground font-technical">{c.total_calls}</TableCell>))}</TableRow>
+                <TableRow><TableCell className="text-muted-foreground">Total de Calls</TableCell>{data.map((c) => (<TableCell key={c.closer_id} className="text-center text-muted-foreground font-body">{c.total_calls}</TableCell>))}</TableRow>
               </TableBody>
             </Table>
           </CardContent>

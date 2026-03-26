@@ -20,7 +20,7 @@ export function LossPatterns({ reports }: LossPatternsProps) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold font-display flex items-center gap-2"><TrendingDown className="h-5 w-5 text-red-400" />Padr\u00f5es de Perda</h2>
+          <h2 className="text-lg font-semibold font-headline flex items-center gap-2"><TrendingDown className="h-5 w-5 text-red-400" />Padr\u00f5es de Perda</h2>
           <p className="text-sm text-muted-foreground">An\u00e1lise autom\u00e1tica de padr\u00f5es em calls que n\u00e3o resultaram em fechamento.</p>
         </div>
         <GeneratePatternButton />
@@ -50,7 +50,7 @@ export function LossPatterns({ reports }: LossPatternsProps) {
                 </CardHeader>
                 {isExpanded && (
                   <CardContent className="space-y-6">
-                    {report.patterns.length > 0 && (<div><h3 className="text-sm font-semibold mb-3 font-display">Padr\u00f5es Identificados</h3><div className="grid gap-3 md:grid-cols-2">{report.patterns.map((pattern, i) => (<PatternCard key={i} pattern={pattern} />))}</div></div>)}
+                    {report.patterns.length > 0 && (<div><h3 className="text-sm font-semibold mb-3 font-headline">Padr\u00f5es Identificados</h3><div className="grid gap-3 md:grid-cols-2">{report.patterns.map((pattern, i) => (<PatternCard key={i} pattern={pattern} />))}</div></div>)}
                     {report.common_objections.length > 0 && <ObjectionsChart objections={report.common_objections} />}
                     {report.weakest_phases.length > 0 && (
                       <Card>
@@ -58,7 +58,7 @@ export function LossPatterns({ reports }: LossPatternsProps) {
                         <CardContent>
                           <div className="space-y-2">
                             {report.weakest_phases.map((phase, i) => (
-                              <div key={i} className="flex items-center justify-between rounded-md bg-surface-interaction/50 p-3">
+                              <div key={i} className="flex items-center justify-between rounded-md bg-surface-container-high/50 p-3">
                                 <span className="text-sm font-medium">{phase.phase}</span>
                                 <Badge variant="outline" className={phase.avg_score < 5 ? "text-red-400 border-red-400/30" : phase.avg_score < 7 ? "text-yellow-400 border-yellow-400/30" : "text-emerald-400 border-emerald-400/30"}>{phase.avg_score.toFixed(1)}</Badge>
                               </div>

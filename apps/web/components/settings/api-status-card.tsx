@@ -18,13 +18,13 @@ export function ApiStatusCard({ status }: ApiStatusCardProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-technical">Supabase</span>
+        <span className="text-sm font-body">Supabase</span>
         <Badge
           variant="secondary"
           className={
             status.supabase
               ? "bg-emerald-900/30 text-emerald-400"
-              : "bg-surface-interaction text-muted-foreground"
+              : "bg-surface-container-high text-muted-foreground"
           }
         >
           {status.supabase ? "Configurado" : "N\u00e3o configurado"}
@@ -32,13 +32,13 @@ export function ApiStatusCard({ status }: ApiStatusCardProps) {
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-sm font-technical">Google Drive</span>
+        <span className="text-sm font-body">Google Drive</span>
         <Badge
           variant="secondary"
           className={
             status.googleDrive
               ? "bg-emerald-900/30 text-emerald-400"
-              : "bg-surface-interaction text-muted-foreground"
+              : "bg-surface-container-high text-muted-foreground"
           }
         >
           {status.googleDrive ? "Configurado" : "N\u00e3o configurado"}
@@ -47,7 +47,7 @@ export function ApiStatusCard({ status }: ApiStatusCardProps) {
 
       {WORKER_APIS.map((api) => (
         <div key={api.key} className="flex items-center justify-between">
-          <span className="text-sm font-technical">{api.name}</span>
+          <span className="text-sm font-body">{api.name}</span>
           <Badge
             variant="secondary"
             className="bg-amber-900/30 text-amber-400"

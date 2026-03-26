@@ -26,13 +26,13 @@ function CommentThread({ comment, auditId, onSeek, onRefresh }: { comment: CallC
   function handleDelete() { startTransition(async () => { await deleteComment(comment.id); onRefresh() }) }
 
   return (
-    <div className={cn("rounded-lg bg-surface-interaction/30 p-3 space-y-2", comment.resolved && "opacity-60")}>
+    <div className={cn("rounded-lg bg-surface-container-high/30 p-3 space-y-2", comment.resolved && "opacity-60")}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 text-sm">
           <span className="font-medium">{comment.author?.full_name ?? "Usu\u00e1rio"}</span>
           {comment.author?.role && <Badge variant="outline" className="text-xs">{comment.author.role}</Badge>}
           {comment.timestamp_sec !== null && (
-            <button className="flex items-center gap-1 text-xs text-accent-foreground hover:text-primary transition-colors" onClick={() => onSeek?.(comment.timestamp_sec!)}>
+            <button className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-primary transition-colors" onClick={() => onSeek?.(comment.timestamp_sec!)}>
               <Clock className="h-3 w-3" />{formatTimestamp(comment.timestamp_sec)}
             </button>
           )}
@@ -45,12 +45,12 @@ function CommentThread({ comment, auditId, onSeek, onRefresh }: { comment: CallC
       <p className="text-sm">{comment.content}</p>
       {comment.resolved && <p className="text-xs text-emerald-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Resolvido</p>}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="ml-4 space-y-2 pl-3" style={{ borderLeft: '2px solid hsl(var(--surface-interaction))' }}>
+        <div className="ml-4 space-y-2 pl-3" style={{ borderLeft: '2px solid hsl(var(--surface-container-high))' }}>
           {comment.replies.map((reply) => (
             <div key={reply.id} className="space-y-1">
               <div className="flex items-center gap-2 text-sm">
                 <span className="font-medium">{reply.author?.full_name ?? "Usu\u00e1rio"}</span>
-                {reply.timestamp_sec !== null && <button className="text-xs text-accent-foreground hover:text-primary transition-colors" onClick={() => onSeek?.(reply.timestamp_sec!)}>{formatTimestamp(reply.timestamp_sec)}</button>}
+                {reply.timestamp_sec !== null && <button className="text-xs text-on-surface-variant hover:text-primary transition-colors" onClick={() => onSeek?.(reply.timestamp_sec!)}>{formatTimestamp(reply.timestamp_sec)}</button>}
               </div>
               <p className="text-sm">{reply.content}</p>
             </div>
