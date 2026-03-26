@@ -34,7 +34,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="w-full max-w-sm bg-[#1a1c1e] rounded-xl border border-white/5 p-8 shadow-[0_40px_40px_-10px_rgba(0,0,0,0.4)]">
+    <div className="w-full max-w-sm bg-[#1a1c1e]/90 backdrop-blur-xl rounded-xl border border-white/10 p-8 shadow-[0_40px_80px_-10px_rgba(0,0,0,0.6)]">
       <div className="text-center mb-8">
         <div className="flex justify-center mb-4">
           <span className="material-symbols-outlined text-4xl text-amber-500">
