@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { AmberGlassButton } from "@/components/ui/amber-glass-button"
 
 const navItems = [
   { href: "/", icon: "terminal", label: "Dashboard" },
@@ -70,9 +71,9 @@ export function Sidebar({ className }: SidebarProps) {
 
       <div className="px-6 mt-auto">
         <Link href="/calls/upload">
-          <button className="w-full bg-[#ffa600] text-[#2a1800] py-3 rounded-lg text-[10px] font-bold tracking-[0.2em] uppercase hover:brightness-110 active:scale-95 transition-all mb-8">
+          <AmberGlassButton className="w-full py-3 text-[10px] mb-8">
             Nova Auditoria
-          </button>
+          </AmberGlassButton>
         </Link>
         <button
           className="flex items-center gap-4 w-full font-headline text-xs font-semibold uppercase tracking-widest text-[#d8c3ac]/40 cursor-pointer hover:text-amber-200 transition-colors bg-transparent border-none"

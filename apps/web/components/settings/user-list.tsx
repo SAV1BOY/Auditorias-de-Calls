@@ -3,6 +3,7 @@
 import { useState } from "react"
 import type { UserProfile } from "@/lib/actions/users"
 import { UserCreateDialog } from "./user-create-dialog"
+import { AmberGlassButton } from "@/components/ui/amber-glass-button"
 
 const ROLE_BADGES: Record<string, string> = {
   admin: "bg-[#ffa600]/10 text-[#ffa600] border-[#ffa600]/20",
@@ -30,13 +31,10 @@ export function UserList({ users: initialUsers }: UserListProps) {
         <span className="text-sm text-stone-400">
           {users.length} usuário(s) cadastrado(s)
         </span>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="bg-[#ffa600] text-[#2a1800] px-4 py-2 rounded-lg text-xs font-bold tracking-widest uppercase hover:brightness-110 transition-all flex items-center gap-2"
-        >
+        <AmberGlassButton onClick={() => setShowCreate(true)}>
           <span className="material-symbols-outlined text-sm">person_add</span>
           Novo Usuário
-        </button>
+        </AmberGlassButton>
       </div>
 
       <div className="bg-[#1a1c1e] rounded-xl border border-white/5 overflow-hidden">

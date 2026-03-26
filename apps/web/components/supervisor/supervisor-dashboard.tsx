@@ -4,6 +4,7 @@ import Link from "next/link"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts"
 import type { SupervisorDashboardStats } from "@/lib/types/supervisor"
 import { getSupervisorClassificationColor } from "@/lib/types/supervisor"
+import { AmberGlassButton } from "@/components/ui/amber-glass-button"
 
 interface SupervisorDashboardProps {
   stats: SupervisorDashboardStats
@@ -92,9 +93,9 @@ export function SupervisorDashboard({ stats }: SupervisorDashboardProps) {
               Recent <span className="text-[#ffa600]">ANALYSES</span>
             </h3>
             <Link href="/supervisor/analyze">
-              <button className="bg-[#ffa600] text-[#2a1800] px-4 py-2 rounded-lg text-[10px] font-bold tracking-[0.2em] uppercase hover:brightness-110 transition-all">
+              <AmberGlassButton className="text-[10px]">
                 Nova Análise
-              </button>
+              </AmberGlassButton>
             </Link>
           </div>
           <table className="w-full text-left border-collapse">

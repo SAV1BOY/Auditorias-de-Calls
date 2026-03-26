@@ -6,6 +6,7 @@ import { useDropzone } from "react-dropzone"
 import { Upload, X, FileAudio, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { AmberGlassButton } from "@/components/ui/amber-glass-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { uploadCall } from "@/lib/actions/upload"
@@ -260,7 +261,7 @@ export function UploadForm({ closers }: UploadFormProps) {
       )}
 
       {/* Submit */}
-      <Button type="submit" disabled={isUploading} className="w-full">
+      <AmberGlassButton type="submit" disabled={isUploading} className="w-full py-3">
         {isUploading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -272,7 +273,7 @@ export function UploadForm({ closers }: UploadFormProps) {
             Enviar Call para Auditoria
           </>
         )}
-      </Button>
+      </AmberGlassButton>
     </form>
   )
 }
