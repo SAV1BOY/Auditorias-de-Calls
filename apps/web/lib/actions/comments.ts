@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import type { CallComment } from "@/lib/types/audit"
 import { createCommentSchema } from "@/lib/validations/schemas"
-import { requireRole } from "@/lib/auth/require-role"
+import { requireAuth, requireRole } from "@/lib/auth/require-role"
 
 export async function createComment(data: {
   auditId: string
@@ -22,6 +22,10 @@ export async function createComment(data: {
   } = await supabase.auth.getUser()
 
   if (!user) throw new Error("Not authenticated")
+
+  const { rateLimit: rl } = await import("@/lib/security/rate-limit")
+  const check = rl(`comment:${user.id}`, { interval: 60000, maxRequests: 30 })
+  if (!check.success) return { id: "" }
 
   const { data: row, error } = await supabase
     .from("call_comments")
@@ -100,6 +104,7 @@ export async function deleteComment(commentId: string): Promise<void> {
 }
 
 export async function getComments(auditId: string): Promise<CallComment[]> {
+  await requireAuth()
   const supabase = await createClient()
 
   const { data } = await supabase

@@ -1,7 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
-import { requireRole } from "@/lib/auth/require-role"
+import { requireAuth, requireRole } from "@/lib/auth/require-role"
 import type { Database } from "@/lib/types/database"
 import type {
   AuditFilters,
@@ -35,32 +35,36 @@ function groupByDateAvg(
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
+  await requireAuth()
   const supabase = await createClient()
 
   // 1. Stats from pre-aggregated view
-  const { data: viewStats } = await supabase
+  const { data: viewStats, error: viewStatsError } = await supabase
     .from("v_dashboard_stats")
     .select("*")
     .limit(1)
     .maybeSingle()
+  if (viewStatsError) console.error("query failed:", viewStatsError)
 
   // 2. Calls this week
   const weekAgo = new Date()
   weekAgo.setDate(weekAgo.getDate() - 7)
-  const { count: callsEstaSemana } = await supabase
+  const { count: callsEstaSemana, error: callsWeekError } = await supabase
     .from("call_audits")
     .select("*", { count: "exact", head: true })
     .gte("call_date", weekAgo.toISOString().split("T")[0])
+  if (callsWeekError) console.error("query failed:", callsWeekError)
 
   // 3. Score evolution (last 30 days)
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  const { data: scoreData } = await supabase
+  const { data: scoreData, error: scoreDataError } = await supabase
     .from("call_audits")
     .select("call_date, score_final")
     .not("score_final", "is", null)
     .gte("call_date", thirtyDaysAgo.toISOString().split("T")[0])
     .order("call_date", { ascending: true })
+  if (scoreDataError) console.error("query failed:", scoreDataError)
 
   const evolucaoScore = groupByDateAvg(scoreData)
 
@@ -80,13 +84,15 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 }
 
 export async function getRecentCalls(): Promise<CallAuditWithCloser[]> {
+  await requireAuth()
   const supabase = await createClient()
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("call_audits")
     .select("*, closers(name)")
     .order("call_date", { ascending: false })
     .limit(10)
+  if (error) console.error("query failed:", error)
 
   return (data as unknown as CallAuditWithCloser[]) ?? []
 }
@@ -104,6 +110,7 @@ const ALLOWED_SORT_COLUMNS = new Set([
 export async function getAudits(
   filters: AuditFilters = {}
 ): Promise<PaginatedResult<CallAuditWithCloser>> {
+  await requireAuth()
   const supabase = await createClient()
   const {
     closerId,
@@ -137,7 +144,8 @@ export async function getAudits(
   const from = (page - 1) * pageSize
   query = query.range(from, from + pageSize - 1)
 
-  const { data, count } = await query
+  const { data, count, error } = await query
+  if (error) console.error("query failed:", error)
 
   return {
     data: (data as unknown as CallAuditWithCloser[]) ?? [],
@@ -149,23 +157,27 @@ export async function getAudits(
 }
 
 export async function getClosers(): Promise<Pick<CloserRow, "id" | "name">[]> {
+  await requireAuth()
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("closers")
     .select("id, name")
     .order("name")
+  if (error) console.error("query failed:", error)
   return data ?? []
 }
 
 export async function getAuditDetail(
   id: string
 ): Promise<CallAuditWithCloser | null> {
+  await requireAuth()
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("call_audits")
     .select("*, closers(name)")
     .eq("id", id)
     .single()
+  if (error) console.error("query failed:", error)
   return (data as unknown as CallAuditWithCloser) ?? null
 }
 

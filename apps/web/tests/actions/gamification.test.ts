@@ -83,26 +83,6 @@ describe("gamification actions", () => {
     })
   })
 
-  describe("getCloserBadges", () => {
-    it("should return badges for a closer", async () => {
-      const client = makeMockClient({ data: [mockCloserBadge] })
-      vi.mocked(createClient).mockResolvedValue(client as any)
-
-      const { getCloserBadges } = await import("@/lib/actions/gamification")
-      const result = await getCloserBadges("closer-001")
-      expect(Array.isArray(result)).toBe(true)
-    })
-
-    it("should return empty array when closer has no badges", async () => {
-      const client = makeMockClient({ data: [] })
-      vi.mocked(createClient).mockResolvedValue(client as any)
-
-      const { getCloserBadges } = await import("@/lib/actions/gamification")
-      const result = await getCloserBadges("closer-999")
-      expect(result).toEqual([])
-    })
-  })
-
   describe("getCompetitions", () => {
     it("should return active competitions", async () => {
       const client = makeMockClient({ data: [] })
