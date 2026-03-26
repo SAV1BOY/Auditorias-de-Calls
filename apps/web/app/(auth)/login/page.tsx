@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { loginAction } from "@/lib/actions/auth"
 
 export default function LoginPage() {
@@ -10,8 +9,6 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [retryAfter, setRetryAfter] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -29,8 +26,8 @@ export default function LoginPage() {
         return
       }
 
-      router.refresh()
-      router.push("/")
+      // Full page reload ensures middleware reads fresh cookies
+      window.location.href = "/"
     } finally {
       setLoading(false)
     }

@@ -45,6 +45,12 @@ export async function loginAction(
     return { error: "Email ou senha incorretos." }
   }
 
+  // Verify session was actually created and cookies persisted
+  const { data: { user: sessionUser } } = await supabase.auth.getUser()
+  if (!sessionUser) {
+    return { error: "Erro ao criar sessão. Tente novamente." }
+  }
+
   // Success — reset rate limit for this IP
   resetRateLimit(`login:${ip}`)
   return { success: true }

@@ -18,10 +18,10 @@ export async function createClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch {
-            // setAll is called from a Server Component where cookies
-            // cannot be set. This can be safely ignored if middleware
-            // refreshes user sessions.
+          } catch (error) {
+            // Server Components can't set cookies — middleware handles refresh.
+            // Log for debugging cookie persistence issues.
+            console.error("[Supabase] Cookie setAll failed:", error)
           }
         },
       },
