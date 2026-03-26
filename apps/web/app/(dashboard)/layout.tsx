@@ -1,6 +1,7 @@
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
 import { FloatingActionButton } from "@/components/layout/fab"
+import { AnimatedBackgroundLines } from "@/components/ui/animated-background-lines"
 
 export default function DashboardLayout({
   children,
@@ -9,9 +10,14 @@ export default function DashboardLayout({
 }) {
   return (
     <>
+      {/* Animated background — behind everything */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <AnimatedBackgroundLines />
+      </div>
+
       <Header />
       <Sidebar />
-      <main className="md:ml-64 pt-24 px-6 md:px-12 pb-28 min-h-screen max-w-7xl mx-auto">
+      <main className="relative z-[1] md:ml-64 pt-24 px-6 md:px-12 pb-28 min-h-screen max-w-7xl mx-auto">
         {children}
       </main>
       <FloatingActionButton />
