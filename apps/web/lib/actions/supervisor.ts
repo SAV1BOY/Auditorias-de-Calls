@@ -4,6 +4,7 @@
 // Supabase types with `supabase gen types typescript`, remove the `as any` casts.
 
 import { createClient } from "@/lib/supabase/server"
+import { requireRole } from "@/lib/auth/require-role"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getSupabase(): Promise<any> {
@@ -253,6 +254,7 @@ export async function updateProtocolRule(
   id: string,
   data: Partial<Pick<ProtocolRule, "stage_name" | "expected_behaviors" | "failure_behaviors" | "scoring_weight" | "is_active">>
 ): Promise<{ success: boolean; error?: string }> {
+  await requireRole(["admin"])
   const supabase = await getSupabase()
 
   const { error } = await supabase

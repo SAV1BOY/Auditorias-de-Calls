@@ -37,7 +37,7 @@ export async function listUsers(): Promise<UserProfile[]> {
 
   // Fetch emails from auth (admin client needed)
   const admin = createAdminClient()
-  const { data: authUsers } = await admin.auth.admin.listUsers()
+  const { data: authUsers } = await admin.auth.admin.listUsers({ perPage: 1000 })
 
   const emailMap = new Map<string, string>()
   if (authUsers?.users) {

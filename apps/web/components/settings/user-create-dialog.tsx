@@ -25,6 +25,11 @@ export function UserCreateDialog({ open, onOpenChange, onCreated }: UserCreateDi
   const { toast } = useToast()
   const [error, setError] = useState<string | null>(null)
 
+  function handleOpenChange(isOpen: boolean) {
+    if (!isOpen) setError(null)
+    onOpenChange(isOpen)
+  }
+
   function handleSubmit(formData: FormData) {
     setError(null)
     startTransition(async () => {
@@ -47,7 +52,7 @@ export function UserCreateDialog({ open, onOpenChange, onCreated }: UserCreateDi
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

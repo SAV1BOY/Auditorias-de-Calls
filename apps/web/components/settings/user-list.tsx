@@ -50,6 +50,13 @@ export function UserList({ users: initialUsers }: UserListProps) {
             </tr>
           </thead>
           <tbody className="text-sm divide-y divide-white/5">
+            {users.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-6 py-8 text-center text-stone-500 text-sm">
+                  Nenhum usuário cadastrado.
+                </td>
+              </tr>
+            )}
             {users.map((user) => (
               <tr key={user.id} className="hover:bg-[#ffa600]/5 transition-colors">
                 <td className="px-6 py-3 font-bold">{user.full_name}</td>

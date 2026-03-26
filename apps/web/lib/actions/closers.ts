@@ -184,6 +184,7 @@ export async function updateCloserNotificationEmails(
 export async function getCloserNotificationEmails(
   closerId: string
 ): Promise<string[]> {
+  await requireRole(["admin", "supervisor"])
   const supabase = await createClient()
   const { data } = await supabase
     .from("closers")

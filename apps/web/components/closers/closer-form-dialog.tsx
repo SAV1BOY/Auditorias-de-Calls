@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -34,6 +34,11 @@ export function CloserFormDialog({
   const { toast } = useToast()
   const isEdit = !!closer
   const [emails, setEmails] = useState(notificationEmails.join("\n"))
+
+  // Re-sync emails state when closer changes
+  useEffect(() => {
+    setEmails(notificationEmails.join("\n"))
+  }, [closer?.id, notificationEmails])
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
