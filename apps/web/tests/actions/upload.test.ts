@@ -144,13 +144,13 @@ describe("uploadCall", () => {
 
     let callCount = 0
     const client = {
-      from: vi.fn().mockImplementation((table: string) => {
-        if (table === "job_queue") return jobChain
+      from: vi.fn().mockImplementation(() => {
         // First call_audits call is insert, second is update
         callCount++
         if (callCount > 1) return updateChain
         return auditChain
       }),
+      rpc: vi.fn().mockResolvedValue({ data: "job-001", error: null }),
       auth: {
         getUser: vi.fn().mockResolvedValue({
           data: { user: { id: "user-001" } },
@@ -182,14 +182,10 @@ describe("uploadCall", () => {
     )
     // Verify storage upload
     expect(client.storage.from).toHaveBeenCalledWith("audios")
-    // Verify job was created
-    expect(client.from).toHaveBeenCalledWith("job_queue")
-    expect(jobChain.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        audit_id: "audit-new",
-        job_type: "transcribe",
-        status: "pending",
-      })
-    )
+    // Verify job was created via RPC
+    expect(client.rpc).toHaveBeenCalledWith("enqueue_job", {
+      p_audit_id: "audit-new",
+      p_job_type: "transcribe",
+    })
   })
 })

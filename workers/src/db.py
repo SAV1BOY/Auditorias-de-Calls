@@ -47,23 +47,13 @@ class DB:
     def fetch_pending_job(self) -> Job | None:
         """Fetch the oldest pending job and atomically mark it as processing.
 
-        Uses an atomic UPDATE with status check to prevent TOCTOU race
-        conditions when multiple workers are running.
+        Uses the dequeue_job() RPC with FOR UPDATE SKIP LOCKED for true
+        atomic dequeue, preventing race conditions with multiple workers.
 
         Returns:
             The job if found, None otherwise.
         """
-        now = datetime.now(timezone.utc).isoformat()
-
-        # Atomic: only update if still pending, preventing race conditions
-        result = (
-            self._client.table("job_queue")
-            .update({"status": "processing", "started_at": now})
-            .eq("status", "pending")
-            .order("created_at", desc=False)
-            .limit(1)
-            .execute()
-        )
+        result = self._client.rpc("dequeue_job").execute()
 
         if not result.data:
             return None
@@ -78,7 +68,7 @@ class DB:
             attempts=row["attempts"],
             max_attempts=row["max_attempts"],
             error_message=row.get("error_message"),
-            started_at=now,
+            started_at=row.get("started_at"),
             completed_at=row.get("completed_at"),
             created_at=row["created_at"],
         )
