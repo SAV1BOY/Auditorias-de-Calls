@@ -18,19 +18,22 @@ export default function LoginPage() {
     setRetryAfter(null)
     setLoading(true)
 
-    const result = await loginAction(email, password)
+    try {
+      const result = await loginAction(email, password)
 
-    if (result.error) {
-      setError(result.error)
-      if (result.retryAfter) {
-        setRetryAfter(result.retryAfter)
+      if (result.error) {
+        setError(result.error)
+        if (result.retryAfter) {
+          setRetryAfter(result.retryAfter)
+        }
+        return
       }
-      setLoading(false)
-      return
-    }
 
-    router.push("/")
-    router.refresh()
+      router.refresh()
+      router.push("/")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
