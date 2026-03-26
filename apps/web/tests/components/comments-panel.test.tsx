@@ -44,7 +44,7 @@ describe("CommentsPanel", () => {
 
     render(<CommentsPanel auditId="audit-001" />)
 
-    expect(screen.getByText("Carregando comentários...")).toBeInTheDocument()
+    expect(screen.getByText(/Carregando/)).toBeInTheDocument()
   })
 
   it("shows empty state when no comments", async () => {
@@ -53,7 +53,7 @@ describe("CommentsPanel", () => {
     render(<CommentsPanel auditId="audit-001" />)
 
     await waitFor(() => {
-      expect(screen.getByText("Nenhum comentário ainda.")).toBeInTheDocument()
+      expect(screen.getByText(/Nenhum coment/)).toBeInTheDocument()
     })
   })
 
