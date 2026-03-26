@@ -65,10 +65,26 @@ class Notifier:
         lead_name = audit.get("lead_name", "Desconhecido")
         call_date = audit.get("call_date", "")
 
-        # 3. Fetch recipients
+        # 3. Fetch recipients — closer-specific emails take priority over global
+        closer_id = audit.get("closer_id")
+        closer_emails: list[str] = []
+        if closer_id:
+            closers_data = audit.get("closers")
+            if isinstance(closers_data, dict):
+                closer_emails = closers_data.get("notification_emails") or []
+            elif isinstance(closers_data, list) and closers_data:
+                closer_emails = closers_data[0].get("notification_emails") or []
+            # Fallback: query DB directly if not in join
+            if not closer_emails:
+                closer_emails = self._db.get_closer_notification_emails(closer_id)
+
         recipients = self._db.get_notification_recipients()
         whatsapp_numbers = recipients.get("whatsapp_numbers", [])
-        email_addresses = recipients.get("email_addresses", [])
+        # Use closer-specific emails if configured, otherwise global
+        email_addresses = closer_emails if closer_emails else recipients.get("email_addresses", [])
+
+        if closer_emails:
+            logger.info("Using closer-specific emails for audit %s: %s", audit_id, closer_emails)
 
         if not whatsapp_numbers and not email_addresses:
             logger.warning("No notification recipients configured for audit %s", audit_id)
