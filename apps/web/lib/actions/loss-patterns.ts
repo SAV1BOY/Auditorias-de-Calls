@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
-import { requireRole } from "@/lib/auth/require-role"
+import { requireRole, requireAuth } from "@/lib/auth/require-role"
 import type { LossPatternReport } from "@/lib/types/audit"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -15,6 +15,7 @@ export async function getLossPatterns(
   dateFrom?: string,
   dateTo?: string
 ): Promise<LossPatternReport[]> {
+  await requireAuth()
   const supabase = await createClient()
 
   let query = db(supabase)
@@ -104,6 +105,7 @@ export async function generateLossPatternAnalysis(
 export async function getLossPatternDetail(
   id: string
 ): Promise<LossPatternReport | null> {
+  await requireAuth()
   const supabase = await createClient()
 
   const { data, error } = await db(supabase)

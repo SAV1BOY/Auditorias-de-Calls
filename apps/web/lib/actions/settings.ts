@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
-import { requireRole } from "@/lib/auth/require-role"
+import { requireAuth, requireRole } from "@/lib/auth/require-role"
 import { notificationConfigSchema } from "@/lib/validations/schemas"
 
 interface NotificationConfig {
@@ -86,6 +86,7 @@ interface ApiStatus {
 }
 
 export async function getApiStatus(): Promise<ApiStatus> {
+  await requireAuth()
   return {
     supabase: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
     googleDrive: !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON,

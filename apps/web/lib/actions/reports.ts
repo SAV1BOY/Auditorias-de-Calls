@@ -1,9 +1,11 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { requireAuth } from "@/lib/auth/require-role"
 import type { WeeklyReport, WeeklyStats } from "@/lib/types/audit"
 
 export async function getWeeklyReports(): Promise<WeeklyReport[]> {
+  await requireAuth()
   const supabase = await createClient()
 
   const { data } = await supabase
@@ -20,6 +22,7 @@ export async function getWeeklyReports(): Promise<WeeklyReport[]> {
 export async function getWeeklyReport(
   id: string
 ): Promise<WeeklyReport | null> {
+  await requireAuth()
   const supabase = await createClient()
 
   const { data } = await supabase

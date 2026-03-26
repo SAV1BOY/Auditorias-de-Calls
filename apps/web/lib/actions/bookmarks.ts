@@ -86,6 +86,7 @@ export async function removeBookmark(
 export async function getBookmark(
   auditId: string
 ): Promise<CallBookmark | null> {
+  await requireAuth()
   const supabase = await createClient()
   const { data } = await supabase
     .from("call_bookmarks")
@@ -105,6 +106,7 @@ export async function getBookmarkedCalls(filters: {
   closerId?: string
   classificacao?: string
 }): Promise<CallBookmark[]> {
+  await requireAuth()
   const supabase = await createClient()
 
   let query = supabase

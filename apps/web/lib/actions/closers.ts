@@ -2,27 +2,31 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
-import { requireRole } from "@/lib/auth/require-role"
+import { requireAuth, requireRole } from "@/lib/auth/require-role"
 import type { CloserRow } from "@/lib/types/audit"
 
 export async function getClosersList(): Promise<CloserRow[]> {
+  await requireAuth()
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("closers")
     .select("*")
     .order("name")
+  if (error) console.error("query failed:", error)
   return (data as CloserRow[]) ?? []
 }
 
 export async function getCloserById(
   id: string
 ): Promise<CloserRow | null> {
+  await requireAuth()
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("closers")
     .select("*")
     .eq("id", id)
     .maybeSingle()
+  if (error) console.error("query failed:", error)
   return (data as CloserRow) ?? null
 }
 
@@ -40,12 +44,14 @@ interface CloserPerformance {
 export async function getCloserPerformance(
   closerId: string
 ): Promise<CloserPerformance | null> {
+  await requireAuth()
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("v_closer_performance")
     .select("*")
     .eq("closer_id", closerId)
     .maybeSingle()
+  if (error) console.error("query failed:", error)
   return (data as CloserPerformance) ?? null
 }
 
@@ -76,13 +82,15 @@ function groupByDateAvg(
 export async function getCloserScoreEvolution(
   closerId: string
 ): Promise<Array<{ date: string; score: number }>> {
+  await requireAuth()
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("call_audits")
     .select("call_date, score_final")
     .eq("closer_id", closerId)
     .not("score_final", "is", null)
     .order("call_date", { ascending: true })
+  if (error) console.error("query failed:", error)
 
   return groupByDateAvg(data)
 }

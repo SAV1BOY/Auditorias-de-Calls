@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
-import { requireRole } from "@/lib/auth/require-role"
+import { requireAuth, requireRole } from "@/lib/auth/require-role"
 import { createGoalSchema, updateGoalStatusSchema } from "@/lib/validations/schemas"
 import { DIMENSIONS, RADAR_LABELS, DIM_INDEX_MAP } from "@/lib/utils/constants"
 import type {
@@ -24,13 +24,15 @@ export async function getClosersComparison(
 ): Promise<CloserComparison[]> {
   if (closerIds.length === 0) return []
 
+  await requireAuth()
   const supabase = await createClient()
 
   if (!dateFrom && !dateTo) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("v_closer_performance")
       .select("*")
       .in("closer_id", closerIds)
+    if (error) console.error("query failed:", error)
 
     return (data ?? []).map((row) => ({
       closer_id: row.closer_id ?? "",
@@ -55,10 +57,12 @@ export async function getClosersComparison(
   if (dateFrom) query = query.gte("call_date", dateFrom)
   if (dateTo) query = query.lte("call_date", dateTo)
 
-  const [{ data: allCalls }, { data: closerRows }] = await Promise.all([
+  const [{ data: allCalls, error: allCallsError }, { data: closerRows, error: closerRowsError }] = await Promise.all([
     query,
     supabase.from("closers").select("id, name").in("id", closerIds),
   ])
+  if (allCallsError) console.error("query failed:", allCallsError)
+  if (closerRowsError) console.error("query failed:", closerRowsError)
 
   const closerNameMap = new Map(
     (closerRows ?? []).map((c) => [c.id, c.name as string])
@@ -115,18 +119,20 @@ export async function getDimensionTrends(
   closerId?: string,
   days: number = 90
 ): Promise<DimensionTrendPoint[]> {
+  await requireAuth()
   const supabase = await createClient()
   const fromDate = new Date()
   fromDate.setDate(fromDate.getDate() - days)
   const fromStr = fromDate.toISOString().split("T")[0]
 
   // Fetch all team data in one query, then filter for closer in JS (avoids 2nd query)
-  const { data: teamData } = await supabase
+  const { data: teamData, error: teamDataError } = await supabase
     .from("call_audits")
     .select("call_date, closer_id, score_final, d01_frame, d02_qualificacao, d03_diag_quantitativo, d04_diag_qualitativo, d05_consequencia, d06_ensino, d07_identidade, d08_ancoragem, d09_isolamento, d10_proporcao_fala, d11_promessas, d12_checkpoints, d13_fechamento")
     .gte("call_date", fromStr)
     .not("score_final", "is", null)
     .order("call_date", { ascending: true })
+  if (teamDataError) console.error("query failed:", teamDataError)
 
   // Filter from teamData to avoid extra query
   type AuditRow = Record<string, unknown>
@@ -176,13 +182,15 @@ function groupByDateDimAvg(
 // ─── Goals CRUD ───
 
 export async function getGoals(): Promise<GoalWithProgress[]> {
+  await requireAuth()
   const supabase = await createClient()
 
-  const { data: goals } = await supabase
+  const { data: goals, error: goalsError } = await supabase
     .from("goals")
     .select("*")
     .order("status")
     .order("end_date", { ascending: true })
+  if (goalsError) console.error("query failed:", goalsError)
 
   if (!goals || goals.length === 0) return []
 

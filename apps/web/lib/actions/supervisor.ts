@@ -1,18 +1,16 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
-import { requireRole } from "@/lib/auth/require-role"
+import { requireRole, requireAuth } from "@/lib/auth/require-role"
 
 import type {
   SupervisorAnalysis,
-  SupervisorAnalysisFilters,
   SupervisorDashboardStats,
   SupervisorStageScore,
   ProtocolRule,
   TrainingAction,
   NegotiationAnalysis,
 } from "@/lib/types/supervisor"
-import type { PaginatedResult } from "@/lib/types/audit"
 
 // ─── Row mapper: DB row → SupervisorAnalysis ───
 
@@ -39,6 +37,7 @@ function mapRowToAnalysis(row: Record<string, unknown>, stages: SupervisorStageS
 // ─── Dashboard Stats ───
 
 export async function getSupervisorDashboardStats(): Promise<SupervisorDashboardStats> {
+  await requireAuth()
   const supabase = await createClient()
 
   // Total analyses + avg score + classification distribution
@@ -99,6 +98,7 @@ export async function getSupervisorDashboardStats(): Promise<SupervisorDashboard
 export async function getSupervisorAnalysis(
   analysisId: string
 ): Promise<SupervisorAnalysis | null> {
+  await requireAuth()
   const supabase = await createClient()
 
   const { data: row } = await supabase
@@ -127,6 +127,7 @@ export async function getSupervisorAnalysis(
 export async function getSupervisorAnalysisByAudit(
   auditId: string
 ): Promise<SupervisorAnalysis | null> {
+  await requireAuth()
   const supabase = await createClient()
 
   const { data: row } = await supabase
@@ -142,58 +143,12 @@ export async function getSupervisorAnalysisByAudit(
   return getSupervisorAnalysis(row.id)
 }
 
-// ─── List Analyses ───
-
-export async function listSupervisorAnalyses(
-  filters: SupervisorAnalysisFilters = {}
-): Promise<PaginatedResult<SupervisorAnalysis>> {
-  const supabase = await createClient()
-  const page = filters.page ?? 1
-  const pageSize = filters.pageSize ?? 10
-  const from = (page - 1) * pageSize
-  const to = from + pageSize - 1
-
-  let query = supabase
-    .from("supervisor_analyses")
-    .select("*, call_audits!inner(id, lead_name, call_date, closer_id, score_final, classificacao, closers(name))", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(from, to)
-
-  if (filters.classification) {
-    query = query.eq("classification", filters.classification)
-  }
-  if (filters.closerId) {
-    query = query.eq("call_audits.closer_id", filters.closerId)
-  }
-  if (filters.dateFrom) {
-    query = query.gte("created_at", filters.dateFrom)
-  }
-  if (filters.dateTo) {
-    query = query.lte("created_at", filters.dateTo)
-  }
-
-  const { data, count } = await query
-
-  const analyses = (data ?? []).map((row) =>
-    mapRowToAnalysis(row as unknown as Record<string, unknown>)
-  )
-
-  const total = count ?? 0
-
-  return {
-    data: analyses,
-    total,
-    page,
-    pageSize,
-    totalPages: Math.ceil(total / pageSize),
-  }
-}
-
 // ─── Protocol Rules ───
 
 export async function getProtocolRules(
   version?: string
 ): Promise<ProtocolRule[]> {
+  await requireAuth()
   const supabase = await createClient()
 
   let query = supabase
@@ -231,62 +186,12 @@ export async function updateProtocolRule(
   return { success: true }
 }
 
-// ─── Weakest Stages ───
-
-export async function getWeakestStages(
-  closerId?: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _period?: string,
-): Promise<Array<{ stage_key: string; stage_name: string; avg_score: number; total_evaluations: number; critical_count: number }>> {
-  const supabase = await createClient()
-
-  if (closerId) {
-    // Per-closer weakest stages (manual aggregation)
-    const { data } = await supabase
-      .from("supervisor_stage_scores")
-      .select("stage_key, stage_name, score, status, supervisor_analyses!inner(audit_id, call_audits!inner(closer_id))")
-      .eq("supervisor_analyses.call_audits.closer_id", closerId)
-
-    if (!data || data.length === 0) return []
-
-    const grouped = new Map<string, { scores: number[]; criticals: number; name: string }>()
-    for (const row of data) {
-      const existing = grouped.get(row.stage_key) ?? { scores: [] as number[], criticals: 0, name: row.stage_name }
-      existing.scores.push(Number(row.score))
-      if (row.status === "critical") existing.criticals++
-      grouped.set(row.stage_key, existing)
-    }
-
-    return Array.from(grouped.entries())
-      .map(([key, val]) => ({
-        stage_key: key,
-        stage_name: val.name,
-        avg_score: Math.round((val.scores.reduce((a, b) => a + b, 0) / val.scores.length) * 10) / 10,
-        total_evaluations: val.scores.length,
-        critical_count: val.criticals,
-      }))
-      .sort((a, b) => a.avg_score - b.avg_score)
-  }
-
-  // Global weakest stages from view
-  const { data } = await supabase
-    .from("v_supervisor_weakest_stages")
-    .select("*")
-
-  return (data ?? []).map((s) => ({
-    stage_key: s.stage_key as string,
-    stage_name: s.stage_name as string,
-    avg_score: Number(s.avg_score ?? 0),
-    total_evaluations: Number(s.total_evaluations ?? 0),
-    critical_count: Number(s.critical_count ?? 0),
-  }))
-}
-
 // ─── Training Actions ───
 
 export async function getTrainingActions(
   closerId?: string
 ): Promise<TrainingAction[]> {
+  await requireAuth()
   const supabase = await createClient()
 
   let query = supabase
@@ -339,34 +244,3 @@ export async function requestSupervisorAnalysis(
   return { success: true }
 }
 
-// ─── Closer Supervisor Performance ───
-
-export async function getCloserSupervisorPerformance(
-  closerId: string
-): Promise<{
-  total_analyses: number
-  avg_score: number | null
-  excelente_count: number
-  boa_count: number
-  regular_count: number
-  fraca_count: number
-} | null> {
-  const supabase = await createClient()
-
-  const { data } = await supabase
-    .from("v_supervisor_closer_performance")
-    .select("*")
-    .eq("closer_id", closerId)
-    .maybeSingle()
-
-  if (!data) return null
-
-  return {
-    total_analyses: Number(data.total_analyses ?? 0),
-    avg_score: data.avg_score ? Number(data.avg_score) : null,
-    excelente_count: Number(data.excelente_count ?? 0),
-    boa_count: Number(data.boa_count ?? 0),
-    regular_count: Number(data.regular_count ?? 0),
-    fraca_count: Number(data.fraca_count ?? 0),
-  }
-}
