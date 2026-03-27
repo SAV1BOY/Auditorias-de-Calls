@@ -17,7 +17,9 @@ export async function middleware(request: NextRequest) {
 
   const csp = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'unsafe-eval'`,
+    // 'unsafe-inline' required for Next.js runtime hydration scripts in production
+    // 'unsafe-eval' required for WebGL shader compilation (shader-animation.tsx)
+    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval'`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https:",
     "font-src 'self' https://fonts.gstatic.com",
