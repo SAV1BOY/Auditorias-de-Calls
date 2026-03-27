@@ -239,7 +239,10 @@ export async function requestSupervisorAnalysis(
     p_job_type: "supervisor_analyze",
   })
 
-  if (error) return { success: false, error: "Erro ao solicitar análise." }
+  if (error) {
+    console.error("enqueue_job supervisor_analyze failed:", error)
+    return { success: false, error: `Erro ao solicitar análise: ${error.message}` }
+  }
   return { success: true }
 }
 

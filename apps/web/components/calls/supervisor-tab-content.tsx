@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 import Link from "next/link"
 import {
   getSupervisorAnalysisByAudit,
@@ -18,15 +18,35 @@ interface SupervisorTabContentProps {
 export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
   const [analysis, setAnalysis] = useState<SupervisorAnalysis | null>(null)
   const [loading, setLoading] = useState(true)
+  const [polling, setPolling] = useState(false)
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  useEffect(() => {
-    getSupervisorAnalysisByAudit(auditId).then((data) => {
+  const fetchAnalysis = useCallback(async () => {
+    const data = await getSupervisorAnalysisByAudit(auditId)
+    if (data) {
       setAnalysis(data)
-      setLoading(false)
-    })
+      setPolling(false)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+    return data
   }, [auditId])
+
+  // Initial fetch
+  useEffect(() => {
+    fetchAnalysis().then(() => setLoading(false))
+  }, [fetchAnalysis])
+
+  // Polling cleanup
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [])
 
   function handleRequest() {
     startTransition(async () => {
@@ -36,8 +56,29 @@ export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
       } else {
         toast({
           title: "Análise solicitada",
-          description: "A análise do supervisor foi adicionada à fila de processamento.",
+          description: "Aguardando processamento. O resultado aparecerá automaticamente.",
         })
+        // Start polling every 5 seconds for up to 2 minutes
+        setPolling(true)
+        let attempts = 0
+        intervalRef.current = setInterval(async () => {
+          attempts++
+          const data = await fetchAnalysis()
+          if (data || attempts >= 24) {
+            // Found or timeout (24 * 5s = 2 min)
+            if (!data && attempts >= 24) {
+              setPolling(false)
+              toast({
+                title: "Processamento em andamento",
+                description: "A análise ainda está sendo processada. Atualize a página em alguns minutos.",
+              })
+            }
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current)
+              intervalRef.current = null
+            }
+          }
+        }, 5000)
       }
     })
   }
@@ -59,28 +100,34 @@ export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
         <p className="text-stone-500">
           Nenhuma análise do supervisor encontrada para esta call.
         </p>
-        <button
-          onClick={handleRequest}
-          disabled={isPending}
-          className="bg-[#ffa600] text-[#2a1800] px-6 py-3 rounded-lg font-headline font-bold text-xs tracking-widest uppercase hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
-        >
-          {isPending ? (
-            <span className="flex items-center gap-2">
-              <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
-              Solicitando...
-            </span>
-          ) : (
-            <span className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">play_arrow</span>
-              Solicitar Análise do Supervisor
-            </span>
-          )}
-        </button>
+        {polling ? (
+          <div className="flex items-center justify-center gap-2 text-[#ffa600] text-sm">
+            <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+            Aguardando resultado da análise...
+          </div>
+        ) : (
+          <button
+            onClick={handleRequest}
+            disabled={isPending}
+            className="bg-[#ffa600] text-[#2a1800] px-6 py-3 rounded-lg font-headline font-bold text-xs tracking-widest uppercase hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {isPending ? (
+              <span className="flex items-center gap-2">
+                <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                Solicitando...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">play_arrow</span>
+                Solicitar Análise do Supervisor
+              </span>
+            )}
+          </button>
+        )}
       </div>
     )
   }
 
-  // Show summary of the analysis with link to full detail
   return (
     <div className="space-y-6">
       {/* Score header */}
