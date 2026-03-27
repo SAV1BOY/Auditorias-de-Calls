@@ -1,11 +1,6 @@
 "use client"
 
-import dynamic from "next/dynamic"
-
-const ShaderAnimation = dynamic(
-  () => import("@/components/ui/shader-animation").then((mod) => ({ default: mod.ShaderAnimation })),
-  { ssr: false, loading: () => <div className="fixed inset-0 bg-black" /> }
-)
+import { ShaderAnimation } from "@/components/ui/shader-animation"
 
 export default function AuthLayout({
   children,
