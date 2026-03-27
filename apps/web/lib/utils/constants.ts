@@ -31,7 +31,15 @@ export const AUDIO_FORMATS = [
   ".m4a",
 ] as const
 
+export const TRANSCRIPTION_FORMATS = [
+  ".md",
+  ".txt",
+  ".pdf",
+  ".docx",
+] as const
+
 export const MAX_FILE_SIZE_MB = 500
+export const MAX_TRANSCRIPTION_FILE_SIZE_MB = 50
 export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
 export const STATUS_LABELS: Record<string, string> = {

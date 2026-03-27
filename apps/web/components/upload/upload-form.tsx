@@ -3,13 +3,13 @@
 import { useCallback, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useDropzone } from "react-dropzone"
-import { Upload, X, FileAudio, Loader2 } from "lucide-react"
+import { Upload, X, FileAudio, FileText, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { uploadCall } from "@/lib/actions/upload"
-import { AUDIO_FORMATS, MAX_FILE_SIZE_MB } from "@/lib/utils/constants"
+import { uploadCall, uploadTranscription } from "@/lib/actions/upload"
+import { AUDIO_FORMATS, TRANSCRIPTION_FORMATS, MAX_FILE_SIZE_MB, MAX_TRANSCRIPTION_FILE_SIZE_MB } from "@/lib/utils/constants"
 
 type Closer = {
   id: string
@@ -20,13 +20,20 @@ interface UploadFormProps {
   closers: Closer[]
 }
 
-const ACCEPT_MAP: Record<string, string[]> = {
+const AUDIO_ACCEPT_MAP: Record<string, string[]> = {
   "audio/ogg": [".ogg"],
   "audio/mpeg": [".mp3"],
   "audio/mp4": [".mp4"],
   "audio/webm": [".webm"],
   "audio/wav": [".wav"],
   "audio/x-m4a": [".m4a"],
+}
+
+const TRANSCRIPTION_ACCEPT_MAP: Record<string, string[]> = {
+  "text/markdown": [".md"],
+  "text/plain": [".txt"],
+  "application/pdf": [".pdf"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
 }
 
 const RESULTADO_OPTIONS = [
@@ -36,8 +43,11 @@ const RESULTADO_OPTIONS = [
   { value: "outro", label: "Outro" },
 ]
 
+type UploadMode = "audio" | "transcription"
+
 export function UploadForm({ closers }: UploadFormProps) {
   const router = useRouter()
+  const [mode, setMode] = useState<UploadMode>("audio")
   const [file, setFile] = useState<File | null>(null)
   const [closerId, setCloserId] = useState("")
   const [leadName, setLeadName] = useState("")
@@ -48,31 +58,42 @@ export function UploadForm({ closers }: UploadFormProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [progress, setProgress] = useState(0)
 
+  const isAudio = mode === "audio"
+  const acceptMap = isAudio ? AUDIO_ACCEPT_MAP : TRANSCRIPTION_ACCEPT_MAP
+  const maxSize = isAudio ? MAX_FILE_SIZE_MB : MAX_TRANSCRIPTION_FILE_SIZE_MB
+  const formats = isAudio ? AUDIO_FORMATS : TRANSCRIPTION_FORMATS
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setError("")
     if (acceptedFiles.length > 0) {
       const f = acceptedFiles[0]
-      if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        setError(`Arquivo muito grande. Máximo: ${MAX_FILE_SIZE_MB} MB.`)
+      if (f.size > maxSize * 1024 * 1024) {
+        setError(`Arquivo muito grande. Máximo: ${maxSize} MB.`)
         return
       }
       setFile(f)
     }
-  }, [])
+  }, [maxSize])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: ACCEPT_MAP,
+    accept: acceptMap,
     maxFiles: 1,
     multiple: false,
   })
+
+  function switchMode(newMode: UploadMode) {
+    setMode(newMode)
+    setFile(null)
+    setError("")
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
     if (!file) {
-      setError("Selecione um arquivo de áudio.")
+      setError(isAudio ? "Selecione um arquivo de áudio." : "Selecione um arquivo de transcrição.")
       return
     }
     if (!closerId) {
@@ -97,7 +118,9 @@ export function UploadForm({ closers }: UploadFormProps) {
       if (valorFechamento) formData.append("valorFechamento", valorFechamento)
 
       setProgress(30)
-      const result = await uploadCall(formData)
+      const result = isAudio
+        ? await uploadCall(formData)
+        : await uploadTranscription(formData)
       setProgress(90)
 
       if (result.error) {
@@ -118,9 +141,37 @@ export function UploadForm({ closers }: UploadFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Mode Toggle */}
+      <div className="flex gap-2 p-1 bg-[#292a2d] rounded-lg w-fit">
+        <button
+          type="button"
+          onClick={() => switchMode("audio")}
+          className={`px-4 py-2 rounded-md text-xs font-bold tracking-widest uppercase transition-all ${
+            isAudio
+              ? "bg-[#ffa600] text-[#2a1800]"
+              : "text-stone-400 hover:text-stone-200"
+          }`}
+        >
+          <FileAudio className="inline mr-1.5 h-4 w-4" />
+          Áudio
+        </button>
+        <button
+          type="button"
+          onClick={() => switchMode("transcription")}
+          className={`px-4 py-2 rounded-md text-xs font-bold tracking-widest uppercase transition-all ${
+            !isAudio
+              ? "bg-[#ffa600] text-[#2a1800]"
+              : "text-stone-400 hover:text-stone-200"
+          }`}
+        >
+          <FileText className="inline mr-1.5 h-4 w-4" />
+          Transcrição
+        </button>
+      </div>
+
       {/* Dropzone */}
       <div>
-        <Label>Áudio da Call</Label>
+        <Label>{isAudio ? "Áudio da Call" : "Arquivo de Transcrição"}</Label>
         <div
           {...getRootProps()}
           className={`mt-2 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors cursor-pointer
@@ -130,7 +181,11 @@ export function UploadForm({ closers }: UploadFormProps) {
           <input {...getInputProps()} />
           {file ? (
             <div className="flex items-center gap-3">
-              <FileAudio className="h-8 w-8 text-primary" />
+              {isAudio ? (
+                <FileAudio className="h-8 w-8 text-primary" />
+              ) : (
+                <FileText className="h-8 w-8 text-primary" />
+              )}
               <div>
                 <p className="font-medium">{file.name}</p>
                 <p className="text-sm text-muted-foreground">
@@ -151,12 +206,18 @@ export function UploadForm({ closers }: UploadFormProps) {
             </div>
           ) : (
             <>
-              <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+              {isAudio ? (
+                <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+              ) : (
+                <FileText className="h-10 w-10 text-muted-foreground mb-2" />
+              )}
               <p className="text-sm text-muted-foreground text-center">
-                Arraste o áudio aqui ou clique para selecionar
+                {isAudio
+                  ? "Arraste o áudio aqui ou clique para selecionar"
+                  : "Arraste a transcrição aqui ou clique para selecionar"}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Formatos: {AUDIO_FORMATS.join(", ")} — Máx: {MAX_FILE_SIZE_MB} MB
+                Formatos: {formats.join(", ")} — Máx: {maxSize} MB
               </p>
             </>
           )}
@@ -227,8 +288,8 @@ export function UploadForm({ closers }: UploadFormProps) {
       </div>
       </div>
 
-      {/* Valor Fechamento (conditional) */}
-      {resultado === "fechamento" && (
+      {/* Valor Fechamento (conditional, audio only) */}
+      {resultado === "fechamento" && isAudio && (
         <div>
           <Label htmlFor="valorFechamento">Valor do Fechamento (R$)</Label>
           <Input
@@ -241,6 +302,16 @@ export function UploadForm({ closers }: UploadFormProps) {
             placeholder="Ex: 5000.00"
             className="mt-1"
           />
+        </div>
+      )}
+
+      {/* Info banner for transcription mode */}
+      {!isAudio && (
+        <div className="rounded-lg bg-[#ffa600]/5 border border-[#ffa600]/20 p-3">
+          <p className="text-xs text-[#d8c3ac]">
+            A transcrição será enviada diretamente para análise, sem transcrição por IA.
+            Use arquivos .md ou .txt para melhor resultado.
+          </p>
         </div>
       )}
 
@@ -269,7 +340,7 @@ export function UploadForm({ closers }: UploadFormProps) {
         ) : (
           <>
             <Upload className="mr-2 h-4 w-4" />
-            Enviar Call para Auditoria
+            {isAudio ? "Enviar Call para Auditoria" : "Enviar Transcrição para Análise"}
           </>
         )}
       </Button>
