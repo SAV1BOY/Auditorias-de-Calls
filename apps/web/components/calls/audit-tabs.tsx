@@ -16,6 +16,7 @@ import { SentimentTimeline } from "./sentiment-timeline"
 import { EngagementMeter } from "./engagement-meter"
 import { ObjectionsList } from "./objections-list"
 import { SupervisorTabContent } from "./supervisor-tab-content"
+import { CloserTips } from "./closer-tips"
 
 interface AuditTabsProps {
   audit: CallAuditWithCloser
@@ -251,6 +252,7 @@ export function AuditTabs({ audit, currentTime, onSeek }: AuditTabsProps) {
         <TabsTrigger value="reescrita">Reescrita</TabsTrigger>
         <TabsTrigger value="plano">Plano de Ação</TabsTrigger>
         <TabsTrigger value="sentimento">Sentimento</TabsTrigger>
+        <TabsTrigger value="dicas">Dicas</TabsTrigger>
         <TabsTrigger value="coaching">Coaching</TabsTrigger>
         <TabsTrigger value="supervisor">Supervisor</TabsTrigger>
       </TabsList>
@@ -262,6 +264,7 @@ export function AuditTabs({ audit, currentTime, onSeek }: AuditTabsProps) {
       <TabsContent value="reescrita"><Card><CardHeader><CardTitle>Reescrita de Falas</CardTitle></CardHeader><CardContent><ReescritaContent audit={audit} /></CardContent></Card></TabsContent>
       <TabsContent value="plano"><Card><CardHeader><CardTitle>Plano de Ação</CardTitle></CardHeader><CardContent><PlanoAcaoContent audit={audit} /></CardContent></Card></TabsContent>
       <TabsContent value="sentimento"><Card><CardHeader><CardTitle>Análise de Sentimento</CardTitle></CardHeader><CardContent><SentimentoContent audit={audit} /></CardContent></Card></TabsContent>
+      <TabsContent value="dicas"><Card><CardHeader><CardTitle>Dicas para o Closer</CardTitle></CardHeader><CardContent><CloserTips audit={audit} /></CardContent></Card></TabsContent>
       <TabsContent value="coaching"><Card><CardHeader><CardTitle>Coaching</CardTitle></CardHeader><CardContent><CommentsPanel auditId={audit.id} currentTime={currentTime} onSeek={onSeek} /></CardContent></Card></TabsContent>
       <TabsContent value="supervisor"><Card><CardHeader><CardTitle>Análise do Supervisor</CardTitle></CardHeader><CardContent><SupervisorTabContent auditId={audit.id} /></CardContent></Card></TabsContent>
     </Tabs>
