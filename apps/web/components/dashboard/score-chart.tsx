@@ -22,7 +22,7 @@ function formatDateLabel(dateStr: string): string {
 
 export function ScoreChart({ data, title = "Evolução de Score" }: ScoreChartProps) {
   return (
-    <div className="bg-[#1a1c1e] rounded-xl border border-white/5 p-8">
+    <div className="bg-[#1a1c1e]/85 backdrop-blur-sm rounded-xl border border-white/[0.08] p-8">
       <div className="flex justify-between items-center mb-10">
         <h3 className="text-xl font-headline font-bold">
           {title}

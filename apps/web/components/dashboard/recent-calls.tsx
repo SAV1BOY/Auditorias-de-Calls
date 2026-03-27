@@ -55,7 +55,7 @@ export function RecentCalls({ calls }: RecentCallsProps) {
           Nenhuma call auditada ainda.
         </p>
       ) : (
-        <div className="bg-[#1a1c1e] rounded-xl border border-white/5 overflow-hidden">
+        <div className="bg-[#1a1c1e]/85 backdrop-blur-sm rounded-xl border border-white/[0.08] overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead className="bg-[#292a2d]/30 text-stone-500 text-[10px] font-bold uppercase tracking-[0.2em] border-b border-white/5">
               <tr>

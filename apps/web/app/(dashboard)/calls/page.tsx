@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Suspense } from "react"
-import { AmberGlassButton } from "@/components/ui/amber-glass-button"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Plus } from "lucide-react"
 import { getAudits, getClosers } from "@/lib/actions/calls"
@@ -38,12 +38,12 @@ export default async function CallsPage({ searchParams }: CallsPageProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Calls</h1>
-        <AmberGlassButton asChild>
+        <Button asChild>
           <Link href="/calls/upload">
             <Plus className="mr-1 h-4 w-4" />
             Nova Call
           </Link>
-        </AmberGlassButton>
+        </Button>
       </div>
 
       <Suspense fallback={<Skeleton className="h-10 w-full" />}>

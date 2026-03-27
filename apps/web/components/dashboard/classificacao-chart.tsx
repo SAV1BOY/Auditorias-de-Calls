@@ -29,7 +29,7 @@ export function ClassificacaoChart({ stats }: ClassificacaoChartProps) {
   ].filter((d) => d.value > 0)
 
   return (
-    <div className="bg-[#1a1c1e] rounded-xl border border-white/5 p-8 flex flex-col items-center">
+    <div className="bg-[#1a1c1e]/85 backdrop-blur-sm rounded-xl border border-white/[0.08] p-8 flex flex-col items-center">
       <h3 className="text-xl font-headline font-bold mb-6 w-full text-center">
         Call <span className="text-[#ffa600]">CLASSIFICATION</span>
       </h3>

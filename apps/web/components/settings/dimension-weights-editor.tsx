@@ -4,7 +4,6 @@ import { useState, useTransition } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { updateDimensionWeights } from "@/lib/actions/settings"
 import { DIMENSIONS } from "@/lib/utils/constants"
-import { AmberGlassButton } from "@/components/ui/amber-glass-button"
 
 interface DimensionWeightsEditorProps {
   weights: Record<string, number>
@@ -62,9 +61,13 @@ export function DimensionWeightsEditor({ weights: initialWeights }: DimensionWei
         <span className={`text-sm font-bold ${isValid ? "text-emerald-400" : "text-red-400"}`}>
           Total: {total.toFixed(0)}%
         </span>
-        <AmberGlassButton onClick={handleSave} disabled={!isValid || isPending}>
+        <button
+          onClick={handleSave}
+          disabled={!isValid || isPending}
+          className="bg-[#ffa600] text-[#2a1800] px-4 py-2 rounded-lg text-xs font-bold tracking-widest uppercase hover:brightness-110 transition-all disabled:opacity-50"
+        >
           {isPending ? "Salvando..." : "Salvar Pesos"}
-        </AmberGlassButton>
+        </button>
       </div>
     </div>
   )

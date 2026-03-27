@@ -12,7 +12,7 @@ interface KpiCardProps {
 
 function KpiCard({ icon, label, value, unit, statusLabel, progress }: KpiCardProps) {
   return (
-    <div className="bg-[#1a1c1e] p-6 rounded-xl border border-white/5 hover:border-[#ffa600]/30 transition-all group shadow-[0_40px_40px_-10px_rgba(0,0,0,0.4)]">
+    <div className="bg-[#1a1c1e]/85 backdrop-blur-sm p-6 rounded-xl border border-white/[0.08] hover:border-[#ffa600]/30 transition-all group shadow-[0_40px_40px_-10px_rgba(0,0,0,0.4)]">
       <div className="flex justify-between items-start mb-4">
         <span className="material-symbols-outlined text-[#ffa600] bg-[#ffa600]/10 p-3 rounded-xl text-2xl">
           {icon}

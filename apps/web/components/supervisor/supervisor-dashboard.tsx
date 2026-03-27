@@ -4,7 +4,6 @@ import Link from "next/link"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts"
 import type { SupervisorDashboardStats } from "@/lib/types/supervisor"
 import { getSupervisorClassificationColor } from "@/lib/types/supervisor"
-import { AmberGlassButton } from "@/components/ui/amber-glass-button"
 
 interface SupervisorDashboardProps {
   stats: SupervisorDashboardStats
@@ -61,7 +60,7 @@ export function SupervisorDashboard({ stats }: SupervisorDashboardProps) {
 
       {/* Weakest Stages Chart */}
       {chartData.length > 0 && (
-        <div className="bg-[#1a1c1e] rounded-xl border border-white/5 p-8">
+        <div className="bg-[#1a1c1e]/85 backdrop-blur-sm rounded-xl border border-white/[0.08] p-8">
           <h3 className="font-headline font-bold text-lg mb-6">
             Weakest <span className="text-[#ffa600]">STAGES</span>
           </h3>
@@ -87,15 +86,15 @@ export function SupervisorDashboard({ stats }: SupervisorDashboardProps) {
 
       {/* Recent Analyses */}
       {stats.recent_analyses.length > 0 && (
-        <div className="bg-[#1a1c1e] rounded-xl border border-white/5 overflow-hidden">
-          <div className="p-6 border-b border-white/5 flex justify-between items-center">
+        <div className="bg-[#1a1c1e]/85 backdrop-blur-sm rounded-xl border border-white/[0.08] overflow-hidden">
+          <div className="p-6 border-b border-white/[0.08] flex justify-between items-center">
             <h3 className="font-headline font-bold text-lg">
               Recent <span className="text-[#ffa600]">ANALYSES</span>
             </h3>
             <Link href="/supervisor/analyze">
-              <AmberGlassButton className="text-[10px]">
+              <button className="bg-[#ffa600] text-[#2a1800] px-4 py-2 rounded-lg text-[10px] font-bold tracking-[0.2em] uppercase hover:brightness-110 transition-all">
                 Nova Análise
-              </AmberGlassButton>
+              </button>
             </Link>
           </div>
           <table className="w-full text-left border-collapse">
@@ -140,7 +139,7 @@ export function SupervisorDashboard({ stats }: SupervisorDashboardProps) {
 
 function KpiCard({ icon, label, value, unit }: { icon: string; label: string; value: string; unit?: string }) {
   return (
-    <div className="bg-[#1a1c1e] p-6 rounded-xl border border-white/5 hover:border-[#ffa600]/30 transition-all group shadow-[0_40px_40px_-10px_rgba(0,0,0,0.4)]">
+    <div className="bg-[#1a1c1e]/85 backdrop-blur-sm p-6 rounded-xl border border-white/[0.08] hover:border-[#ffa600]/30 transition-all group shadow-[0_40px_40px_-10px_rgba(0,0,0,0.4)]">
       <div className="flex justify-between items-start mb-4">
         <span className="material-symbols-outlined text-[#ffa600] bg-[#ffa600]/10 p-3 rounded-xl text-2xl">{icon}</span>
       </div>

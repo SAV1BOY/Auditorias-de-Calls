@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { AmberGlassButton } from "@/components/ui/amber-glass-button"
+import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { CloserFormDialog } from "./closer-form-dialog"
 
@@ -10,10 +10,10 @@ export function CloserPageActions() {
 
   return (
     <>
-      <AmberGlassButton onClick={() => setCreateOpen(true)}>
+      <Button onClick={() => setCreateOpen(true)}>
         <Plus className="mr-1 h-4 w-4" />
         Novo Closer
-      </AmberGlassButton>
+      </Button>
       <CloserFormDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
