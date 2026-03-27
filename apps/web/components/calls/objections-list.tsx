@@ -6,12 +6,12 @@ interface ObjectionsListProps { objections: DetectedObjection[] }
 
 export function ObjectionsList({ objections }: ObjectionsListProps) {
   if (objections.length === 0) {
-    return <p className="py-4 text-center text-sm text-muted-foreground">Nenhuma obje\u00e7\u00e3o detectada.</p>
+    return <p className="py-4 text-center text-sm text-muted-foreground">Nenhuma objeção detectada.</p>
   }
 
   return (
     <div className="space-y-3">
-      <h4 className="text-sm font-semibold font-headline">Obje\u00e7\u00f5es Detectadas</h4>
+      <h4 className="text-sm font-semibold font-headline">Objeções Detectadas</h4>
       {objections.map((obj, i) => (
         <div key={i} className="rounded-lg bg-surface-container-high/30 p-3 space-y-2">
           <div className="flex items-center justify-between">
@@ -26,8 +26,8 @@ export function ObjectionsList({ objections }: ObjectionsListProps) {
             </span>
           </div>
           <div className="space-y-1">
-            <p className="text-sm"><strong className="text-muted-foreground">Obje\u00e7\u00e3o:</strong> \u201c{obj.objection}\u201d</p>
-            <p className="text-sm"><strong className="text-muted-foreground">Resposta:</strong> \u201c{obj.closer_response}\u201d</p>
+            <p className="text-sm"><strong className="text-muted-foreground">Objeção:</strong> “{obj.objection}”</p>
+            <p className="text-sm"><strong className="text-muted-foreground">Resposta:</strong> “{obj.closer_response}”</p>
           </div>
         </div>
       ))}

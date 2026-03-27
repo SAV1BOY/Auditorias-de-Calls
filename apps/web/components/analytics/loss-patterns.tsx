@@ -20,14 +20,14 @@ export function LossPatterns({ reports }: LossPatternsProps) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold font-headline flex items-center gap-2"><TrendingDown className="h-5 w-5 text-red-400" />Padr\u00f5es de Perda</h2>
-          <p className="text-sm text-muted-foreground">An\u00e1lise autom\u00e1tica de padr\u00f5es em calls que n\u00e3o resultaram em fechamento.</p>
+          <h2 className="text-lg font-semibold font-headline flex items-center gap-2"><TrendingDown className="h-5 w-5 text-red-400" />Padrões de Perda</h2>
+          <p className="text-sm text-muted-foreground">Análise automática de padrões em calls que não resultaram em fechamento.</p>
         </div>
         <GeneratePatternButton />
       </div>
 
       {reports.length === 0 ? (
-        <Card><CardContent className="py-8 text-center"><p className="text-muted-foreground">Nenhuma an\u00e1lise de padr\u00f5es gerada ainda. Use o bot\u00e3o acima para iniciar.</p></CardContent></Card>
+        <Card><CardContent className="py-8 text-center"><p className="text-muted-foreground">Nenhuma análise de padrões gerada ainda. Use o botão acima para iniciar.</p></CardContent></Card>
       ) : (
         <div className="space-y-4">
           {reports.map((report) => {
@@ -39,9 +39,9 @@ export function LossPatterns({ reports }: LossPatternsProps) {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <CardTitle className="text-base flex items-center gap-2">
-                        Relat\u00f3rio de {report.period_start} a {report.period_end}
+                        Relatório de {report.period_start} a {report.period_end}
                         <Badge variant="secondary" className="ml-2">{report.total_lost_calls} calls perdidas</Badge>
-                        <Badge variant="outline">{report.patterns.length} padr\u00f5es</Badge>
+                        <Badge variant="outline">{report.patterns.length} padrões</Badge>
                       </CardTitle>
                       <p className="text-xs text-muted-foreground">Gerado em {formattedDate}</p>
                     </div>
@@ -50,7 +50,7 @@ export function LossPatterns({ reports }: LossPatternsProps) {
                 </CardHeader>
                 {isExpanded && (
                   <CardContent className="space-y-6">
-                    {report.patterns.length > 0 && (<div><h3 className="text-sm font-semibold mb-3 font-headline">Padr\u00f5es Identificados</h3><div className="grid gap-3 md:grid-cols-2">{report.patterns.map((pattern, i) => (<PatternCard key={i} pattern={pattern} />))}</div></div>)}
+                    {report.patterns.length > 0 && (<div><h3 className="text-sm font-semibold mb-3 font-headline">Padrões Identificados</h3><div className="grid gap-3 md:grid-cols-2">{report.patterns.map((pattern, i) => (<PatternCard key={i} pattern={pattern} />))}</div></div>)}
                     {report.common_objections.length > 0 && <ObjectionsChart objections={report.common_objections} />}
                     {report.weakest_phases.length > 0 && (
                       <Card>

@@ -45,8 +45,8 @@ export function AudioPlayer({ audioPath, markers = [], onTimeClick, onTimeUpdate
   const handleEnded = useCallback(() => { setPlaying(false) }, [])
 
   if (!audioPath) return null
-  if (error) return <div className="rounded-lg bg-surface-container-high/30 p-3 text-sm text-muted-foreground">N\u00e3o foi poss\u00edvel carregar o \u00e1udio.</div>
-  if (!src) return <div className="rounded-lg bg-surface-container-high/30 p-3 text-sm text-muted-foreground animate-amber-pulse">Carregando \u00e1udio...</div>
+  if (error) return <div className="rounded-lg bg-surface-container-high/30 p-3 text-sm text-muted-foreground">Não foi possível carregar o áudio.</div>
+  if (!src) return <div className="rounded-lg bg-surface-container-high/30 p-3 text-sm text-muted-foreground animate-amber-pulse">Carregando áudio...</div>
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
   const pointMarkers = markers.filter((m) => m.type === "comment")

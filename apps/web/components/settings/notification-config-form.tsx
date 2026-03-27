@@ -29,7 +29,7 @@ export function NotificationConfigForm({
           variant: "destructive",
         })
       } else {
-        toast({ title: "Configura\u00e7\u00f5es salvas" })
+        toast({ title: "Configurações salvas" })
       }
     })
   }
@@ -38,7 +38,7 @@ export function NotificationConfigForm({
     <form action={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="whatsapp_numbers">
-          N\u00fameros WhatsApp (um por linha)
+          Números WhatsApp (um por linha)
         </Label>
         <textarea
           id="whatsapp_numbers"
@@ -50,7 +50,7 @@ export function NotificationConfigForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="email_addresses">
-          Endere\u00e7os de Email (um por linha)
+          Endereços de Email (um por linha)
         </Label>
         <textarea
           id="email_addresses"
@@ -61,7 +61,7 @@ export function NotificationConfigForm({
         />
       </div>
       <Button type="submit" disabled={isPending}>
-        {isPending ? "Salvando..." : "Salvar Configura\u00e7\u00f5es"}
+        {isPending ? "Salvando..." : "Salvar Configurações"}
       </Button>
     </form>
   )

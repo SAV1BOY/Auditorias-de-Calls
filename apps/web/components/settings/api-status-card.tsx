@@ -27,7 +27,7 @@ export function ApiStatusCard({ status }: ApiStatusCardProps) {
               : "bg-surface-container-high text-muted-foreground"
           }
         >
-          {status.supabase ? "Configurado" : "N\u00e3o configurado"}
+          {status.supabase ? "Configurado" : "Não configurado"}
         </Badge>
       </div>
 
@@ -41,7 +41,7 @@ export function ApiStatusCard({ status }: ApiStatusCardProps) {
               : "bg-surface-container-high text-muted-foreground"
           }
         >
-          {status.googleDrive ? "Configurado" : "N\u00e3o configurado"}
+          {status.googleDrive ? "Configurado" : "Não configurado"}
         </Badge>
       </div>
 

@@ -9,13 +9,13 @@ interface ObjectionsChartProps { objections: Objection[] }
 
 export function ObjectionsChart({ objections }: ObjectionsChartProps) {
   if (objections.length === 0) {
-    return (<Card><CardHeader><CardTitle className="text-base">Obje\u00e7\u00f5es Mais Comuns</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Nenhuma obje\u00e7\u00e3o identificada.</p></CardContent></Card>)
+    return (<Card><CardHeader><CardTitle className="text-base">Objeções Mais Comuns</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Nenhuma objeção identificada.</p></CardContent></Card>)
   }
   const data = objections.map((o) => ({ name: (o.objection ?? "").length > 40 ? (o.objection ?? "").slice(0, 37) + "..." : (o.objection ?? ""), fullName: o.objection ?? "", count: o.count, best_response: o.best_response }))
 
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">Obje\u00e7\u00f5es Mais Comuns</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="text-base">Objeções Mais Comuns</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -26,7 +26,7 @@ export function ObjectionsChart({ objections }: ObjectionsChartProps) {
               <Tooltip content={({ active, payload }) => {
                 if (!active || !payload?.length) return null
                 const item = payload[0].payload as (typeof data)[0]
-                return (<div className="glass rounded-lg p-3 shadow-panel max-w-xs"><p className="font-medium text-sm">{item.fullName}</p><p className="text-xs text-muted-foreground mt-1">Ocorr\u00eancias: {item.count}</p>{item.best_response && <p className="text-xs mt-2"><span className="font-medium">Melhor resposta: </span>{item.best_response}</p>}</div>)
+                return (<div className="glass rounded-lg p-3 shadow-panel max-w-xs"><p className="font-medium text-sm">{item.fullName}</p><p className="text-xs text-muted-foreground mt-1">Ocorrências: {item.count}</p>{item.best_response && <p className="text-xs mt-2"><span className="font-medium">Melhor resposta: </span>{item.best_response}</p>}</div>)
               }} />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>{data.map((_, i) => (<Cell key={`cell-${i}`} fill={CHART_COLORS[i % CHART_COLORS.length]} />))}</Bar>
             </BarChart>

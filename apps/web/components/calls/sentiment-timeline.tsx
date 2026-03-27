@@ -18,7 +18,7 @@ function getScoreColor(score: number): string {
 
 export function SentimentTimeline({ timeline, overallSentiment, sentimentScore }: SentimentTimelineProps) {
   if (timeline.length === 0 && overallSentiment === "neutral" && sentimentScore === 0) {
-    return <p className="py-8 text-center text-muted-foreground">An\u00e1lise de sentimento ainda n\u00e3o dispon\u00edvel.</p>
+    return <p className="py-8 text-center text-muted-foreground">Análise de sentimento ainda não disponível.</p>
   }
 
   const scoreColor = getScoreColor(sentimentScore)

@@ -22,7 +22,7 @@ function TrendIcon({ trend }: { trend: "up" | "down" | "stable" }) {
 
 export function LeaderboardTable({ entries }: LeaderboardTableProps) {
   if (entries.length === 0) {
-    return (<div className="flex flex-col items-center justify-center py-12 text-muted-foreground"><Trophy className="h-10 w-10 mb-2" /><p>Nenhum dado para o per\u00edodo selecionado.</p></div>)
+    return (<div className="flex flex-col items-center justify-center py-12 text-muted-foreground"><Trophy className="h-10 w-10 mb-2" /><p>Nenhum dado para o período selecionado.</p></div>)
   }
   return (
     <Table>

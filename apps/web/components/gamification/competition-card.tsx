@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 
 interface CompetitionCardProps { competition: CompetitionWithStandings }
 
-const METRIC_LABELS: Record<string, string> = { score_avg: "M\u00e9dia de Score", volume: "Volume de Calls", taxa_fechamento: "Taxa de Fechamento" }
+const METRIC_LABELS: Record<string, string> = { score_avg: "Média de Score", volume: "Volume de Calls", taxa_fechamento: "Taxa de Fechamento" }
 const STATUS_LABELS: Record<string, string> = { active: "Em andamento", upcoming: "Programada", completed: "Finalizada" }
 const STATUS_COLORS: Record<string, string> = {
   active: "text-emerald-400 bg-emerald-900/30",

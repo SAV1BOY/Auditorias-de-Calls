@@ -8,7 +8,7 @@ interface StreakDisplayProps { streaks: CloserStreakRow[] }
 const STREAK_TYPE_LABELS: Record<string, string> = { good_score: "Score 7+", elite: "Elite" }
 
 export function StreakDisplay({ streaks }: StreakDisplayProps) {
-  if (streaks.length === 0) return <p className="text-sm text-muted-foreground">Nenhuma sequ\u00eancia ativa.</p>
+  if (streaks.length === 0) return <p className="text-sm text-muted-foreground">Nenhuma sequência ativa.</p>
   return (
     <div className="flex flex-wrap gap-4">
       {streaks.map((streak) => (

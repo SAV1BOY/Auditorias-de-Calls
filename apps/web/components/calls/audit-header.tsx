@@ -52,7 +52,7 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
   function handleResendNotification() {
     startTransition(async () => {
       const result = await resendNotification(audit.id)
-      setNotifMsg(result.error ?? "Notifica\u00e7\u00e3o reenviada!")
+      setNotifMsg(result.error ?? "Notificação reenviada!")
       setTimeout(() => setNotifMsg(null), 3000)
     })
   }
@@ -75,7 +75,7 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold font-headline">
-                  {audit.closers?.name ?? "\u2014"} x <span className="amber-keyword">{audit.lead_name}</span>
+                  {audit.closers?.name ?? "—"} x <span className="amber-keyword">{audit.lead_name}</span>
                 </h1>
                 <BookmarkButton auditId={audit.id} />
               </div>
@@ -93,7 +93,7 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                   <User className="h-4 w-4" />
                   {audit.resultado
                     ? RESULTADO_LABELS[audit.resultado] ?? audit.resultado
-                    : "\u2014"}
+                    : "—"}
                   {audit.resultado === "fechamento" &&
                     audit.valor_fechamento && (
                       <span className="ml-1 font-medium font-body text-emerald-400">
@@ -121,7 +121,7 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                       className="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors"
                     >
                       <ExternalLink className="h-3 w-3" />
-                      \u00c1udio no Drive
+                      Áudio no Drive
                     </a>
                   )}
                   {audit.drive_report_url && (
@@ -132,7 +132,7 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                       className="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors"
                     >
                       <ExternalLink className="h-3 w-3" />
-                      Relat\u00f3rio no Drive
+                      Relatório no Drive
                     </a>
                   )}
                 </div>
@@ -147,7 +147,7 @@ export function AuditHeader({ audit }: AuditHeaderProps) {
                     onClick={handleDownloadReport}
                   >
                     <Download className="mr-1 h-4 w-4" />
-                    Download Relat\u00f3rio
+                    Download Relatório
                   </Button>
                 )}
                 {(audit.status === "completed" ||

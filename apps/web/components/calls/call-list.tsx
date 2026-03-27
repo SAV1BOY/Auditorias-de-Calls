@@ -31,9 +31,9 @@ const columns = [
   { key: "closers", label: "Closer", sortable: false },
   { key: "lead_name", label: "Lead", sortable: true },
   { key: "call_date", label: "Data", sortable: true },
-  { key: "duration_minutes", label: "Dura\u00e7\u00e3o", sortable: true },
+  { key: "duration_minutes", label: "Duração", sortable: true },
   { key: "score_final", label: "Score", sortable: true },
-  { key: "classificacao", label: "Classifica\u00e7\u00e3o", sortable: true },
+  { key: "classificacao", label: "Classificação", sortable: true },
   { key: "status", label: "Status", sortable: true },
 ]
 
@@ -108,7 +108,7 @@ export function CallList({ audits, sortBy, sortOrder }: CallListProps) {
               onClick={() => handleRowClick(audit.id)}
             >
               <TableCell className="font-medium">
-                {audit.closers?.name ?? "\u2014"}
+                {audit.closers?.name ?? "—"}
               </TableCell>
               <TableCell>{audit.lead_name}</TableCell>
               <TableCell className="font-body text-muted-foreground">{formatDate(audit.call_date)}</TableCell>
@@ -129,7 +129,7 @@ export function CallList({ audits, sortBy, sortOrder }: CallListProps) {
                     {audit.classificacao}
                   </Badge>
                 ) : (
-                  "\u2014"
+                  "—"
                 )}
               </TableCell>
               <TableCell>

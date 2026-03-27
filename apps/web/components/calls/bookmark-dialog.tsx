@@ -40,7 +40,7 @@ export function BookmarkDialog({ auditId, open, onOpenChange, onSaved }: Bookmar
               ))}
             </div>
           </div>
-          <div className="space-y-2"><Label>Notas (opcional)</Label><Input placeholder="Por que essa call \u00e9 modelo?" value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          <div className="space-y-2"><Label>Notas (opcional)</Label><Input placeholder="Por que essa call é modelo?" value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>

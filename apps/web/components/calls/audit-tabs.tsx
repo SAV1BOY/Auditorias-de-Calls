@@ -23,7 +23,7 @@ interface AuditTabsProps {
   onSeek?: (sec: number) => void
 }
 
-/* \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 SCORECARD TAB \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ─────────────── SCORECARD TAB ─────────────── */
 function ScorecardContent({ audit }: { audit: CallAuditWithCloser }) {
   const hasDimensions = DIMENSIONS.some(
     (d) => (audit as unknown as Record<string, unknown>)[d.id] != null
@@ -32,7 +32,7 @@ function ScorecardContent({ audit }: { audit: CallAuditWithCloser }) {
   if (!hasDimensions) {
     return (
       <p className="py-8 text-center text-muted-foreground">
-        Scorecard ainda n\u00e3o dispon\u00edvel. A an\u00e1lise precisa ser conclu\u00edda.
+        Scorecard ainda não disponível. A análise precisa ser concluída.
       </p>
     )
   }
@@ -67,10 +67,10 @@ function ScorecardContent({ audit }: { audit: CallAuditWithCloser }) {
   )
 }
 
-/* \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 RELAT\u00d3RIO TAB \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ─────────────── RELATÓRIO TAB ─────────────── */
 function RelatorioContent({ audit }: { audit: CallAuditWithCloser }) {
   if (!audit.relatorio_completo) {
-    return <p className="py-8 text-center text-muted-foreground">Relat\u00f3rio ainda n\u00e3o dispon\u00edvel.</p>
+    return <p className="py-8 text-center text-muted-foreground">Relatório ainda não disponível.</p>
   }
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -79,12 +79,12 @@ function RelatorioContent({ audit }: { audit: CallAuditWithCloser }) {
   )
 }
 
-/* \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 TRANSCRI\u00c7\u00c3O TAB \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ─────────────── TRANSCRIÇÃO TAB ─────────────── */
 function TranscricaoContent({ audit }: { audit: CallAuditWithCloser }) {
   const [search, setSearch] = useState("")
 
   if (!audit.transcricao) {
-    return <p className="py-8 text-center text-muted-foreground">Transcri\u00e7\u00e3o ainda n\u00e3o dispon\u00edvel.</p>
+    return <p className="py-8 text-center text-muted-foreground">Transcrição ainda não disponível.</p>
   }
 
   const lines = audit.transcricao.split("\n")
@@ -92,11 +92,11 @@ function TranscricaoContent({ audit }: { audit: CallAuditWithCloser }) {
 
   return (
     <div className="space-y-4">
-      <Input placeholder="Buscar na transcri\u00e7\u00e3o..." value={search} onChange={(e) => setSearch(e.target.value)} />
+      <Input placeholder="Buscar na transcrição..." value={search} onChange={(e) => setSearch(e.target.value)} />
       <div className="max-h-[600px] overflow-y-auto rounded-lg bg-surface-container-high/30 p-4 text-sm leading-relaxed">
         {lines.map((line, i) => {
-          if (!search) return <p key={i} className="mb-1">{line || "\u00A0"}</p>
-          if (!line.toLowerCase().includes(searchLower)) return <p key={i} className="mb-1 opacity-30">{line || "\u00A0"}</p>
+          if (!search) return <p key={i} className="mb-1">{line || " "}</p>
+          if (!line.toLowerCase().includes(searchLower)) return <p key={i} className="mb-1 opacity-30">{line || " "}</p>
           const parts = line.split(new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"))
           return (
             <p key={i} className="mb-1">
@@ -113,7 +113,7 @@ function TranscricaoContent({ audit }: { audit: CallAuditWithCloser }) {
   )
 }
 
-/* \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 ERROS & ACERTOS TAB \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ─────────────── ERROS & ACERTOS TAB ─────────────── */
 interface TopItem { rank: number; title: string; description: string; severity?: string }
 
 function ErrosAcertosContent({ audit }: { audit: CallAuditWithCloser }) {
@@ -121,7 +121,7 @@ function ErrosAcertosContent({ audit }: { audit: CallAuditWithCloser }) {
   const acertos = (audit.top_acertos ?? []) as unknown as TopItem[]
 
   if (erros.length === 0 && acertos.length === 0) {
-    return <p className="py-8 text-center text-muted-foreground">Erros e acertos ainda n\u00e3o dispon\u00edveis.</p>
+    return <p className="py-8 text-center text-muted-foreground">Erros e acertos ainda não disponíveis.</p>
   }
 
   return (
@@ -166,12 +166,12 @@ function ErrosAcertosContent({ audit }: { audit: CallAuditWithCloser }) {
   )
 }
 
-/* \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 REESCRITA TAB \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ─────────────── REESCRITA TAB ─────────────── */
 interface ReescritaItem { description: string; original?: string; rewritten?: string; reason?: string; impact?: string }
 
 function ReescritaContent({ audit }: { audit: CallAuditWithCloser }) {
   const items = (audit.reescrita_falas ?? []) as unknown as ReescritaItem[]
-  if (items.length === 0) return <p className="py-8 text-center text-muted-foreground">Reescrita de falas ainda n\u00e3o dispon\u00edvel.</p>
+  if (items.length === 0) return <p className="py-8 text-center text-muted-foreground">Reescrita de falas ainda não disponível.</p>
 
   return (
     <div className="space-y-6">
@@ -181,14 +181,14 @@ function ReescritaContent({ audit }: { audit: CallAuditWithCloser }) {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1">
               <p className="text-xs font-medium text-red-400 uppercase font-body">O que foi dito</p>
-              <p className="rounded-lg bg-red-950/50 p-3 text-sm">{item.original ?? "\u2014"}</p>
+              <p className="rounded-lg bg-red-950/50 p-3 text-sm">{item.original ?? "—"}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs font-medium text-emerald-400 uppercase font-body">O que deveria ter sido dito</p>
-              <p className="rounded-lg bg-emerald-950/50 p-3 text-sm">{item.rewritten ?? "\u2014"}</p>
+              <p className="rounded-lg bg-emerald-950/50 p-3 text-sm">{item.rewritten ?? "—"}</p>
             </div>
           </div>
-          {item.reason && <p className="text-xs text-muted-foreground"><strong>Por qu\u00ea:</strong> {item.reason}</p>}
+          {item.reason && <p className="text-xs text-muted-foreground"><strong>Por quê:</strong> {item.reason}</p>}
           {item.impact && <p className="text-xs text-muted-foreground"><strong>Impacto estimado:</strong> {item.impact}</p>}
         </div>
       ))}
@@ -196,12 +196,12 @@ function ReescritaContent({ audit }: { audit: CallAuditWithCloser }) {
   )
 }
 
-/* \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 PLANO DE A\u00c7\u00c3O TAB \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ─────────────── PLANO DE AÇÃO TAB ─────────────── */
 interface PlanoItem { rank: number; title: string; o_que_fazer?: string; por_que?: string; como_treinar?: string; prioridade?: string }
 
 function PlanoAcaoContent({ audit }: { audit: CallAuditWithCloser }) {
   const items = (audit.plano_acao ?? []) as unknown as PlanoItem[]
-  if (items.length === 0) return <p className="py-8 text-center text-muted-foreground">Plano de a\u00e7\u00e3o ainda n\u00e3o dispon\u00edvel.</p>
+  if (items.length === 0) return <p className="py-8 text-center text-muted-foreground">Plano de ação ainda não disponível.</p>
 
   return (
     <div className="space-y-4">
@@ -213,7 +213,7 @@ function PlanoAcaoContent({ audit }: { audit: CallAuditWithCloser }) {
             {item.prioridade && <Badge variant="outline" className="ml-auto text-xs">{item.prioridade}</Badge>}
           </div>
           {item.o_que_fazer && <p className="text-sm"><strong className="text-muted-foreground">O que fazer:</strong> {item.o_que_fazer}</p>}
-          {item.por_que && <p className="text-sm"><strong className="text-muted-foreground">Por qu\u00ea:</strong> {item.por_que}</p>}
+          {item.por_que && <p className="text-sm"><strong className="text-muted-foreground">Por quê:</strong> {item.por_que}</p>}
           {item.como_treinar && <p className="text-sm"><strong className="text-muted-foreground">Como treinar:</strong> {item.como_treinar}</p>}
         </div>
       ))}
@@ -221,7 +221,7 @@ function PlanoAcaoContent({ audit }: { audit: CallAuditWithCloser }) {
   )
 }
 
-/* \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 SENTIMENTO TAB \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ─────────────── SENTIMENTO TAB ─────────────── */
 function SentimentoContent({ audit }: { audit: CallAuditWithCloser }) {
   const raw = audit as unknown as Record<string, unknown>
   const timeline = (raw.sentiment_timeline ?? []) as unknown as SentimentTimelineEntry[]
@@ -239,31 +239,31 @@ function SentimentoContent({ audit }: { audit: CallAuditWithCloser }) {
   )
 }
 
-/* \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 MAIN TABS COMPONENT \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ─────────────── MAIN TABS COMPONENT ─────────────── */
 export function AuditTabs({ audit, currentTime, onSeek }: AuditTabsProps) {
   return (
     <Tabs defaultValue="scorecard">
       <TabsList className="flex-wrap">
         <TabsTrigger value="scorecard">Scorecard</TabsTrigger>
-        <TabsTrigger value="relatorio">Relat\u00f3rio</TabsTrigger>
-        <TabsTrigger value="transcricao">Transcri\u00e7\u00e3o</TabsTrigger>
+        <TabsTrigger value="relatorio">Relatório</TabsTrigger>
+        <TabsTrigger value="transcricao">Transcrição</TabsTrigger>
         <TabsTrigger value="erros">Erros & Acertos</TabsTrigger>
         <TabsTrigger value="reescrita">Reescrita</TabsTrigger>
-        <TabsTrigger value="plano">Plano de A\u00e7\u00e3o</TabsTrigger>
+        <TabsTrigger value="plano">Plano de Ação</TabsTrigger>
         <TabsTrigger value="sentimento">Sentimento</TabsTrigger>
         <TabsTrigger value="coaching">Coaching</TabsTrigger>
         <TabsTrigger value="supervisor">Supervisor</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="scorecard"><Card><CardHeader><CardTitle>Scorecard \u2014 13 Dimens\u00f5es</CardTitle></CardHeader><CardContent><ScorecardContent audit={audit} /></CardContent></Card></TabsContent>
-      <TabsContent value="relatorio"><Card><CardHeader><CardTitle>Relat\u00f3rio Completo</CardTitle></CardHeader><CardContent><RelatorioContent audit={audit} /></CardContent></Card></TabsContent>
-      <TabsContent value="transcricao"><Card><CardHeader><CardTitle>Transcri\u00e7\u00e3o</CardTitle></CardHeader><CardContent><TranscricaoContent audit={audit} /></CardContent></Card></TabsContent>
+      <TabsContent value="scorecard"><Card><CardHeader><CardTitle>Scorecard — 13 Dimensões</CardTitle></CardHeader><CardContent><ScorecardContent audit={audit} /></CardContent></Card></TabsContent>
+      <TabsContent value="relatorio"><Card><CardHeader><CardTitle>Relatório Completo</CardTitle></CardHeader><CardContent><RelatorioContent audit={audit} /></CardContent></Card></TabsContent>
+      <TabsContent value="transcricao"><Card><CardHeader><CardTitle>Transcrição</CardTitle></CardHeader><CardContent><TranscricaoContent audit={audit} /></CardContent></Card></TabsContent>
       <TabsContent value="erros"><Card><CardHeader><CardTitle>Erros & Acertos</CardTitle></CardHeader><CardContent><ErrosAcertosContent audit={audit} /></CardContent></Card></TabsContent>
       <TabsContent value="reescrita"><Card><CardHeader><CardTitle>Reescrita de Falas</CardTitle></CardHeader><CardContent><ReescritaContent audit={audit} /></CardContent></Card></TabsContent>
-      <TabsContent value="plano"><Card><CardHeader><CardTitle>Plano de A\u00e7\u00e3o</CardTitle></CardHeader><CardContent><PlanoAcaoContent audit={audit} /></CardContent></Card></TabsContent>
-      <TabsContent value="sentimento"><Card><CardHeader><CardTitle>An\u00e1lise de Sentimento</CardTitle></CardHeader><CardContent><SentimentoContent audit={audit} /></CardContent></Card></TabsContent>
+      <TabsContent value="plano"><Card><CardHeader><CardTitle>Plano de Ação</CardTitle></CardHeader><CardContent><PlanoAcaoContent audit={audit} /></CardContent></Card></TabsContent>
+      <TabsContent value="sentimento"><Card><CardHeader><CardTitle>Análise de Sentimento</CardTitle></CardHeader><CardContent><SentimentoContent audit={audit} /></CardContent></Card></TabsContent>
       <TabsContent value="coaching"><Card><CardHeader><CardTitle>Coaching</CardTitle></CardHeader><CardContent><CommentsPanel auditId={audit.id} currentTime={currentTime} onSeek={onSeek} /></CardContent></Card></TabsContent>
-      <TabsContent value="supervisor"><Card><CardHeader><CardTitle>An\u00e1lise do Supervisor</CardTitle></CardHeader><CardContent><SupervisorTabContent auditId={audit.id} /></CardContent></Card></TabsContent>
+      <TabsContent value="supervisor"><Card><CardHeader><CardTitle>Análise do Supervisor</CardTitle></CardHeader><CardContent><SupervisorTabContent auditId={audit.id} /></CardContent></Card></TabsContent>
     </Tabs>
   )
 }

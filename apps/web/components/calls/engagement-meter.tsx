@@ -10,7 +10,7 @@ export function EngagementMeter({ level }: EngagementMeterProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium font-headline">N\u00edvel de Engajamento</span>
+        <span className="text-sm font-medium font-headline">Nível de Engajamento</span>
         <span className="text-sm font-semibold font-body" style={{ color: ENGAGEMENT_COLORS[level] ?? "hsl(var(--muted-foreground))" }}>{label}</span>
       </div>
       <div className="flex gap-1">
@@ -20,7 +20,7 @@ export function EngagementMeter({ level }: EngagementMeterProps) {
           return <div key={lvl} className={`h-3 flex-1 rounded-sm ${isActive ? "" : "bg-surface-container-high"}`} style={isActive ? { backgroundColor: color } : undefined} />
         })}
       </div>
-      <div className="flex justify-between text-xs text-muted-foreground font-body"><span>Baixo</span><span>M\u00e9dio</span><span>Alto</span></div>
+      <div className="flex justify-between text-xs text-muted-foreground font-body"><span>Baixo</span><span>Médio</span><span>Alto</span></div>
     </div>
   )
 }

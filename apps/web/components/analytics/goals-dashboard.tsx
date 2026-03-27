@@ -11,8 +11,8 @@ import { updateGoalStatus, deleteGoal } from "@/lib/actions/analytics"
 import { getGoalProgressColor, getDaysRemaining, getTotalDays } from "@/lib/utils/analytics"
 import { GoalFormDialog } from "./goal-form-dialog"
 
-const METRIC_LABELS: Record<string, string> = { score_avg: "Score M\u00e9dio", score_min: "Score M\u00ednimo", classificacao_count: "Calls n\u00e3o-Fracas", taxa_fechamento: "Taxa Fechamento", dimension_avg: "Dimens\u00e3o M\u00e9dia" }
-const TYPE_LABELS: Record<string, string> = { individual: "Individual", team: "Time", dimension: "Dimens\u00e3o" }
+const METRIC_LABELS: Record<string, string> = { score_avg: "Score Médio", score_min: "Score Mínimo", classificacao_count: "Calls não-Fracas", taxa_fechamento: "Taxa Fechamento", dimension_avg: "Dimensão Média" }
+const TYPE_LABELS: Record<string, string> = { individual: "Individual", team: "Time", dimension: "Dimensão" }
 
 interface GoalsDashboardProps { goals: GoalWithProgress[]; closers: CloserRow[] }
 
@@ -42,7 +42,7 @@ export function GoalsDashboard({ goals, closers }: GoalsDashboardProps) {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{activeGoals.map((goal) => (<GoalCard key={goal.id} goal={goal} isPending={isPending} onStatusChange={handleStatusChange} onDelete={handleDelete} />))}</div>
       {completedGoals.length > 0 && (
         <div className="space-y-4">
-          <Button variant="ghost" onClick={() => setShowCompleted(!showCompleted)} className="text-muted-foreground">{showCompleted ? "Ocultar" : "Mostrar"} Metas Conclu\u00eddas ({completedGoals.length})</Button>
+          <Button variant="ghost" onClick={() => setShowCompleted(!showCompleted)} className="text-muted-foreground">{showCompleted ? "Ocultar" : "Mostrar"} Metas Concluídas ({completedGoals.length})</Button>
           {showCompleted && <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{completedGoals.map((goal) => (<GoalCard key={goal.id} goal={goal} isPending={isPending} onStatusChange={handleStatusChange} onDelete={handleDelete} />))}</div>}
         </div>
       )}
@@ -65,7 +65,7 @@ function GoalCard({ goal, isPending, onStatusChange, onDelete }: { goal: GoalWit
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-sm font-medium leading-tight">{goal.title}</CardTitle>
           <div className="flex gap-1 flex-shrink-0">
-            {goal.status === "active" && (<><Button variant="ghost" size="icon" className="h-6 w-6" disabled={isPending} onClick={() => onStatusChange(goal.id, "completed")} title="Marcar como conclu\u00edda"><Check className="h-3 w-3" /></Button><Button variant="ghost" size="icon" className="h-6 w-6" disabled={isPending} onClick={() => onStatusChange(goal.id, "failed")} title="Marcar como falha"><X className="h-3 w-3" /></Button></>)}
+            {goal.status === "active" && (<><Button variant="ghost" size="icon" className="h-6 w-6" disabled={isPending} onClick={() => onStatusChange(goal.id, "completed")} title="Marcar como concluída"><Check className="h-3 w-3" /></Button><Button variant="ghost" size="icon" className="h-6 w-6" disabled={isPending} onClick={() => onStatusChange(goal.id, "failed")} title="Marcar como falha"><X className="h-3 w-3" /></Button></>)}
             <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" disabled={isPending} onClick={() => onDelete(goal.id)} title="Excluir meta"><Trash2 className="h-3 w-3" /></Button>
           </div>
         </div>
@@ -73,8 +73,8 @@ function GoalCard({ goal, isPending, onStatusChange, onDelete }: { goal: GoalWit
           <Badge variant="outline" className="text-xs">{TYPE_LABELS[goal.type] ?? goal.type}</Badge>
           <Badge variant="outline" className="text-xs">{METRIC_LABELS[goal.metric] ?? goal.metric}</Badge>
           {goal.closer_name && <Badge variant="secondary" className="text-xs">{goal.closer_name}</Badge>}
-          {goal.status === "completed" && <Badge className="bg-emerald-900/30 text-emerald-400 text-xs">Conclu\u00edda</Badge>}
-          {goal.status === "failed" && <Badge className="bg-red-900/30 text-red-400 text-xs">N\u00e3o Atingida</Badge>}
+          {goal.status === "completed" && <Badge className="bg-emerald-900/30 text-emerald-400 text-xs">Concluída</Badge>}
+          {goal.status === "failed" && <Badge className="bg-red-900/30 text-red-400 text-xs">Não Atingida</Badge>}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">

@@ -29,7 +29,7 @@ function CommentThread({ comment, auditId, onSeek, onRefresh }: { comment: CallC
     <div className={cn("rounded-lg bg-surface-container-high/30 p-3 space-y-2", comment.resolved && "opacity-60")}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-medium">{comment.author?.full_name ?? "Usu\u00e1rio"}</span>
+          <span className="font-medium">{comment.author?.full_name ?? "Usuário"}</span>
           {comment.author?.role && <Badge variant="outline" className="text-xs">{comment.author.role}</Badge>}
           {comment.timestamp_sec !== null && (
             <button className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-primary transition-colors" onClick={() => onSeek?.(comment.timestamp_sec!)}>
@@ -49,7 +49,7 @@ function CommentThread({ comment, auditId, onSeek, onRefresh }: { comment: CallC
           {comment.replies.map((reply) => (
             <div key={reply.id} className="space-y-1">
               <div className="flex items-center gap-2 text-sm">
-                <span className="font-medium">{reply.author?.full_name ?? "Usu\u00e1rio"}</span>
+                <span className="font-medium">{reply.author?.full_name ?? "Usuário"}</span>
                 {reply.timestamp_sec !== null && <button className="text-xs text-on-surface-variant hover:text-primary transition-colors" onClick={() => onSeek?.(reply.timestamp_sec!)}>{formatTimestamp(reply.timestamp_sec)}</button>}
               </div>
               <p className="text-sm">{reply.content}</p>
@@ -79,13 +79,13 @@ export function CommentsPanel({ auditId, currentTime, onSeek }: CommentsPanelPro
     return () => { supabase.removeChannel(channel) }
   }, [auditId, refresh])
 
-  if (loading) return <div className="py-8 text-center text-muted-foreground animate-amber-pulse">Carregando coment\u00e1rios...</div>
+  if (loading) return <div className="py-8 text-center text-muted-foreground animate-amber-pulse">Carregando comentários...</div>
 
   return (
     <div className="space-y-4">
       <CommentForm auditId={auditId} currentTimestamp={currentTime} placeholder="Adicionar feedback no momento atual..." onSubmitted={refresh} />
       {comments.length === 0 ? (
-        <div className="py-8 text-center text-muted-foreground"><CircleDot className="mx-auto h-10 w-10 mb-2 opacity-20" /><p>Nenhum coment\u00e1rio ainda.</p><p className="text-sm mt-1">Adicione feedback em momentos espec\u00edficos do \u00e1udio.</p></div>
+        <div className="py-8 text-center text-muted-foreground"><CircleDot className="mx-auto h-10 w-10 mb-2 opacity-20" /><p>Nenhum comentário ainda.</p><p className="text-sm mt-1">Adicione feedback em momentos específicos do áudio.</p></div>
       ) : (
         <div className="space-y-3">{comments.map((comment) => (<CommentThread key={comment.id} comment={comment} auditId={auditId} onSeek={onSeek} onRefresh={refresh} />))}</div>
       )}

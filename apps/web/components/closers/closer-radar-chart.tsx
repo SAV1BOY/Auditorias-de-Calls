@@ -11,9 +11,9 @@ export function CloserRadarChart({ dimensions }: CloserRadarChartProps) {
   const hasData = dimensions.some((d) => d.score > 0)
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">Radar de Dimens\u00f5es</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="text-base">Radar de Dimensões</CardTitle></CardHeader>
       <CardContent>
-        {!hasData ? (<p className="py-12 text-center text-sm text-muted-foreground">Nenhum dado dispon\u00edvel.</p>) : (
+        {!hasData ? (<p className="py-12 text-center text-sm text-muted-foreground">Nenhum dado disponível.</p>) : (
           <ResponsiveContainer width="100%" height={320}>
             <RadarChart data={dimensions} cx="50%" cy="50%" outerRadius="75%">
               <PolarGrid stroke="hsl(225, 4%, 17%)" />
