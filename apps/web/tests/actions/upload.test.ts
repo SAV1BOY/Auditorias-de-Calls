@@ -1,6 +1,6 @@
 import { vi } from "vitest"
 import { createClient } from "@/lib/supabase/server"
-import { uploadCall } from "@/lib/actions/upload"
+import { uploadCall, uploadTranscription } from "@/lib/actions/upload"
 
 // ─── Helpers ───
 
@@ -187,5 +187,70 @@ describe("uploadCall", () => {
       p_audit_id: "audit-new",
       p_job_type: "transcribe",
     })
+  })
+})
+
+describe("uploadTranscription", () => {
+  it("creates audit with status transcribed and enqueues analyze job", async () => {
+    const chain = mockChain({ data: { id: "audit-tx-001" } })
+    const client = {
+      from: vi.fn().mockReturnValue(chain),
+      rpc: vi.fn().mockResolvedValue({ data: "job-001", error: null }),
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-001" } },
+          error: null,
+        }),
+      },
+      storage: { from: vi.fn() },
+    }
+    vi.mocked(createClient).mockResolvedValue(client as any)
+
+    const mdContent = "A".repeat(100) // min 50 chars
+    const file = new File([mdContent], "transcricao.md", { type: "text/markdown" })
+    const fd = new FormData()
+    fd.append("file", file)
+    fd.append("closerId", "a0000000-0000-4000-8000-000000000001")
+    fd.append("leadName", "Lead Teste")
+    fd.append("callDate", "2026-03-27")
+
+    const result = await uploadTranscription(fd)
+
+    expect(result.auditId).toBe("audit-tx-001")
+    expect(result.error).toBeUndefined()
+    expect(client.rpc).toHaveBeenCalledWith("enqueue_job", {
+      p_audit_id: "audit-tx-001",
+      p_job_type: "analyze",
+    })
+  })
+
+  it("rejects transcription shorter than 50 characters", async () => {
+    const file = new File(["short"], "transcricao.md", { type: "text/markdown" })
+    const fd = new FormData()
+    fd.append("file", file)
+    fd.append("closerId", "a0000000-0000-4000-8000-000000000001")
+    fd.append("leadName", "Lead")
+    fd.append("callDate", "2026-03-27")
+
+    const result = await uploadTranscription(fd)
+
+    expect(result.error).toContain("curta")
+  })
+
+  it("rejects unsupported file format", async () => {
+    // Reset rate limit for this test
+    const { resetRateLimit } = await import("@/lib/security/rate-limit")
+    resetRateLimit("upload:user-001")
+
+    const file = new File(["content"], "audio.mp3", { type: "audio/mpeg" })
+    const fd = new FormData()
+    fd.append("file", file)
+    fd.append("closerId", "a0000000-0000-4000-8000-000000000001")
+    fd.append("leadName", "Lead")
+    fd.append("callDate", "2026-03-27")
+
+    const result = await uploadTranscription(fd)
+
+    expect(result.error).toContain("suportado")
   })
 })
