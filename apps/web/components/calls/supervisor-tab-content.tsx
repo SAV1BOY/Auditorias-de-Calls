@@ -15,6 +15,25 @@ interface SupervisorTabContentProps {
   auditId: string
 }
 
+// Helper: safely render priority improvement items (handles both string and object formats)
+function renderPriorityItem(item: unknown): string {
+  if (typeof item === "string") return item
+  if (item && typeof item === "object") {
+    const obj = item as Record<string, unknown>
+    // Format: "[Stage] Issue — Recommended action"
+    const parts: string[] = []
+    if (obj.stage) parts.push(`[${obj.stage}]`)
+    if (obj.issue) parts.push(String(obj.issue))
+    if (obj.recommended_action) parts.push(`— ${obj.recommended_action}`)
+    if (parts.length > 0) return parts.join(" ")
+    // Fallback: try common field names
+    const text = obj.text || obj.description || obj.recommendation || obj.summary
+    if (text) return String(text)
+    return JSON.stringify(item)
+  }
+  return String(item)
+}
+
 export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
   const [analysis, setAnalysis] = useState<SupervisorAnalysis | null>(null)
   const [loading, setLoading] = useState(true)
@@ -128,6 +147,25 @@ export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
     )
   }
 
+  // Extract stages from raw_json if stages array is empty (fallback)
+  const stages = analysis.stages.length > 0
+    ? analysis.stages
+    : ((analysis.raw_json as Record<string, unknown>)?.stages as Array<Record<string, unknown>> ?? []).map((s, idx) => ({
+        id: `raw-${idx}`,
+        analysis_id: analysis.id,
+        stage_key: String(s.stage_key || s.key || `stage_${idx + 1}`),
+        stage_name: String(s.stage_name || s.name || `Etapa ${idx + 1}`),
+        stage_order: Number(s.stage_order || s.stage || s.order || idx + 1),
+        score: Number(s.score ?? 0),
+        max_score: Number(s.max_score || 10),
+        weight: Number(s.weight ?? s.weight_pct ? (Number(s.weight_pct) / 100) : 0),
+        status: String(s.status || "ok") as "excellent" | "ok" | "warning" | "critical" | "skipped",
+        justification: String(s.justification || s.observations || ""),
+        evidence_excerpt: s.evidence_excerpt ? String(s.evidence_excerpt) : null,
+        missed_actions: Array.isArray(s.missed_actions) ? s.missed_actions.map(String) : [],
+        suggested_fix: Array.isArray(s.suggested_fix) ? s.suggested_fix.map(String) : [],
+      }))
+
   return (
     <div className="space-y-6">
       {/* Score header */}
@@ -159,8 +197,8 @@ export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
         </Link>
       </div>
 
-      {/* Timeline */}
-      {analysis.stages.length > 0 && <StageTimeline stages={analysis.stages} />}
+      {/* Timeline - uses stages from DB or fallback from raw_json */}
+      {stages.length > 0 && <StageTimeline stages={stages} />}
 
       {/* Executive summary */}
       {analysis.executive_summary && (
@@ -174,21 +212,128 @@ export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
         </div>
       )}
 
-      {/* Priority improvements */}
+      {/* Priority improvements - handles both string[] and object[] */}
       {analysis.priority_improvements.length > 0 && (
         <div>
           <p className="text-[10px] font-label uppercase tracking-widest text-stone-500 mb-2">
             Melhorias Prioritárias
           </p>
-          <ul className="space-y-1">
-            {analysis.priority_improvements.slice(0, 3).map((item, i) => (
-              <li key={i} className="text-sm text-[#d8c3ac] flex items-start gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ffa600]/10 text-[9px] font-bold text-[#ffa600]">
-                  {i + 1}
-                </span>
-                {item}
-              </li>
-            ))}
+          <ul className="space-y-2">
+            {(analysis.priority_improvements as unknown[]).slice(0, 5).map((item, i) => {
+              const obj = typeof item === "object" && item !== null ? item as Record<string, unknown> : null
+              return (
+                <li key={i} className="text-sm text-[#d8c3ac] bg-[#121316]/50 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ffa600]/10 text-[9px] font-bold text-[#ffa600] mt-0.5">
+                      {obj?.priority != null ? String(obj.priority) : i + 1}
+                    </span>
+                    <div className="flex-1 space-y-1">
+                      {obj?.stage && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#ffa600]/70">
+                          {String(obj.stage)}
+                        </span>
+                      )}
+                      <p className="text-sm text-[#d8c3ac]">
+                        {obj ? String(obj.issue || obj.text || obj.description || JSON.stringify(obj)) : String(item)}
+                      </p>
+                      {obj?.recommended_action && (
+                        <p className="text-xs text-stone-500 mt-1">
+                          <span className="text-emerald-400/70 font-bold">Ação:</span>{" "}
+                          {String(obj.recommended_action)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+
+      {/* Training actions */}
+      {(analysis.training_actions as unknown[])?.length > 0 && (
+        <div>
+          <p className="text-[10px] font-label uppercase tracking-widest text-stone-500 mb-2">
+            Ações de Treinamento
+          </p>
+          <ul className="space-y-2">
+            {(analysis.training_actions as unknown[]).slice(0, 5).map((item, i) => {
+              const obj = typeof item === "object" && item !== null ? item as Record<string, unknown> : null
+              return (
+                <li key={i} className="text-sm text-[#d8c3ac] bg-[#121316]/50 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-[9px] font-bold text-emerald-400 mt-0.5">
+                      {i + 1}
+                    </span>
+                    <div className="flex-1 space-y-1">
+                      {obj?.type && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/70">
+                          {String(obj.type)}{obj.focus ? ` — ${String(obj.focus)}` : ""}
+                        </span>
+                      )}
+                      <p className="text-sm text-[#d8c3ac]">
+                        {obj ? String(obj.description || obj.recommendation || obj.text || JSON.stringify(obj)) : String(item)}
+                      </p>
+                      {obj?.responsible && (
+                        <p className="text-xs text-stone-500">
+                          <span className="text-[#ffa600]/70 font-bold">Responsável:</span> {String(obj.responsible)}
+                          {obj.deadline_days ? ` · ${String(obj.deadline_days)} dias` : ""}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+
+      {/* Objections detected */}
+      {(analysis.objections_detected as unknown[])?.length > 0 && (
+        <div>
+          <p className="text-[10px] font-label uppercase tracking-widest text-stone-500 mb-2">
+            Objeções Detectadas
+          </p>
+          <ul className="space-y-2">
+            {(analysis.objections_detected as unknown[]).map((item, i) => {
+              const obj = typeof item === "object" && item !== null ? item as Record<string, unknown> : null
+              const handled = obj?.handled === true
+              return (
+                <li key={i} className="text-sm bg-[#121316]/50 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <span className={`material-symbols-outlined text-sm mt-0.5 ${handled ? "text-emerald-400" : "text-red-400"}`}>
+                      {handled ? "check_circle" : "cancel"}
+                    </span>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        {obj?.type && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#ffa600]/70">
+                            {String(obj.type)}
+                          </span>
+                        )}
+                        {obj?.handling_quality && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                            obj.handling_quality === "Insuficiente" || obj.handling_quality === "Não tratada"
+                              ? "bg-red-500/10 text-red-400"
+                              : "bg-emerald-500/10 text-emerald-400"
+                          }`}>
+                            {String(obj.handling_quality)}
+                          </span>
+                        )}
+                      </div>
+                      {obj?.verbatim && (
+                        <p className="text-sm text-stone-400 italic">"{String(obj.verbatim)}"</p>
+                      )}
+                      {obj?.notes && (
+                        <p className="text-xs text-stone-500">{String(obj.notes)}</p>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         </div>
       )}
