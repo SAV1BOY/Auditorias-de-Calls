@@ -15,25 +15,6 @@ interface SupervisorTabContentProps {
   auditId: string
 }
 
-// Helper: safely render priority improvement items (handles both string and object formats)
-function renderPriorityItem(item: unknown): string {
-  if (typeof item === "string") return item
-  if (item && typeof item === "object") {
-    const obj = item as Record<string, unknown>
-    // Format: "[Stage] Issue — Recommended action"
-    const parts: string[] = []
-    if (obj.stage) parts.push(`[${obj.stage}]`)
-    if (obj.issue) parts.push(String(obj.issue))
-    if (obj.recommended_action) parts.push(`— ${obj.recommended_action}`)
-    if (parts.length > 0) return parts.join(" ")
-    // Fallback: try common field names
-    const text = obj.text || obj.description || obj.recommendation || obj.summary
-    if (text) return String(text)
-    return JSON.stringify(item)
-  }
-  return String(item)
-}
-
 export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
   const [analysis, setAnalysis] = useState<SupervisorAnalysis | null>(null)
   const [loading, setLoading] = useState(true)
@@ -324,7 +305,7 @@ export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
                         )}
                       </div>
                       {obj?.verbatim != null && (
-                        <p className="text-sm text-stone-400 italic">"{String(obj.verbatim)}"</p>
+                        <p className="text-sm text-stone-400 italic">&ldquo;{String(obj.verbatim)}&rdquo;</p>
                       )}
                       {obj?.notes != null && (
                         <p className="text-xs text-stone-500">{String(obj.notes)}</p>
