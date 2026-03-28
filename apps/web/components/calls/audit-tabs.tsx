@@ -88,16 +88,30 @@ function TranscricaoContent({ audit }: { audit: CallAuditWithCloser }) {
     return <p className="py-8 text-center text-muted-foreground">Transcrição ainda não disponível.</p>
   }
 
-  const lines = audit.transcricao.split("\n")
+  const hasMarkdown = /[*#>|`]/.test(audit.transcricao)
   const searchLower = search.toLowerCase()
+
+  // If markdown detected and no search active, render as markdown
+  if (hasMarkdown && !search) {
+    return (
+      <div className="space-y-4">
+        <Input placeholder="Buscar na transcrição..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <div className="max-h-[600px] overflow-y-auto rounded-lg bg-surface-container-high/30 p-4 text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{audit.transcricao}</ReactMarkdown>
+        </div>
+      </div>
+    )
+  }
+
+  const lines = audit.transcricao.split("\n")
 
   return (
     <div className="space-y-4">
       <Input placeholder="Buscar na transcrição..." value={search} onChange={(e) => setSearch(e.target.value)} />
       <div className="max-h-[600px] overflow-y-auto rounded-lg bg-surface-container-high/30 p-4 text-sm leading-relaxed">
         {lines.map((line, i) => {
-          if (!search) return <p key={i} className="mb-1">{line || " "}</p>
-          if (!line.toLowerCase().includes(searchLower)) return <p key={i} className="mb-1 opacity-30">{line || " "}</p>
+          if (!search) return <p key={i} className="mb-1">{line || "\u00a0"}</p>
+          if (!line.toLowerCase().includes(searchLower)) return <p key={i} className="mb-1 opacity-30">{line || "\u00a0"}</p>
           const parts = line.split(new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"))
           return (
             <p key={i} className="mb-1">
@@ -113,6 +127,7 @@ function TranscricaoContent({ audit }: { audit: CallAuditWithCloser }) {
     </div>
   )
 }
+
 
 /* ─────────────── ERROS & ACERTOS TAB ─────────────── */
 interface TopItem { rank: number; title: string; description: string; severity?: string }
