@@ -453,14 +453,14 @@ async function runSupervisorAnalysis(
       executive_summary: parsed.executive_summary,
       protocol_version: parsed.protocol_version || "v1.0",
       prompt_version: "1.0",
-      table_price_presented: parsed.negotiation?.table_price_presented,
-      silence_applied: parsed.negotiation?.silence_applied,
-      who_spoke_first: parsed.negotiation?.who_spoke_first,
-      protagonist_transition_quality: parsed.negotiation?.protagonist_transition_quality,
-      cac_explained: parsed.negotiation?.cac_explained,
-      negotiation_firmness: parsed.negotiation?.negotiation_firmness,
-      downsell_used: parsed.negotiation?.downsell_used,
-      downsell_narrative_quality: parsed.negotiation?.downsell_narrative_quality,
+      table_price_presented: typeof parsed.negotiation?.table_price_presented === "boolean" ? parsed.negotiation.table_price_presented : !!parsed.negotiation?.price_table_presented,
+      silence_applied: parsed.negotiation?.silence_applied === true,
+      who_spoke_first: (() => { const w = String(parsed.negotiation?.who_spoke_first || "unknown").toLowerCase(); return ["closer","lead","unknown"].includes(w) ? w : w.includes("closer") || w.includes("vendedor") ? "closer" : w.includes("lead") || w.includes("client") ? "lead" : "unknown"; })(),
+      protagonist_transition_quality: Number(parsed.negotiation?.protagonist_transition_quality) || null,
+      cac_explained: parsed.negotiation?.cac_explained === true,
+      negotiation_firmness: Number(parsed.negotiation?.negotiation_firmness) || null,
+      downsell_used: parsed.negotiation?.downsell_used === true,
+      downsell_narrative_quality: parsed.negotiation?.downsell_narrative_quality != null ? Number(parsed.negotiation.downsell_narrative_quality) : null,
       priority_improvements: parsed.priority_improvements || [],
       training_actions: parsed.training_actions || [],
       objections_detected: parsed.objections_detected || [],
@@ -477,15 +477,15 @@ async function runSupervisorAnalysis(
   if (analysis && parsed.stages?.length) {
     const stageRows = parsed.stages.map((s: Record<string, unknown>) => ({
       analysis_id: analysis.id,
-      stage_key: s.stage_key,
-      stage_name: s.stage_name,
-      stage_order: s.stage_order,
-      score: s.score,
+      stage_key: s.stage_key || `stage_${s.stage}`,
+      stage_name: s.stage_name || s.name || `Etapa ${s.stage}`,
+      stage_order: s.stage_order ?? s.stage ?? 0,
+      score: s.score ?? 0,
       max_score: s.max_score || 10,
-      weight: s.weight,
-      status: s.status,
-      justification: s.justification,
-      evidence_excerpt: s.evidence_excerpt,
+      weight: s.weight ?? (s.weight_pct ? Number(s.weight_pct) / 100 : 0),
+      status: s.status || "ok",
+      justification: s.justification || s.observations || "",
+      evidence_excerpt: s.evidence_excerpt || null,
       missed_actions: s.missed_actions || [],
       suggested_fix: s.suggested_fix || [],
     }))
@@ -534,6 +534,31 @@ Etapa 1: Quebra-gelo (3%), Etapa 2: Rapport (5%), Etapa 3: Pacto Inicial (5%), E
 Scoring: 0-10 por etapa. Status: excellent (≥8), ok (≥6), warning (≥4), critical (<4), skipped (0).
 Classificação: EXCELENTE (≥9), BOA (≥7), REGULAR (≥5), FRACA (≥3), CRITICA (<3).
 
-Responda EXCLUSIVAMENTE com JSON válido (sem markdown). Estrutura: { protocol_version, overall_score, overall_label, classification, executive_summary, stages: [...], negotiation: {...}, objections_detected: [...], priority_improvements: [...], training_actions: [...] }.
+Responda EXCLUSIVAMENTE com JSON válido (sem markdown). Estrutura:
+{
+  "protocol_version": "v1.0",
+  "overall_score": number (0-10, média ponderada),
+  "overall_label": "string descritivo",
+  "classification": "EXCELENTE"|"BOA"|"REGULAR"|"FRACA"|"CRITICA",
+  "executive_summary": "resumo em PT-BR",
+  "stages": [{ "stage": number, "name": string, "score": number, "status": string, "weight_pct": number, "observations": string, "timestamp_start": "HH:MM:SS", "timestamp_end": "HH:MM:SS" }],
+  "negotiation": {
+    "table_price_presented": boolean,
+    "silence_applied": boolean,
+    "who_spoke_first": "closer"|"lead"|"unknown",
+    "protagonist_transition_quality": number (0-10),
+    "cac_explained": boolean,
+    "negotiation_firmness": number (0-10),
+    "downsell_used": boolean,
+    "downsell_narrative_quality": number|null (0-10),
+    "price_table_presented": "string do valor apresentado ou null",
+    "anchor_value_used": "string",
+    "discount_given_pct": number|null,
+    "result": "string descritivo do resultado"
+  },
+  "objections_detected": [{ "id": number, "type": string, "verbatim": "fala exata do lead", "handled": boolean, "handling_quality": string, "notes": string, "timestamp": "HH:MM:SS" }],
+  "priority_improvements": [{ "priority": number, "stage": string, "issue": string, "recommended_action": string }],
+  "training_actions": [{ "type": string, "focus": string, "description": string, "responsible": string, "deadline_days": number }]
+}
 
-Todas as 16 etapas DEVEM aparecer no array "stages". Booleanos lowercase. Números sem aspas.`
+Todas as 16 etapas DEVEM aparecer no array "stages". Booleanos lowercase. Números sem aspas. who_spoke_first DEVE ser "closer", "lead" ou "unknown".`
