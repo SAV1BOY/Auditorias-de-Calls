@@ -228,7 +228,7 @@ export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
                       {obj?.priority != null ? String(obj.priority) : i + 1}
                     </span>
                     <div className="flex-1 space-y-1">
-                      {obj?.stage && (
+                      {obj?.stage != null && (
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[#ffa600]/70">
                           {String(obj.stage)}
                         </span>
@@ -236,7 +236,7 @@ export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
                       <p className="text-sm text-[#d8c3ac]">
                         {obj ? String(obj.issue || obj.text || obj.description || JSON.stringify(obj)) : String(item)}
                       </p>
-                      {obj?.recommended_action && (
+                      {obj?.recommended_action != null && (
                         <p className="text-xs text-stone-500 mt-1">
                           <span className="text-emerald-400/70 font-bold">Ação:</span>{" "}
                           {String(obj.recommended_action)}
@@ -267,7 +267,7 @@ export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
                       {i + 1}
                     </span>
                     <div className="flex-1 space-y-1">
-                      {obj?.type && (
+                      {obj?.type != null && (
                         <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/70">
                           {String(obj.type)}{obj.focus ? ` — ${String(obj.focus)}` : ""}
                         </span>
@@ -275,7 +275,7 @@ export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
                       <p className="text-sm text-[#d8c3ac]">
                         {obj ? String(obj.description || obj.recommendation || obj.text || JSON.stringify(obj)) : String(item)}
                       </p>
-                      {obj?.responsible && (
+                      {obj?.responsible != null && (
                         <p className="text-xs text-stone-500">
                           <span className="text-[#ffa600]/70 font-bold">Responsável:</span> {String(obj.responsible)}
                           {obj.deadline_days ? ` · ${String(obj.deadline_days)} dias` : ""}
@@ -308,12 +308,12 @@ export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
                     </span>
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
-                        {obj?.type && (
+                        {obj?.type != null && (
                           <span className="text-[10px] font-bold uppercase tracking-wider text-[#ffa600]/70">
                             {String(obj.type)}
                           </span>
                         )}
-                        {obj?.handling_quality && (
+                        {obj?.handling_quality != null && (
                           <span className={`text-[10px] px-1.5 py-0.5 rounded ${
                             obj.handling_quality === "Insuficiente" || obj.handling_quality === "Não tratada"
                               ? "bg-red-500/10 text-red-400"
@@ -323,10 +323,10 @@ export function SupervisorTabContent({ auditId }: SupervisorTabContentProps) {
                           </span>
                         )}
                       </div>
-                      {obj?.verbatim && (
+                      {obj?.verbatim != null && (
                         <p className="text-sm text-stone-400 italic">"{String(obj.verbatim)}"</p>
                       )}
-                      {obj?.notes && (
+                      {obj?.notes != null && (
                         <p className="text-xs text-stone-500">{String(obj.notes)}</p>
                       )}
                     </div>

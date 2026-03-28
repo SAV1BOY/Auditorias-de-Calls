@@ -116,7 +116,7 @@ export function AnalysisResult({ analysis }: AnalysisResultProps) {
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ffa600]/10 text-[10px] font-bold text-[#ffa600]">
                   {i + 1}
                 </span>
-                <span className="text-[#d8c3ac]">{item}</span>
+                <span className="text-[#d8c3ac]">{String(item)}</span>
               </li>
             ))}
           </ol>
