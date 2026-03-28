@@ -2,8 +2,13 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  // ─── CSP Nonce Generation ───
-  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("base64")
+  // ─── CSP Configuration ───
+  // NOTE: Nonce-based CSP is NOT used because Next.js 14 does not propagate
+  // nonce attributes to its own inline bootstrap scripts. When a nonce is
+  // present in script-src, CSP Level 3 browsers IGNORE 'unsafe-inline',
+  // which blocks ALL inline scripts and kills React hydration entirely.
+  // Using 'unsafe-inline' + 'unsafe-eval' without nonce is the correct
+  // approach for Next.js 14 until nonce propagation is properly supported.
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
   const supabaseWs = supabaseUrl.replace(/^https?:\/\//, "wss://")
@@ -17,9 +22,9 @@ export async function middleware(request: NextRequest) {
 
   const csp = [
     "default-src 'self'",
-    // 'unsafe-inline' required for Next.js runtime hydration scripts in production
+    // 'unsafe-inline' required for Next.js inline hydration/bootstrap scripts
     // 'unsafe-eval' required for WebGL shader compilation (shader-animation.tsx)
-    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval'`,
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https:",
     "font-src 'self' https://fonts.gstatic.com",
@@ -80,7 +85,6 @@ export async function middleware(request: NextRequest) {
 
   // ─── Set Security Headers ───
   supabaseResponse.headers.set("Content-Security-Policy", csp)
-  supabaseResponse.headers.set("x-nonce", nonce)
   supabaseResponse.headers.set("X-Content-Type-Options", "nosniff")
   supabaseResponse.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
   supabaseResponse.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
