@@ -15,22 +15,30 @@ import type {
 // ─── Row mapper: DB row → SupervisorAnalysis ───
 
 function mapRowToAnalysis(row: Record<string, unknown>, stages: SupervisorStageScore[] = []): SupervisorAnalysis {
+  const rawJson = row.raw_json as Record<string, unknown> | undefined;
+  const negotiationData = rawJson?.negotiation as Record<string, unknown> | undefined;
+
   return {
     ...(row as Record<string, unknown>),
     stages,
     negotiation: {
-      table_price_presented: (row.table_price_presented as boolean) ?? false,
+      table_price_presented: (row.table_price_presented as boolean) ?? !!negotiationData?.price_table_presented,
       silence_applied: (row.silence_applied as boolean) ?? false,
-      who_spoke_first: (row.who_spoke_first as string) ?? "unknown",
+      who_spoke_first: (row.who_spoke_first as string) ?? (rawJson?.who_spoke_first as string) ?? "unknown",
       protagonist_transition_quality: (row.protagonist_transition_quality as number) ?? 0,
       cac_explained: (row.cac_explained as boolean) ?? false,
       negotiation_firmness: (row.negotiation_firmness as number) ?? 0,
-      downsell_used: (row.downsell_used as boolean) ?? false,
+      downsell_used: (row.downsell_used as boolean) ?? !!negotiationData?.downsell_used,
       downsell_narrative_quality: row.downsell_narrative_quality as number | undefined,
     } as NegotiationAnalysis,
     priority_improvements: ((row.priority_improvements ?? []) as unknown[]),
     training_actions: ((row.training_actions ?? []) as SupervisorAnalysis["training_actions"]),
-    objections_detected: ((row.objections_detected ?? []) as SupervisorAnalysis["objections_detected"]),
+    objections_detected: ((row.objections_detected ?? []) as Array<Record<string, unknown>>).map(obj => ({
+      type: String(obj.type ?? ''),
+      text: String(obj.verbatim ?? obj.text ?? ''),
+      handled: Boolean(obj.handled),
+      quality: String(obj.handling_quality ?? obj.quality ?? 'poor'),
+    })),
   } as SupervisorAnalysis
 }
 

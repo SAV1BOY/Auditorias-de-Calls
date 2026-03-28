@@ -86,7 +86,7 @@ export function AnalysisResult({ analysis }: AnalysisResultProps) {
             {analysis.objections_detected.map((obj, i) => (
               <div key={i} className="bg-[#121316]/50 rounded-lg p-3 flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-[#d8c3ac]">{`"${obj.text}"`}</p>
+                  <p className="text-sm text-[#d8c3ac]">&ldquo;{obj.text || 'N/A'}&rdquo;</p>
                   <p className="text-[10px] text-stone-500 uppercase tracking-widest">{obj.type}</p>
                 </div>
                 <span
@@ -111,14 +111,32 @@ export function AnalysisResult({ analysis }: AnalysisResultProps) {
             Priority <span className="text-[#ffa600]">IMPROVEMENTS</span>
           </h3>
           <ol className="space-y-2">
-            {analysis.priority_improvements.map((item, i) => (
-              <li key={i} className="flex items-start gap-3 text-sm">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ffa600]/10 text-[10px] font-bold text-[#ffa600]">
-                  {i + 1}
-                </span>
-                <span className="text-[#d8c3ac]">{String(item)}</span>
-              </li>
-            ))}
+            {analysis.priority_improvements.map((item, i) => {
+              const obj = typeof item === 'object' && item !== null ? item as Record<string, unknown> : null
+              return (
+                <li key={i} className="flex items-start gap-3 text-sm">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ffa600]/10 text-[10px] font-bold text-[#ffa600]">
+                    {i + 1}
+                  </span>
+                  <div className="space-y-1">
+                    {obj?.stage != null && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#ffa600]/70">
+                        {String(obj.stage)}
+                      </span>
+                    )}
+                    <p className="text-[#d8c3ac]">
+                      {obj ? String(obj.issue || obj.text || obj.description || JSON.stringify(obj)) : String(item)}
+                    </p>
+                    {obj?.recommended_action != null && (
+                      <p className="text-xs text-stone-500 mt-1">
+                        <span className="text-emerald-400/70 font-bold">Ação:</span>{" "}
+                        {String(obj.recommended_action)}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
           </ol>
         </div>
       )}
