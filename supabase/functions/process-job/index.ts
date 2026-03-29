@@ -227,7 +227,13 @@ Deno.serve(async (req: Request) => {
 
       // 4. Parse response
       const dimensions = parseDimensions(rawText)
-      const { score, classificacao } = parseScoreFinal(rawText)
+      const parsed_score = parseScoreFinal(rawText)
+      // Sanitize classificacao to only allow DB-valid values
+      const VALID_CLASSIFICACOES = ["ELITE", "FORTE", "MEDIANA", "FRACA"]
+      const score = parsed_score.score
+      const classificacao = VALID_CLASSIFICACOES.includes(parsed_score.classificacao)
+        ? parsed_score.classificacao
+        : classify(score)
       const topAcertos = parseTopItems(rawText, 5)
       const topErros = parseTopItems(rawText, 6)
       const sentiment = parseSentiment(rawText)
@@ -383,7 +389,18 @@ Deno.serve(async (req: Request) => {
 
     // ─── NOTIFY (simplified) ───
     if (job_type === "notify") {
-      // Mark as completed (full notification via Resend/Evolution requires separate config)
+      // Ensure proper status transition: analyzed → notifying → completed
+      const { data: currentAudit } = await supabase.from("call_audits").select("status").eq("id", audit_id).single()
+      const currentStatus = currentAudit?.status || "analyzing"
+
+      // If still analyzing (previous update failed), transition through intermediate states
+      if (currentStatus === "analyzing") {
+        await supabase.from("call_audits").update({ status: "analyzed" }).eq("id", audit_id)
+      }
+      if (currentStatus === "analyzing" || currentStatus === "analyzed") {
+        await supabase.from("call_audits").update({ status: "notifying" }).eq("id", audit_id)
+      }
+
       await supabase.from("call_audits").update({
         status: "completed",
         notified_at: new Date().toISOString(),
@@ -562,3 +579,4 @@ Responda EXCLUSIVAMENTE com JSON válido (sem markdown). Estrutura:
 }
 
 Todas as 16 etapas DEVEM aparecer no array "stages". Booleanos lowercase. Números sem aspas. who_spoke_first DEVE ser "closer", "lead" ou "unknown".`
+
