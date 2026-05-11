@@ -58,3 +58,16 @@ export async function loginAction(
   // Set-Cookie headers, atomically committing the session + navigation.
   redirect("/")
 }
+
+/**
+ * Server Action for logout.
+ *
+ * Must run server-side (not via browser client) so the HTTP auth cookies
+ * are properly cleared. Then redirect to /login.
+ */
+export async function logoutAction(): Promise<never> {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  revalidatePath("/", "layout")
+  redirect("/login")
+}

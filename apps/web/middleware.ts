@@ -67,12 +67,13 @@ export async function middleware(request: NextRequest) {
   // Helper: build a redirect response that PRESERVES cookies from supabaseResponse.
   // This is critical for token-refresh scenarios — without it, refresh tokens
   // set by getUser() would be dropped, terminating the session.
+  // Destructures cookie object so we don't pass extra fields as options.
   function redirectWithCookies(pathname: string) {
     const url = request.nextUrl.clone()
     url.pathname = pathname
     const redirectResponse = NextResponse.redirect(url)
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    supabaseResponse.cookies.getAll().forEach(({ name, value, ...options }) => {
+      redirectResponse.cookies.set(name, value, options)
     })
     return redirectResponse
   }
