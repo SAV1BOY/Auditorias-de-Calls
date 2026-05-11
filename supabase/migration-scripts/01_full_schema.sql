@@ -936,7 +936,8 @@ CREATE TRIGGER trigger_audit_status_transition
 
 ALTER TABLE call_audits
   ADD COLUMN IF NOT EXISTS prompt_version TEXT,
-  ADD COLUMN IF NOT EXISTS report_hash TEXT;
+  ADD COLUMN IF NOT EXISTS report_hash TEXT,
+  ADD COLUMN IF NOT EXISTS storage_report_path TEXT;
 
 -- Index for prompt version analysis
 CREATE INDEX IF NOT EXISTS idx_call_audits_prompt_version ON call_audits(prompt_version)

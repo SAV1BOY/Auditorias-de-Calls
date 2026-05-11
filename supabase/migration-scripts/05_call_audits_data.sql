@@ -2,6 +2,10 @@
 -- Execute in SQL Editor of NEW project AFTER 03_data_migration.sql
 -- Removed: DISABLE TRIGGER ALL fails on system triggers. INSERTs do not fire any user triggers.
 
+-- Ensure storage_report_path column exists (added via direct SQL Editor migration in source project)
+ALTER TABLE call_audits ADD COLUMN IF NOT EXISTS storage_report_path TEXT;
+
+
 INSERT INTO call_audits (id, organization_id, closer_id, lead_name, call_date, duration_minutes, resultado, valor_fechamento, status, error_message, score_final, classificacao, d01_frame, d02_qualificacao, d03_diag_quantitativo, d04_diag_qualitativo, d05_consequencia, d06_ensino, d07_identidade, d08_ancoragem, d09_isolamento, d10_proporcao_fala, d11_promessas, d12_checkpoints, d13_fechamento, transcricao, relatorio_completo, resumo_whatsapp, top_erros, top_acertos, plano_acao, frases_proibidas, reescrita_falas, mapa_frameworks, fases_analise, audio_path, audio_duration_seconds, drive_file_id, drive_url, drive_report_url, modelo_transcricao, modelo_analise, tokens_input, tokens_output, custo_estimado, uploaded_at, transcribed_at, analyzed_at, notified_at, completed_at, created_at, updated_at, sentiment_overall, sentiment_timeline, sentiment_score, engagement_level, objections_detected, prompt_version, report_hash, storage_report_path) VALUES
 ('06cf2436-1314-417b-811e-c067dfdbf9f8', '4ecd8f2d-d0c5-419c-a5bc-b2e94dca0465', '171a0543-1dde-4ba4-99f8-d396c6832b60', 'Karina Vuolo', '2026-03-28', NULL, NULL, NULL, 'completed', NULL, 4.4, 'FRACA', 6.5, 4.0, 3.0, 6.0, 2.0, 7.0, 7.5, 4.0, 2.0, 5.0, 6.0, 7.0, 2.0, '20 de fev. de 2026
 
