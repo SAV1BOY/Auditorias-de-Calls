@@ -3,8 +3,11 @@
 # vercel-migrate-env.sh — Atualiza env vars Supabase na Vercel
 #
 # USO (no seu PC local, dentro da pasta Auditorias-de-Calls):
-#   chmod +x scripts/vercel-migrate-env.sh
+#   export VERCEL_TOKEN='seu_token_aqui'
 #   ./scripts/vercel-migrate-env.sh
+#
+# OU passe o token como argumento:
+#   ./scripts/vercel-migrate-env.sh vcp_xxxxxxxxxxxx
 #
 # REQUISITOS:
 #   - Node.js instalado
@@ -13,6 +16,11 @@
 
 set -euo pipefail
 
+# ═══ Token via arg ou env var ═══
+if [ $# -ge 1 ]; then
+  export VERCEL_TOKEN="$1"
+fi
+
 # ═══ Valores do NOVO projeto Supabase (CALL AUDIT) ═══
 NEW_URL="https://putdygyeerldrsyjhvzm.supabase.co"
 NEW_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1dGR5Z3llZXJsZHJzeWpodnptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0Mzk1MDksImV4cCI6MjA5NDAxNTUwOX0.-BL__9l5wrRUepWVXSQ3QLn6tOeRCFQE9m5E0hVaRbE"
@@ -20,11 +28,16 @@ NEW_SERVICE="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZi
 
 # Cores
 G='\033[0;32m'; Y='\033[0;33m'; R='\033[0;31m'; B='\033[0;34m'; N='\033[0m'
-
 step() { echo -e "\n${B}▶ $1${N}"; }
 ok()   { echo -e "${G}✓ $1${N}"; }
 warn() { echo -e "${Y}⚠ $1${N}"; }
 err()  { echo -e "${R}✗ $1${N}"; exit 1; }
+
+# Flag --token=... só se VERCEL_TOKEN estiver setado
+TOKEN_FLAG=""
+if [ -n "${VERCEL_TOKEN:-}" ]; then
+  TOKEN_FLAG="--token=$VERCEL_TOKEN"
+fi
 
 # ─── 1. Verificar Vercel CLI ───
 step "1/5 — Verificando Vercel CLI"
@@ -36,17 +49,20 @@ ok "Vercel CLI: $(vercel --version)"
 
 # ─── 2. Autenticar ───
 step "2/5 — Verificando autenticação"
-if ! vercel whoami >/dev/null 2>&1; then
+if ! vercel whoami $TOKEN_FLAG >/dev/null 2>&1; then
+  if [ -n "${VERCEL_TOKEN:-}" ]; then
+    err "Token Vercel inválido ou expirado. Crie um novo em https://vercel.com/account/tokens"
+  fi
   warn "Você não está logado. Abrindo navegador para login..."
   vercel login || err "Falha no login"
 fi
-ok "Logado como: $(vercel whoami)"
+ok "Logado como: $(vercel whoami $TOKEN_FLAG)"
 
 # ─── 3. Link projeto (se necessário) ───
 step "3/5 — Vinculando ao projeto Vercel"
 if [ ! -f ".vercel/project.json" ]; then
   warn "Projeto não está linkado. Vincule manualmente:"
-  vercel link || err "Falha ao linkar"
+  vercel link $TOKEN_FLAG || err "Falha ao linkar"
 fi
 PROJECT_NAME=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.vercel/project.json')).projectName || 'unknown')" 2>/dev/null || echo "unknown")
 ok "Projeto: $PROJECT_NAME"
@@ -58,9 +74,9 @@ update_env() {
   local NAME="$1" VALUE="$2" ENV="$3"
   echo -n "  $NAME [$ENV]: "
   # Remove se existir (silencia erro se não existir)
-  vercel env rm "$NAME" "$ENV" --yes >/dev/null 2>&1 || true
+  vercel env rm "$NAME" "$ENV" --yes $TOKEN_FLAG >/dev/null 2>&1 || true
   # Adiciona o novo valor
-  if printf '%s' "$VALUE" | vercel env add "$NAME" "$ENV" >/dev/null 2>&1; then
+  if printf '%s' "$VALUE" | vercel env add "$NAME" "$ENV" $TOKEN_FLAG >/dev/null 2>&1; then
     echo -e "${G}OK${N}"
   else
     echo -e "${R}FALHOU${N}"
@@ -79,7 +95,7 @@ ok "Todas as 9 variáveis atualizadas"
 # ─── 5. Trigger Redeploy ───
 step "5/5 — Disparando redeploy em produção"
 warn "Aguarde, o build pode levar 2-4 minutos..."
-vercel --prod --yes 2>&1 | tail -20
+vercel --prod --yes $TOKEN_FLAG 2>&1 | tail -20
 
 echo ""
 ok "Migração de env vars concluída!"
