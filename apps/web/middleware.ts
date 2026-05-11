@@ -30,6 +30,10 @@ export async function middleware(request: NextRequest) {
   ].join("; ")
 
   // ─── Supabase Auth ───
+  // IMPORTANT: This pattern is from the official Supabase Next.js docs.
+  // The supabaseResponse object MUST be returned with its cookies intact —
+  // any redirect must explicitly copy cookies from supabaseResponse, otherwise
+  // the browser and server go out of sync and the session is terminated.
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -53,27 +57,39 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  // Do NOT run code between createServerClient and supabase.auth.getUser().
+  // A token refresh may set new cookies via setAll(); we must call getUser()
+  // immediately so the refreshed cookies land on supabaseResponse.
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Redirect unauthenticated users to login
+  // Helper: build a redirect response that PRESERVES cookies from supabaseResponse.
+  // This is critical for token-refresh scenarios — without it, refresh tokens
+  // set by getUser() would be dropped, terminating the session.
+  function redirectWithCookies(pathname: string) {
+    const url = request.nextUrl.clone()
+    url.pathname = pathname
+    const redirectResponse = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return redirectResponse
+  }
+
+  // Redirect unauthenticated users to /login
   if (
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/_next") &&
     !request.nextUrl.pathname.startsWith("/favicon")
   ) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/login"
-    return NextResponse.redirect(url)
+    return redirectWithCookies("/login")
   }
 
-  // Redirect authenticated users away from login
+  // Redirect authenticated users away from /login
   if (user && request.nextUrl.pathname.startsWith("/login")) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/"
-    return NextResponse.redirect(url)
+    return redirectWithCookies("/")
   }
 
   // ─── Set Security Headers ───
