@@ -550,10 +550,10 @@ ALTER TABLE job_queue ADD CONSTRAINT job_queue_job_type_check
 -- Replaces all USING (true) policies with organization_id filtering
 -- ═══════════════════════════════════════════════════════════════
 
--- ─── Helper function: extract org_id from authenticated user's profile ───
--- Uses a subquery on profiles rather than JWT claims for reliability
--- (JWT claims require custom hook setup in Supabase)
-CREATE OR REPLACE FUNCTION auth.org_id() RETURNS uuid AS $$
+-- ─── Helper function: get_org_id() ───
+-- Originally was auth.org_id() but Supabase doesn't allow CREATE on auth schema.
+-- Creating as public.get_org_id() directly (migration 013 also defines this).
+CREATE OR REPLACE FUNCTION public.get_org_id() RETURNS uuid AS $$
   SELECT organization_id FROM public.profiles WHERE id = auth.uid();
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
@@ -565,11 +565,11 @@ DROP POLICY IF EXISTS "authenticated_insert" ON call_audits;
 DROP POLICY IF EXISTS "authenticated_update" ON call_audits;
 
 CREATE POLICY "org_select" ON call_audits FOR SELECT TO authenticated
-  USING (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id());
 CREATE POLICY "org_insert" ON call_audits FOR INSERT TO authenticated
-  WITH CHECK (organization_id = auth.org_id());
+  WITH CHECK (organization_id = public.get_org_id());
 CREATE POLICY "org_update" ON call_audits FOR UPDATE TO authenticated
-  USING (organization_id = auth.org_id()) WITH CHECK (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id()) WITH CHECK (organization_id = public.get_org_id());
 
 -- ═══════════════════════════════════════
 -- 2. closers — org isolation
@@ -579,11 +579,11 @@ DROP POLICY IF EXISTS "authenticated_insert" ON closers;
 DROP POLICY IF EXISTS "authenticated_update" ON closers;
 
 CREATE POLICY "org_select" ON closers FOR SELECT TO authenticated
-  USING (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id());
 CREATE POLICY "org_insert" ON closers FOR INSERT TO authenticated
-  WITH CHECK (organization_id = auth.org_id());
+  WITH CHECK (organization_id = public.get_org_id());
 CREATE POLICY "org_update" ON closers FOR UPDATE TO authenticated
-  USING (organization_id = auth.org_id()) WITH CHECK (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id()) WITH CHECK (organization_id = public.get_org_id());
 
 -- ═══════════════════════════════════════
 -- 3. job_queue — LOCKDOWN: no direct authenticated access
@@ -597,7 +597,7 @@ DROP POLICY IF EXISTS "authenticated_update" ON job_queue;
 CREATE POLICY "org_select_via_audit" ON job_queue FOR SELECT TO authenticated
   USING (
     audit_id IN (
-      SELECT id FROM call_audits WHERE organization_id = auth.org_id()
+      SELECT id FROM call_audits WHERE organization_id = public.get_org_id()
     )
   );
 
@@ -620,7 +620,7 @@ BEGIN
     RAISE EXCEPTION 'Audit not found: %', p_audit_id;
   END IF;
 
-  IF v_org_id != auth.org_id() THEN
+  IF v_org_id != public.get_org_id() THEN
     RAISE EXCEPTION 'Access denied: audit belongs to another organization';
   END IF;
 
@@ -641,7 +641,7 @@ DROP POLICY IF EXISTS "authenticated_select" ON notifications;
 CREATE POLICY "org_select_via_audit" ON notifications FOR SELECT TO authenticated
   USING (
     audit_id IN (
-      SELECT id FROM call_audits WHERE organization_id = auth.org_id()
+      SELECT id FROM call_audits WHERE organization_id = public.get_org_id()
     )
   );
 
@@ -653,11 +653,11 @@ DROP POLICY IF EXISTS "authenticated_insert" ON app_config;
 DROP POLICY IF EXISTS "authenticated_update" ON app_config;
 
 CREATE POLICY "org_select" ON app_config FOR SELECT TO authenticated
-  USING (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id());
 CREATE POLICY "org_insert" ON app_config FOR INSERT TO authenticated
-  WITH CHECK (organization_id = auth.org_id());
+  WITH CHECK (organization_id = public.get_org_id());
 CREATE POLICY "org_update" ON app_config FOR UPDATE TO authenticated
-  USING (organization_id = auth.org_id()) WITH CHECK (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id()) WITH CHECK (organization_id = public.get_org_id());
 
 -- ═══════════════════════════════════════
 -- 6. drive_sync — org isolation via audit
@@ -667,7 +667,7 @@ DROP POLICY IF EXISTS "authenticated_select" ON drive_sync;
 CREATE POLICY "org_select_via_audit" ON drive_sync FOR SELECT TO authenticated
   USING (
     audit_id IN (
-      SELECT id FROM call_audits WHERE organization_id = auth.org_id()
+      SELECT id FROM call_audits WHERE organization_id = public.get_org_id()
     )
   );
 
@@ -677,11 +677,11 @@ CREATE POLICY "org_select_via_audit" ON drive_sync FOR SELECT TO authenticated
 DROP POLICY IF EXISTS "authenticated_all" ON call_bookmarks;
 
 CREATE POLICY "org_select" ON call_bookmarks FOR SELECT TO authenticated
-  USING (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id());
 CREATE POLICY "org_insert" ON call_bookmarks FOR INSERT TO authenticated
-  WITH CHECK (organization_id = auth.org_id() AND bookmarked_by = auth.uid());
+  WITH CHECK (organization_id = public.get_org_id() AND bookmarked_by = auth.uid());
 CREATE POLICY "owner_update" ON call_bookmarks FOR UPDATE TO authenticated
-  USING (bookmarked_by = auth.uid()) WITH CHECK (organization_id = auth.org_id());
+  USING (bookmarked_by = auth.uid()) WITH CHECK (organization_id = public.get_org_id());
 CREATE POLICY "owner_delete" ON call_bookmarks FOR DELETE TO authenticated
   USING (bookmarked_by = auth.uid());
 
@@ -694,7 +694,7 @@ DROP POLICY IF EXISTS "authenticated_all" ON call_comments;
 CREATE POLICY "org_select" ON call_comments FOR SELECT TO authenticated
   USING (
     audit_id IN (
-      SELECT id FROM call_audits WHERE organization_id = auth.org_id()
+      SELECT id FROM call_audits WHERE organization_id = public.get_org_id()
     )
   );
 -- Authenticated users can create comments on their org's audits
@@ -702,14 +702,14 @@ CREATE POLICY "org_insert" ON call_comments FOR INSERT TO authenticated
   WITH CHECK (
     author_id = auth.uid()
     AND audit_id IN (
-      SELECT id FROM call_audits WHERE organization_id = auth.org_id()
+      SELECT id FROM call_audits WHERE organization_id = public.get_org_id()
     )
   );
 -- Anyone in org can update (resolve/unresolve) — RBAC enforced at app level
 CREATE POLICY "org_update" ON call_comments FOR UPDATE TO authenticated
   USING (
     audit_id IN (
-      SELECT id FROM call_audits WHERE organization_id = auth.org_id()
+      SELECT id FROM call_audits WHERE organization_id = public.get_org_id()
     )
   );
 -- Only author can delete their own comments
@@ -722,9 +722,9 @@ CREATE POLICY "author_delete" ON call_comments FOR DELETE TO authenticated
 DROP POLICY IF EXISTS "authenticated_all" ON weekly_reports;
 
 CREATE POLICY "org_select" ON weekly_reports FOR SELECT TO authenticated
-  USING (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id());
 CREATE POLICY "org_insert" ON weekly_reports FOR INSERT TO authenticated
-  WITH CHECK (organization_id = auth.org_id());
+  WITH CHECK (organization_id = public.get_org_id());
 
 -- ═══════════════════════════════════════
 -- 10. badges — global read (badges are shared), org-scoped write
@@ -745,7 +745,7 @@ DROP POLICY IF EXISTS "authenticated_all_closer_badges" ON closer_badges;
 CREATE POLICY "org_select_via_closer" ON closer_badges FOR SELECT TO authenticated
   USING (
     closer_id IN (
-      SELECT id FROM closers WHERE organization_id = auth.org_id()
+      SELECT id FROM closers WHERE organization_id = public.get_org_id()
     )
   );
 -- Only service_role (worker) writes closer_badges
@@ -758,7 +758,7 @@ DROP POLICY IF EXISTS "authenticated_all_closer_streaks" ON closer_streaks;
 CREATE POLICY "org_select_via_closer" ON closer_streaks FOR SELECT TO authenticated
   USING (
     closer_id IN (
-      SELECT id FROM closers WHERE organization_id = auth.org_id()
+      SELECT id FROM closers WHERE organization_id = public.get_org_id()
     )
   );
 -- Only service_role (worker) writes closer_streaks
@@ -769,11 +769,11 @@ CREATE POLICY "org_select_via_closer" ON closer_streaks FOR SELECT TO authentica
 DROP POLICY IF EXISTS "authenticated_all_competitions" ON competitions;
 
 CREATE POLICY "org_select" ON competitions FOR SELECT TO authenticated
-  USING (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id());
 CREATE POLICY "org_insert" ON competitions FOR INSERT TO authenticated
-  WITH CHECK (organization_id = auth.org_id());
+  WITH CHECK (organization_id = public.get_org_id());
 CREATE POLICY "org_update" ON competitions FOR UPDATE TO authenticated
-  USING (organization_id = auth.org_id()) WITH CHECK (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id()) WITH CHECK (organization_id = public.get_org_id());
 
 -- ═══════════════════════════════════════
 -- 14. goals — org isolation
@@ -784,13 +784,13 @@ DROP POLICY IF EXISTS "authenticated_update" ON goals;
 DROP POLICY IF EXISTS "authenticated_delete" ON goals;
 
 CREATE POLICY "org_select" ON goals FOR SELECT TO authenticated
-  USING (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id());
 CREATE POLICY "org_insert" ON goals FOR INSERT TO authenticated
-  WITH CHECK (organization_id = auth.org_id());
+  WITH CHECK (organization_id = public.get_org_id());
 CREATE POLICY "org_update" ON goals FOR UPDATE TO authenticated
-  USING (organization_id = auth.org_id()) WITH CHECK (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id()) WITH CHECK (organization_id = public.get_org_id());
 CREATE POLICY "org_delete" ON goals FOR DELETE TO authenticated
-  USING (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id());
 
 -- ═══════════════════════════════════════
 -- 15. loss_patterns — org isolation
@@ -798,7 +798,7 @@ CREATE POLICY "org_delete" ON goals FOR DELETE TO authenticated
 DROP POLICY IF EXISTS "authenticated_all_loss_patterns" ON loss_patterns;
 
 CREATE POLICY "org_select" ON loss_patterns FOR SELECT TO authenticated
-  USING (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id());
 -- Only service_role (worker) writes loss_patterns
 
 -- ═══════════════════════════════════════
@@ -807,7 +807,7 @@ CREATE POLICY "org_select" ON loss_patterns FOR SELECT TO authenticated
 -- Existing: users_read_own, users_update_own (keep these)
 -- Add: users in same org can see each other's basic info
 CREATE POLICY "org_read_profiles" ON profiles FOR SELECT TO authenticated
-  USING (organization_id = auth.org_id());
+  USING (organization_id = public.get_org_id());
 
 -- ═══════════════════════════════════════
 -- 17. Storage: org-scoped path isolation
@@ -822,19 +822,19 @@ DROP POLICY IF EXISTS "Auth users delete audios" ON storage.objects;
 CREATE POLICY "org_upload_audios" ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (
     bucket_id = 'audios'
-    AND (storage.foldername(name))[1] = auth.org_id()::text
+    AND (storage.foldername(name))[1] = public.get_org_id()::text
   );
 
 CREATE POLICY "org_read_audios" ON storage.objects FOR SELECT TO authenticated
   USING (
     bucket_id = 'audios'
-    AND (storage.foldername(name))[1] = auth.org_id()::text
+    AND (storage.foldername(name))[1] = public.get_org_id()::text
   );
 
 CREATE POLICY "org_delete_audios" ON storage.objects FOR DELETE TO authenticated
   USING (
     bucket_id = 'audios'
-    AND (storage.foldername(name))[1] = auth.org_id()::text
+    AND (storage.foldername(name))[1] = public.get_org_id()::text
   );
 
 -- Service role (worker) retains full access (policy already exists from migration 003)
@@ -1357,12 +1357,12 @@ CREATE INDEX IF NOT EXISTS idx_closers_notification_emails ON closers USING GIN(
 COMMENT ON COLUMN closers.notification_emails IS
   'Lista de emails de supervisores que recebem auditorias deste closer. Se vazio, usa config global.';
 -- Migration 013: Fix Supervisor RLS + Channel webhook + Dequeue RPC
--- Replaces auth.org_id() with public.get_org_id() (avoids schema permission issues)
+-- Replaces public.get_org_id() with public.get_org_id() (avoids schema permission issues)
 -- Adds 'webhook' channel to notifications
 -- Creates enqueue_job and dequeue_job RPCs
 
 -- ═══════════════════════════════════════
--- 1. Create public.get_org_id() to replace auth.org_id()
+-- 1. Ensure public.get_org_id() exists (CREATE OR REPLACE is idempotent)
 -- ═══════════════════════════════════════
 CREATE OR REPLACE FUNCTION public.get_org_id()
 RETURNS uuid
@@ -1373,7 +1373,7 @@ AS $$
 $$;
 
 -- ═══════════════════════════════════════
--- 2. Update ALL RLS policies to use get_org_id() instead of auth.org_id()
+-- 2. Update ALL RLS policies to use get_org_id() instead of public.get_org_id()
 -- ═══════════════════════════════════════
 
 -- call_audits
