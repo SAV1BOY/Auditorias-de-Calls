@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { loginAction } from "@/lib/actions/auth"
 
 export default function LoginPage() {
@@ -10,7 +9,6 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [retryAfter, setRetryAfter] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -18,19 +16,17 @@ export default function LoginPage() {
     setRetryAfter(null)
     setLoading(true)
 
+    // loginAction performs a server-side redirect on success and never
+    // returns. The only way we get a result here is when login fails.
     const result = await loginAction(email, password)
 
-    if (result.error) {
+    if (result?.error) {
       setError(result.error)
       if (result.retryAfter) {
         setRetryAfter(result.retryAfter)
       }
-      setLoading(false)
-      return
     }
-
-    router.push("/")
-    router.refresh()
+    setLoading(false)
   }
 
   return (
