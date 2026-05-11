@@ -57,12 +57,25 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  const incomingCookies = request.cookies.getAll()
+  const sbCookies = incomingCookies.filter((c) => c.name.startsWith("sb-"))
+
   // Do NOT run code between createServerClient and supabase.auth.getUser().
   // A token refresh may set new cookies via setAll(); we must call getUser()
   // immediately so the refreshed cookies land on supabaseResponse.
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser()
+
+  console.log("[middleware]", {
+    path: request.nextUrl.pathname,
+    method: request.method,
+    sbCookieCount: sbCookies.length,
+    sbCookieNames: sbCookies.map((c) => c.name),
+    user: user ? { id: user.id, email: user.email } : null,
+    userError: userError ? { message: userError.message, status: userError.status } : null,
+  })
 
   // Helper: build a redirect response that PRESERVES cookies from supabaseResponse.
   // This is critical for token-refresh scenarios — without it, refresh tokens

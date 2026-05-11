@@ -29,8 +29,11 @@ export async function loginAction(
   const forwarded = headersList.get("x-forwarded-for")
   const ip = forwarded?.split(",")[0]?.trim() || "unknown"
 
+  console.log("[loginAction] START", { email, ip })
+
   const rl = rateLimit(`login:${ip}`, RATE_LIMITS.login)
   if (!rl.success) {
+    console.log("[loginAction] RATE_LIMITED", { ip, retryAfter: rl.retryAfter })
     return {
       error: `Muitas tentativas. Aguarde ${rl.retryAfter} segundos.`,
       retryAfter: rl.retryAfter,
@@ -38,20 +41,35 @@ export async function loginAction(
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
 
   if (error) {
+    console.log("[loginAction] SIGNIN_FAILED", {
+      email,
+      errorName: error.name,
+      errorStatus: error.status,
+      errorMessage: error.message,
+    })
     return { error: "Email ou senha incorretos." }
   }
+
+  console.log("[loginAction] SIGNIN_OK", {
+    userId: data.user?.id,
+    sessionExpiresAt: data.session?.expires_at,
+    hasAccessToken: !!data.session?.access_token,
+    hasRefreshToken: !!data.session?.refresh_token,
+  })
 
   resetRateLimit(`login:${ip}`)
 
   // Invalidate any cached server-rendered pages so the next render
   // sees the authenticated session.
   revalidatePath("/", "layout")
+
+  console.log("[loginAction] REDIRECTING to /")
 
   // CRITICAL: redirect() must be OUTSIDE any try/catch. It throws
   // NEXT_REDIRECT which Next.js handles to issue a 303 response with
