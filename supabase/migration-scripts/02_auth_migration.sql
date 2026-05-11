@@ -1,13 +1,20 @@
 -- ═══════════════════════════════════════════════════════════════
--- Script 02: Auth Users Migration
--- Execute AFTER 01_full_schema.sql in the new Supabase project
--- This must be run BEFORE data migration (profiles depend on auth.users)
+-- Script 02: Auth Users Migration (FIXED for SQL Editor)
+-- Execute AFTER 01_full_schema.sql
+--
+-- Note: We cannot ALTER auth.users from SQL Editor (not owner).
+-- Strategy: Insert auth users → handle_new_user trigger creates default profiles
+--   → Script 03 will UPSERT correct profile data afterwards.
 -- ═══════════════════════════════════════════════════════════════
 
--- Disable the handle_new_user trigger (we're importing profiles separately)
-ALTER TABLE auth.users DISABLE TRIGGER on_auth_user_created;
+-- IMPORTANT: Insert the organization FIRST (trigger handle_new_user inserts
+-- profiles with FK to organizations.id).
+INSERT INTO organizations (id, name, slug, created_at) VALUES
+('4ecd8f2d-d0c5-419c-a5bc-b2e94dca0465', 'CallAudit', 'callaudit', '2026-03-23T01:28:17.318575+00:00')
+ON CONFLICT (id) DO NOTHING;
 
 -- Insert 5 auth users with preserved UUIDs and password hashes
+-- ON CONFLICT DO NOTHING handles re-runs gracefully
 INSERT INTO auth.users (
   id, instance_id, email, encrypted_password, email_confirmed_at,
   invited_at, confirmation_token, recovery_token, recovery_sent_at,
@@ -17,7 +24,6 @@ INSERT INTO auth.users (
   email_change_token_current, email_change_confirm_status,
   banned_until, reauthentication_token, is_sso_user, deleted_at, role, is_anonymous
 ) VALUES
--- 1. Admin: miguelgsaviotti29@gmail.com
 (
   'fca79260-6922-4c01-b236-9b4c63b837e9',
   '00000000-0000-0000-0000-000000000000',
@@ -26,12 +32,11 @@ INSERT INTO auth.users (
   '2026-03-23 04:36:38.350539+00',
   NULL, '', '', '2026-03-26 17:50:14.843356+00',
   '2026-04-01 04:11:58.935543+00',
-  '{"email_verified": true}'::jsonb,
+  '{"email_verified": true, "full_name": "Miguel Saviotti", "role": "admin", "organization_id": "4ecd8f2d-d0c5-419c-a5bc-b2e94dca0465"}'::jsonb,
   '{"provider": "email", "providers": ["email"]}'::jsonb,
   NULL, '2026-03-23 04:36:38.331395+00', '2026-04-01 20:41:06.071184+00', NULL,
   '', '', '', '', '', 0, NULL, '', false, NULL, 'authenticated', false
 ),
--- 2. Supervisor Teste
 (
   'abac724d-6584-4339-831b-b20d501049ca',
   '00000000-0000-0000-0000-000000000000',
@@ -40,12 +45,11 @@ INSERT INTO auth.users (
   '2026-03-26 17:46:20.965055+00',
   NULL, '', '', NULL,
   NULL,
-  '{"full_name": "Supervisor Teste", "email_verified": true}'::jsonb,
+  '{"full_name": "Supervisor Teste", "email_verified": true, "role": "supervisor", "organization_id": "4ecd8f2d-d0c5-419c-a5bc-b2e94dca0465"}'::jsonb,
   '{"provider": "email", "providers": ["email"]}'::jsonb,
   NULL, '2026-03-26 17:46:20.922155+00', '2026-03-26 17:46:20.968856+00', NULL,
   '', '', '', '', '', 0, NULL, '', false, NULL, 'authenticated', false
 ),
--- 3. Closer Teste
 (
   '54b58b00-d426-4306-b564-8eb1b81df408',
   '00000000-0000-0000-0000-000000000000',
@@ -54,12 +58,11 @@ INSERT INTO auth.users (
   '2026-03-26 17:46:21.728815+00',
   NULL, '', '', NULL,
   NULL,
-  '{"full_name": "Closer Teste", "email_verified": true}'::jsonb,
+  '{"full_name": "Closer Teste", "email_verified": true, "role": "closer", "organization_id": "4ecd8f2d-d0c5-419c-a5bc-b2e94dca0465"}'::jsonb,
   '{"provider": "email", "providers": ["email"]}'::jsonb,
   NULL, '2026-03-26 17:46:21.722898+00', '2026-03-26 17:46:21.729471+00', NULL,
   '', '', '', '', '', 0, NULL, '', false, NULL, 'authenticated', false
 ),
--- 4. Sandra Saviotti
 (
   '06f36375-1f73-4a25-9ae9-3503989d13a2',
   '00000000-0000-0000-0000-000000000000',
@@ -68,12 +71,11 @@ INSERT INTO auth.users (
   '2026-03-26 17:48:48.767912+00',
   '2026-03-26 17:47:13.124351+00', '', '', NULL,
   '2026-03-26 17:48:48.780523+00',
-  '{"email_verified": true}'::jsonb,
+  '{"email_verified": true, "role": "viewer"}'::jsonb,
   '{"provider": "email", "providers": ["email"]}'::jsonb,
   NULL, '2026-03-26 17:47:13.096495+00', '2026-03-26 17:48:48.803989+00', NULL,
   '', '', '', '', '', 0, NULL, '', false, NULL, 'authenticated', false
 ),
--- 5. Matheus Lopez
 (
   '34f787c5-f3db-4b7a-bed1-26c1d17d7b13',
   '00000000-0000-0000-0000-000000000000',
@@ -82,11 +84,12 @@ INSERT INTO auth.users (
   '2026-03-31 01:50:52.934365+00',
   NULL, '', '', NULL,
   NULL,
-  '{"email_verified": true}'::jsonb,
+  '{"email_verified": true, "role": "viewer"}'::jsonb,
   '{"provider": "email", "providers": ["email"]}'::jsonb,
   NULL, '2026-03-31 01:50:52.887417+00', '2026-03-31 01:50:52.935771+00', NULL,
   '', '', '', '', '', 0, NULL, '', false, NULL, 'authenticated', false
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- Insert auth identities (required for email/password login)
 INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at) VALUES
@@ -139,7 +142,8 @@ INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, 
   '2026-03-31 01:50:52.929304+00',
   '2026-03-31 01:50:52.929375+00',
   '2026-03-31 01:50:52.929375+00'
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
--- Re-enable the trigger
-ALTER TABLE auth.users ENABLE TRIGGER on_auth_user_created;
+-- Verify auth users created
+SELECT 'Auth users inserted: ' || count(*) || ' (expected: 5)' AS status FROM auth.users;
