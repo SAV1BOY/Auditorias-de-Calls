@@ -14,9 +14,17 @@ DROP POLICY IF EXISTS "org_delete_audios" ON storage.objects;
 DROP POLICY IF EXISTS "Service role full access reports" ON storage.objects;
 DROP POLICY IF EXISTS "Auth users read reports" ON storage.objects;
 
--- Drop migrated storage buckets
-DELETE FROM storage.objects WHERE bucket_id IN ('audios', 'reports');
-DELETE FROM storage.buckets WHERE id IN ('audios', 'reports');
+-- Drop migrated storage buckets (gracefully — Supabase blocks DELETE via
+-- storage.protect_delete() trigger; the schema script will create fresh buckets)
+DO $$ BEGIN
+  DELETE FROM storage.objects WHERE bucket_id IN ('audios', 'reports');
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  DELETE FROM storage.buckets WHERE id IN ('audios', 'reports');
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
 
 -- Drop the on_auth_user_created trigger if it exists (created by migration 002)
 -- Note: this requires being owner of auth.users — may fail silently
@@ -25,14 +33,17 @@ DO $$ BEGIN
 EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
--- Delete any auth users we may have inserted (by email, to avoid touching native users)
-DELETE FROM auth.users WHERE email IN (
-  'miguelgsaviotti29@gmail.com',
-  'supervisor.teste@callaudit.app',
-  'closer.teste@callaudit.app',
-  'sandra.saviotti110772@gmail.com',
-  'matheuslopezmedeiros@gmail.com'
-);
+-- Delete any auth users we may have inserted (gracefully — may fail if not owner)
+DO $$ BEGIN
+  DELETE FROM auth.users WHERE email IN (
+    'miguelgsaviotti29@gmail.com',
+    'supervisor.teste@callaudit.app',
+    'closer.teste@callaudit.app',
+    'sandra.saviotti110772@gmail.com',
+    'matheuslopezmedeiros@gmail.com'
+  );
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
 
 -- Nuke the entire public schema and recreate it fresh
 DROP SCHEMA public CASCADE;

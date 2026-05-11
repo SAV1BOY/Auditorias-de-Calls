@@ -325,7 +325,8 @@ VALUES (
   false,
   524288000, -- 500 MB
   ARRAY['audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/webm', 'audio/wav', 'audio/x-m4a']
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- Authenticated users can upload and read audios
 CREATE POLICY "Auth users upload audios"
