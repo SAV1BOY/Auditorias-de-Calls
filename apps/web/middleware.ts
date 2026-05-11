@@ -37,6 +37,10 @@ export async function middleware(request: NextRequest) {
   ].join("; ")
 
   // ─── Supabase Auth ───
+  // IMPORTANT: This pattern is from the official Supabase Next.js docs.
+  // The supabaseResponse object MUST be returned with its cookies intact —
+  // any redirect must explicitly copy cookies from supabaseResponse, otherwise
+  // the browser and server go out of sync and the session is terminated.
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -60,27 +64,52 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  const incomingCookies = request.cookies.getAll()
+  const sbCookies = incomingCookies.filter((c) => c.name.startsWith("sb-"))
+
+  // Do NOT run code between createServerClient and supabase.auth.getUser().
+  // A token refresh may set new cookies via setAll(); we must call getUser()
+  // immediately so the refreshed cookies land on supabaseResponse.
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser()
 
-  // Redirect unauthenticated users to login
+  console.log("[middleware]", {
+    path: request.nextUrl.pathname,
+    method: request.method,
+    sbCookieCount: sbCookies.length,
+    sbCookieNames: sbCookies.map((c) => c.name),
+    user: user ? { id: user.id, email: user.email } : null,
+    userError: userError ? { message: userError.message, status: userError.status } : null,
+  })
+
+  // Helper: build a redirect response that PRESERVES cookies from supabaseResponse.
+  // CRITICAL: without this, refresh tokens set by getUser() are dropped on the
+  // redirect response, terminating the session and causing the login loop.
+  function redirectWithCookies(pathname: string) {
+    const url = request.nextUrl.clone()
+    url.pathname = pathname
+    const redirectResponse = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach(({ name, value, ...options }) => {
+      redirectResponse.cookies.set(name, value, options)
+    })
+    return redirectResponse
+  }
+
+  // Redirect unauthenticated users to /login
   if (
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/_next") &&
     !request.nextUrl.pathname.startsWith("/favicon")
   ) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/login"
-    return NextResponse.redirect(url)
+    return redirectWithCookies("/login")
   }
 
-  // Redirect authenticated users away from login
+  // Redirect authenticated users away from /login
   if (user && request.nextUrl.pathname.startsWith("/login")) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/"
-    return NextResponse.redirect(url)
+    return redirectWithCookies("/")
   }
 
   // ─── Set Security Headers ───
