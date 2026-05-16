@@ -5,7 +5,7 @@ supabase>=2.0.0
 
 # Google Drive API
 google-api-python-client>=2.130.0
-google-auth>=2.29.0
+google-auth>=2.49.2
 google-auth-oauthlib>=1.2.0
 
 # OpenAI (Whisper API)
