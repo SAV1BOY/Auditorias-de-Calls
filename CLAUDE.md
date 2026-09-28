@@ -192,3 +192,7 @@ Seguir EXATAMENTE esta ordem:
 3. **Server Actions para mutações, não API routes.** API routes apenas para webhooks.
 4. **Supabase RLS ativado.** Todas as queries precisam funcionar com RLS.
 5. **Worker não é Lambda.** É um long-running process com polling. Precisa de systemd no VPS.
+
+<!-- BEGIN managed:agent-permissions v1 -->
+@AGENTS.md
+<!-- END managed:agent-permissions v1 -->
